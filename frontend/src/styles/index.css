@@ -1,0 +1,33 @@
+/* =========================================
+   GPTK Library Management System
+   Global CSS Entry Point
+   ========================================= */
+
+/* ===================
+   CORE DESIGN SYSTEM
+   =================== */
+@import './variables.css';
+@import './themes.css';
+@import './base.css';
+@import './glass.css';
+
+/* ===================
+   LAYOUT SYSTEM
+   =================== */
+@import './layout.css';
+@import './pages/dashboard.css';
+
+/* ===================
+   COMPONENT STYLES
+   =================== */
+@import './components/buttons.css';
+@import './components/inputs.css';
+@import './components/forms.css';
+@import './components/cards.css';
+@import './components/modals.css';
+@import './components/tables.css';
+
+/* ===================
+   UTILITIES
+   =================== */
+@import './utilities.css';

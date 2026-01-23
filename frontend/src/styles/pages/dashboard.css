@@ -1,0 +1,94 @@
+/* =========================================
+   Dashboard Page Styles
+   ========================================= */
+
+.dashboard-content {
+    padding: var(--space-6);
+    animation: fadeIn var(--transition-normal) ease-out;
+}
+
+.dashboard-header {
+    margin-bottom: var(--space-6);
+}
+
+.dashboard-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+/* --- KPI Grid --- */
+.dashboard-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: var(--space-4);
+    margin-bottom: var(--space-8);
+}
+
+@media (min-width: 768px) {
+    .dashboard-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .dashboard-kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .dashboard-kpi-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* --- Charts Grid --- */
+.dashboard-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+    margin-bottom: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+    .dashboard-charts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .dashboard-charts-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* --- Logs Grid --- */
+.dashboard-logs-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+    .dashboard-logs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1280px) {
+    .dashboard-logs-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* --- Widget Containers --- */
+.chart-container {
+    height: 16rem;
+    /* 64 * 0.25rem = 16rem approx */
+    width: 100%;
+}
+
+.logs-container {
+    height: 100%;
+}

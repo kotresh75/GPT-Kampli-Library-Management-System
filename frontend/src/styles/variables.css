@@ -1,0 +1,204 @@
+/* =========================================
+   Design System Variables
+   ========================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap');
+
+:root {
+   /* ===================
+       FONT SCALING
+       =================== */
+   --font-scale: 1;
+   /* Range: 0.85 - 1.25 */
+
+   /* ===================
+       GLASS INTENSITY
+       =================== */
+   --glass-blur: 10px;
+   /* Range: 0px - 20px */
+
+   /* ===================
+       COLOR PALETTE
+       =================== */
+   /* Primary */
+   --color-primary-50: #f0f1ff;
+   --color-primary-100: #e0e4ff;
+   --color-primary-200: #c7cdfe;
+   --color-primary-300: #a5acfc;
+   --color-primary-400: #8b8ef8;
+   --color-primary-500: #667eea;
+   --color-primary-600: #5a65d6;
+   --color-primary-700: #4a50b5;
+   --color-primary-800: #3d4292;
+   --color-primary-900: #363b76;
+
+   /* Secondary (Purple) */
+   --color-secondary-500: #764ba2;
+   --color-secondary-600: #6b4190;
+   --color-secondary-700: #5a377a;
+
+   /* Success */
+   --color-success-50: #ecfdf5;
+   --color-success-100: #d1fae5;
+   --color-success-500: #2ecc71;
+   --color-success-600: #27ae60;
+   --color-success-700: #229954;
+
+   /* Danger */
+   --color-danger-50: #fef2f2;
+   --color-danger-100: #fee2e2;
+   --color-danger-500: #e74c3c;
+   --color-danger-600: #dc2626;
+   --color-danger-700: #b91c1c;
+
+   /* Warning */
+   --color-warning-50: #fffbeb;
+   --color-warning-100: #fef3c7;
+   --color-warning-500: #f1c40f;
+   --color-warning-600: #d97706;
+   --color-warning-700: #b45309;
+
+   /* Info */
+   --color-info-500: #3498db;
+   --color-info-600: #2980b9;
+
+   /* Neutral */
+   --color-neutral-50: #f9fafb;
+   --color-neutral-100: #f3f4f6;
+   --color-neutral-200: #e5e7eb;
+   --color-neutral-300: #d1d5db;
+   --color-neutral-400: #9ca3af;
+   --color-neutral-500: #6b7280;
+   --color-neutral-600: #4b5563;
+   --color-neutral-700: #374151;
+   --color-neutral-800: #1f2937;
+   --color-neutral-900: #111827;
+
+   /* ===================
+       SPACING SCALE
+       =================== */
+   --space-0: 0;
+   --space-1: 4px;
+   --space-2: 8px;
+   --space-3: 12px;
+   --space-4: 16px;
+   --space-5: 20px;
+   --space-6: 24px;
+   --space-7: 28px;
+   --space-8: 32px;
+   --space-10: 40px;
+   --space-12: 48px;
+   --space-16: 64px;
+   --space-20: 80px;
+
+   /* ===================
+       TYPOGRAPHY
+       =================== */
+   --font-family-base: 'Outfit', 'Noto Sans', 'Noto Sans Kannada', 'Noto Sans Devanagari', 'Noto Sans Tamil', 'Noto Sans Telugu', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+   --font-family-mono: 'Fira Code', 'Monaco', 'Consolas', monospace;
+
+   /* Font Sizes (with scaling) */
+   --font-size-xs: calc(12px * var(--font-scale));
+   --font-size-sm: calc(14px * var(--font-scale));
+   --font-size-base: calc(16px * var(--font-scale));
+   --font-size-lg: calc(18px * var(--font-scale));
+   --font-size-xl: calc(20px * var(--font-scale));
+   --font-size-2xl: calc(24px * var(--font-scale));
+   --font-size-3xl: calc(30px * var(--font-scale));
+   --font-size-4xl: calc(36px * var(--font-scale));
+   --font-size-5xl: calc(48px * var(--font-scale));
+
+   /* Font Weights */
+   --font-weight-light: 300;
+   --font-weight-normal: 400;
+   --font-weight-medium: 500;
+   --font-weight-semibold: 600;
+   --font-weight-bold: 700;
+   --font-weight-extrabold: 800;
+
+   /* Line Heights */
+   --line-height-tight: 1.1;
+   --line-height-snug: 1.25;
+   --line-height-normal: 1.5;
+   --line-height-relaxed: 1.625;
+
+   /* Letter Spacing */
+   --letter-spacing-tight: -0.025em;
+   --letter-spacing-normal: 0;
+   --letter-spacing-wide: 0.025em;
+   --letter-spacing-wider: 0.05em;
+
+   /* ===================
+       BORDER RADIUS
+       =================== */
+   --radius-sm: 4px;
+   --radius-md: 8px;
+   --radius-lg: 12px;
+   --radius-xl: 16px;
+   --radius-2xl: 24px;
+   --radius-full: 9999px;
+
+   /* ===================
+       SHADOWS
+       =================== */
+   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+   /* Glass Shadow */
+   --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+   --shadow-glass-lg: 0 16px 48px 0 rgba(31, 38, 135, 0.2);
+
+   /* Elevation Shadow */
+   --shadow-elevation-low: 0 2px 8px rgba(0, 0, 0, 0.08);
+   --shadow-elevation-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+   --shadow-elevation-high: 0 8px 32px rgba(0, 0, 0, 0.16);
+
+   /* ===================
+       Z-INDEX SCALE
+       =================== */
+   --z-dropdown: 100;
+   --z-sticky: 200;
+   --z-fixed: 300;
+   --z-modal-backdrop: 400;
+   --z-modal: 500;
+   --z-popover: 600;
+   --z-tooltip: 700;
+   --z-toast: 800;
+
+   /* ===================
+       TRANSITIONS
+       =================== */
+   --transition-fast: 150ms ease;
+   --transition-base: 200ms ease;
+   --transition-slow: 300ms ease;
+   --transition-slower: 500ms ease;
+
+   /* Cubic Bezier */
+   --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+   --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+   --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+   /* ===================
+       GRADIENTS
+       =================== */
+   --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+   --gradient-secondary: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+   --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+   --gradient-danger: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+   --gradient-dark: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+   --gradient-aurora: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+
+   /* ===================
+       BREAKPOINTS (for reference)
+       =================== */
+   /* --breakpoint-sm: 640px; */
+   /* --breakpoint-md: 768px; */
+   /* --breakpoint-lg: 1024px; */
+   /* --breakpoint-xl: 1280px; */
+   /* --breakpoint-2xl: 1536px; */
+}

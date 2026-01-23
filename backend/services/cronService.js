@@ -1,0 +1,84 @@
+const cron = require('node-cron');
+const db = require('../db');
+const emailService = require('./emailService');
+const { v4: uuidv4 } = require('uuid');
+const { getISTDate, getSQLiteISTTimestamp } = require('../utils/dateUtils');
+
+// Scheduled Task: Check Overdue Books (Daily at 8:00 AM)
+cron.schedule('0 8 * * *', async () => {
+    console.log('[Cron] Running Daily Overdue Check...');
+
+    try {
+        // 1. Get Active Overdue Loans
+        // Group by Student to send one email per student
+        const now = new Date().toISOString();
+
+        db.all(`
+            SELECT c.id, c.student_id, c.due_date, b.title as book_title, s.full_name as student_name, s.email
+            FROM circulation c
+            JOIN book_copies bc ON c.copy_id = bc.id
+            JOIN books b ON bc.book_isbn = b.isbn
+            JOIN students s ON c.student_id = s.id
+            WHERE c.due_date < datetime('now', '+05:30')
+        `, [], async (err, rows) => {
+            if (err) {
+                console.error('[Cron] Error fetching overdue loans:', err);
+                return;
+            }
+
+            if (rows.length === 0) {
+                console.log('[Cron] No overdue books found today.');
+                return;
+            }
+
+            // Group by Student
+            const studentLoans = {};
+            rows.forEach(row => {
+                if (!studentLoans[row.student_id]) {
+                    studentLoans[row.student_id] = {
+                        student: { name: row.student_name, email: row.email },
+                        loans: []
+                    };
+                }
+
+                const dueDate = new Date(row.due_date);
+                const diffTime = Math.abs(getISTDate() - dueDate);
+                const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                studentLoans[row.student_id].loans.push({
+                    book_title: row.book_title,
+                    due_date: row.due_date,
+                    overdue_days: overdueDays
+                });
+            });
+
+            // Send Emails
+            console.log(`[Cron] Found ${Object.keys(studentLoans).length} students with overdue books.`);
+
+            let emailsSent = 0;
+            for (const studentId in studentLoans) {
+                const data = studentLoans[studentId];
+                if (data.student.email) {
+                    await emailService.sendOverdueNotice(data.student, data.loans);
+                    emailsSent++;
+                }
+            }
+
+            console.log('[Cron] Overdue check completed.');
+
+            // Audit Log for System Action
+            if (emailsSent > 0) {
+                const auditId = uuidv4();
+                const logQuery = `INSERT INTO audit_logs (id, module, action_type, description, actor_id, actor_role, timestamp) VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+05:30'))`;
+                db.run(logQuery, [auditId, 'System', 'OVERDUE_CHECK', `Sent overdue notices to ${emailsSent} students`, 'SYSTEM', 'System']);
+            }
+        });
+
+    } catch (error) {
+        console.error('[Cron] Unexpected error:', error);
+    }
+});
+
+module.exports = {
+    init: () => console.log('[Cron] Service Initialized')
+};

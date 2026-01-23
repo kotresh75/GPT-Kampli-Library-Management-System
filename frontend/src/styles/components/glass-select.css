@@ -1,0 +1,191 @@
+/* =========================================
+   10.0. Custom Form Controls (Glass Dropdown)
+   ========================================= */
+
+/* --- Glass Select Container --- */
+.glass-select-container {
+    position: relative;
+    width: 100%;
+    min-width: 140px;
+}
+
+/* --- Trigger Button --- */
+.glass-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 48px;
+    padding: 0 16px;
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    user-select: none;
+    box-sizing: border-box;
+    white-space: nowrap;
+}
+
+.glass-select-trigger:hover {
+    background: var(--hover-overlay);
+    border-color: var(--border-color-strong);
+}
+
+.glass-select-trigger.with-icon {
+    padding-left: 12px;
+}
+
+.glass-select-icon {
+    margin-right: 10px;
+    color: var(--text-secondary);
+}
+
+.glass-select-placeholder {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* color: var(--text-secondary); */
+    text-align: left;
+}
+
+.glass-select-placeholder.selected {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* --- Dropdown Menu (Portal) --- */
+.glass-dropdown-menu {
+    background: var(--bg-color);
+    /* Solid background relative to theme */
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--glass-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: fadeInDown 0.2s ease-out;
+    padding: 6px;
+    min-width: 180px;
+    max-height: 300px;
+}
+
+/* Search inside dropdown */
+.dropdown-search {
+    padding: 6px;
+    border-bottom: 1px solid var(--border-color-light);
+    margin-bottom: 6px;
+}
+
+.dropdown-search-inner {
+    display: flex;
+    align-items: center;
+    background: var(--hover-overlay);
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+.dropdown-search-input {
+    border: none;
+    background: transparent;
+    width: 100%;
+    color: var(--text-primary);
+    outline: none;
+    font-size: 0.85rem;
+}
+
+/* Options */
+.dropdown-option {
+    padding: 10px 14px;
+    border-radius: 8px;
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-option:hover {
+    background: var(--primary-btn-bg);
+    /* Use primary gradient on hover */
+    color: white;
+}
+
+.dropdown-option.selected {
+    background: rgba(100, 100, 255, 0.1);
+    /* Subtle highlight for selected */
+    color: var(--color-primary-500);
+    font-weight: 600;
+}
+
+/* Hover override for selected item to ensure visibility */
+.dropdown-option.selected:hover {
+    background: var(--primary-btn-bg);
+    color: white;
+}
+
+.dropdown-empty {
+    padding: 15px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Glass Search Input (Matches Catalog Search) --- */
+.glass-search-input {
+    background: var(--surface-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.glass-search-input:focus-within {
+    border-color: var(--primary-color);
+    background: var(--surface-primary);
+    box-shadow: 0 0 0 2px var(--primary-color-alpha);
+    color: var(--text-primary);
+}
+
+.glass-search-input input {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    width: 100%;
+    height: 100%;
+    outline: none;
+    font-size: 0.95rem;
+    padding: 0;
+    margin: 0;
+}
+
+.glass-search-input svg {
+    margin-right: 12px;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+}
+
+.glass-search-input:focus-within svg {
+    color: var(--primary-color);
+}

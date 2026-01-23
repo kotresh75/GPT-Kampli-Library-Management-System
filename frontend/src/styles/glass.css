@@ -1,0 +1,377 @@
+/* =========================================
+   Glassmorphism System
+   ========================================= */
+
+/* ===================
+   BASE GLASS SURFACE
+   =================== */
+.glass-surface {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* ===================
+   GLASS PANEL
+   =================== */
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--glass-shadow);
+    padding: var(--space-10);
+    animation: fadeInUp 0.6s var(--ease-spring);
+}
+
+/* ===================
+   GLASS CARD
+   =================== */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-elevation-low);
+    padding: var(--space-5);
+    transition: transform var(--transition-base),
+        box-shadow var(--transition-base),
+        background var(--transition-base);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-elevation-medium);
+    background: var(--glass-bg-hover);
+}
+
+.glass-card--flat {
+    box-shadow: none;
+}
+
+.glass-card--flat:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+/* ===================
+   GLASS MODAL
+   =================== */
+.glass-modal {
+    background: var(--glass-bg);
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-2xl);
+}
+
+/* ===================
+   GLASS SIDEBAR
+   =================== */
+.glass-sidebar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.2));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.2));
+    border-right: 1px solid var(--glass-border);
+    height: 100%;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    transition: width var(--transition-slow),
+        transform var(--transition-slow);
+    z-index: var(--z-fixed);
+}
+
+.glass-sidebar.collapsed {
+    width: 80px;
+}
+
+/* ===================
+   GLASS HEADER
+   =================== */
+.glass-header {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--glass-border);
+    height: 70px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 var(--space-8);
+    z-index: var(--z-sticky);
+}
+
+/* ===================
+   GLASS FOOTER
+   =================== */
+.glass-footer {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border-top: 1px solid var(--glass-border);
+    padding: var(--space-4) var(--space-8);
+    text-align: center;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-top: auto;
+}
+
+/* ===================
+   GLASS DROPDOWN
+   =================== */
+.glass-dropdown {
+    background: var(--glass-bg);
+    backdrop-filter: blur(calc(var(--glass-blur) * 1.2));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.2));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    overflow: hidden;
+    z-index: var(--z-dropdown);
+    animation: fadeIn 0.2s ease;
+}
+
+/* ===================
+   GLASS INPUT
+   =================== */
+.glass-input {
+    background: var(--input-bg);
+    backdrop-filter: blur(calc(var(--glass-blur) * 0.5));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.5));
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family-base);
+    padding: var(--space-3) var(--space-4);
+    width: 100%;
+    outline: none;
+    transition: all var(--transition-base);
+}
+
+.glass-input:focus {
+    background: var(--input-bg-focus);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.glass-input::placeholder {
+    color: var(--input-placeholder);
+}
+
+.glass-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ===================
+   GLASS TEXTAREA
+   =================== */
+.glass-textarea {
+    background: var(--input-bg);
+    backdrop-filter: blur(calc(var(--glass-blur) * 0.5));
+    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 0.5));
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-family: var(--font-family-base);
+    padding: var(--space-3) var(--space-4);
+    width: 100%;
+    min-height: 100px;
+    resize: vertical;
+    outline: none;
+    transition: all var(--transition-base);
+}
+
+.glass-textarea:focus {
+    background: var(--input-bg-focus);
+    border-color: var(--input-border-focus);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* ===================
+   ANIMATED BACKGROUND
+   =================== */
+.gradient-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--bg-color);
+}
+
+.gradient-bg::before,
+.gradient-bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.6;
+    animation: floatOrb 10s infinite alternate ease-in-out;
+}
+
+.gradient-bg::before {
+    width: 50vw;
+    height: 50vw;
+    background: var(--orb-color-1);
+    top: -10%;
+    left: -10%;
+}
+
+.gradient-bg::after {
+    width: 40vw;
+    height: 40vw;
+    background: var(--orb-color-2);
+    bottom: -10%;
+    right: -10%;
+    animation-delay: -5s;
+}
+
+/* ===================
+   ANIMATIONS
+   =================== */
+@keyframes floatOrb {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    100% {
+        transform: translate(30px, 50px) scale(1.1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale3d(0.3, 0.3, 0.3);
+    }
+
+    20% {
+        transform: scale3d(1.1, 1.1, 1.1);
+    }
+
+    40% {
+        transform: scale3d(0.9, 0.9, 0.9);
+    }
+
+    60% {
+        opacity: 1;
+        transform: scale3d(1.03, 1.03, 1.03);
+    }
+
+    80% {
+        transform: scale3d(0.97, 0.97, 0.97);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale3d(1, 1, 1);
+    }
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-5px);
+    }
+
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Animation Classes */
+.animate-fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+.animate-fade-in-up {
+    animation: fadeInUp 0.5s var(--ease-spring);
+}
+
+.animate-fade-in-down {
+    animation: fadeInDown 0.3s ease;
+}
+
+.animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.animate-shake {
+    animation: shake 0.4s ease-in-out;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+    animation: pulse 2s ease-in-out infinite;
+}

@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import { ArrowLeftRight, BookOpen, RefreshCcw, IndianRupee } from 'lucide-react';
+import IssueTab from '../components/circulation/IssueTab';
+import ReturnTab from '../components/circulation/ReturnTab';
+import FinesTab from '../components/circulation/FinesTab';
+
+import { useLocation } from 'react-router-dom';
+
+const CirculationPage = () => {
+    const location = useLocation();
+    const [activeTab, setActiveTab] = useState('issue');
+
+
+    // Handle Route Navigation State
+    React.useEffect(() => {
+        if (location.state?.activeTab) {
+            setActiveTab(location.state.activeTab);
+        }
+    }, [location.state]);
+
+    // Keyboard Shortcuts
+    React.useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'F1') {
+                e.preventDefault();
+                setActiveTab('issue');
+            } else if (e.key === 'F2') {
+                e.preventDefault();
+                setActiveTab('return');
+            } else if (e.key === 'F3') {
+                e.preventDefault();
+                setActiveTab('fines');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+    return (
+        <div className="dashboard-content flex flex-col">
+
+            {/* Header / Tab Switcher */}
+            <div className="flex justify-between items-center mb-5">
+                <div>
+                    <h1 className="page-title mb-1">
+                        <ArrowLeftRight size={24} className="text-info" /> Circulation Desk
+                    </h1>
+
+                </div>
+
+                <div className="glass-panel flex gap-1 p-1 rounded-full">
+                    <button
+                        onClick={() => setActiveTab('issue')}
+                        title="Shortcut: F1"
+                        className={`btn rounded-full flex items-center gap-2 ${activeTab === 'issue' ? 'btn-primary' : 'btn-ghost'}`}
+                    >
+                        <BookOpen size={18} /> Issue (F1)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('return')}
+                        title="Shortcut: F2"
+                        className={`btn rounded-full flex items-center gap-2 ${activeTab === 'return' ? 'btn-primary' : 'btn-ghost'}`}
+                    >
+                        <RefreshCcw size={18} /> Return (F2)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('fines')}
+                        title="Shortcut: F3"
+                        className={`btn rounded-full flex items-center gap-2 ${activeTab === 'fines' ? 'btn-primary' : 'btn-ghost'}`}
+                    >
+                        <IndianRupee size={18} /> Fines (F3)
+                    </button>
+                </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="flex-1">
+                {activeTab === 'issue' ? <IssueTab /> : activeTab === 'return' ? <ReturnTab /> : <FinesTab initialTab={location.state?.fineSubTab} />}
+            </div>
+
+        </div>
+    );
+};
+
+export default CirculationPage;

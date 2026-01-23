@@ -1,0 +1,187 @@
+/* =========================================
+   Theme System - Light & Dark Mode
+   ========================================= */
+
+/* ===================
+   LIGHT MODE (Default)
+   =================== */
+:root {
+    /* Background */
+    --bg-color: #f0f4f8;
+    --bg-secondary: #e8eef3;
+    --bg-tertiary: #dce4eb;
+
+    /* Glass */
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-bg-hover: rgba(255, 255, 255, 0.95);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+
+    /* Text */
+    --text-primary: #2d3436;
+    --text-secondary: #636e72;
+    --text-tertiary: #8395a7;
+    --text-inverse: #ffffff;
+    --text-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    /* Surfaces */
+    --surface-primary: #ffffff;
+    --surface-secondary: #f8fafc;
+    --surface-elevated: #ffffff;
+
+    /* Borders */
+    --border-color: rgba(0, 0, 0, 0.1);
+    --border-color-light: rgba(0, 0, 0, 0.05);
+    --border-color-strong: rgba(0, 0, 0, 0.15);
+
+    /* Focus */
+    --focus-ring: rgba(102, 126, 234, 0.4);
+    --focus-ring-offset: #ffffff;
+
+    /* Interactive States */
+    --hover-overlay: rgba(0, 0, 0, 0.04);
+    --active-overlay: rgba(0, 0, 0, 0.08);
+
+    /* Scrollbar */
+    --scrollbar-bg: transparent;
+    --scrollbar-thumb: rgba(100, 100, 100, 0.3);
+    --scrollbar-thumb-hover: rgba(100, 100, 100, 0.5);
+
+    /* Button Primary */
+    --btn-primary-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --btn-primary-text: #ffffff;
+    --btn-primary-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+    /* Button Secondary */
+    --btn-secondary-bg: rgba(255, 255, 255, 0.8);
+    --btn-secondary-text: #2d3436;
+    --btn-secondary-border: rgba(0, 0, 0, 0.1);
+
+    /* Input */
+    --input-bg: rgba(255, 255, 255, 0.5);
+    --input-bg-focus: rgba(255, 255, 255, 0.8);
+    --input-border: rgba(0, 0, 0, 0.1);
+    --input-border-focus: #667eea;
+    --input-placeholder: #9ca3af;
+
+    /* Status Colors */
+    --status-success-bg: rgba(46, 204, 113, 0.15);
+    --status-success-text: #27ae60;
+    --status-success-border: rgba(46, 204, 113, 0.3);
+
+    --status-warning-bg: rgba(241, 196, 15, 0.15);
+    --status-warning-text: #f39c12;
+    --status-warning-border: rgba(241, 196, 15, 0.3);
+
+    --status-danger-bg: rgba(231, 76, 60, 0.15);
+    --status-danger-text: #e74c3c;
+    --status-danger-border: rgba(231, 76, 60, 0.3);
+
+    --status-info-bg: rgba(52, 152, 219, 0.15);
+    --status-info-text: #2980b9;
+    --status-info-border: rgba(52, 152, 219, 0.3);
+
+    /* Orb Colors (Background Animation) */
+    --orb-color-1: #FF9A9E;
+    --orb-color-2: #FECFEF;
+}
+
+/* ===================
+   DARK MODE
+   =================== */
+[data-theme='dark'] {
+    /* Background */
+    --bg-color: #0f0c29;
+    --bg-secondary: #1a1640;
+    --bg-tertiary: #251f4a;
+
+    /* Glass */
+    --glass-bg: rgba(16, 22, 36, 0.6);
+    --glass-bg-hover: rgba(16, 22, 36, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+
+    /* Text */
+    --text-primary: #ffffff;
+    --text-secondary: #b2bec3;
+    --text-tertiary: #8395a7;
+    --text-inverse: #2d3436;
+    --text-gradient: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+
+    /* Surfaces */
+    --surface-primary: rgba(30, 30, 60, 0.8);
+    --surface-secondary: rgba(20, 20, 45, 0.8);
+    --surface-elevated: rgba(40, 40, 80, 0.8);
+
+    /* Borders */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-color-light: rgba(255, 255, 255, 0.05);
+    --border-color-strong: rgba(255, 255, 255, 0.15);
+
+    /* Focus */
+    --focus-ring: rgba(161, 140, 209, 0.5);
+    --focus-ring-offset: #0f0c29;
+
+    /* Interactive States */
+    --hover-overlay: rgba(255, 255, 255, 0.05);
+    --active-overlay: rgba(255, 255, 255, 0.1);
+
+    /* Scrollbar */
+    --scrollbar-bg: transparent;
+    --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+
+    /* Button Primary */
+    --btn-primary-bg: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+    --btn-primary-text: #ffffff;
+    --btn-primary-shadow: 0 4px 15px rgba(48, 207, 208, 0.3);
+
+    /* Button Secondary */
+    --btn-secondary-bg: rgba(255, 255, 255, 0.1);
+    --btn-secondary-text: #ffffff;
+    --btn-secondary-border: rgba(255, 255, 255, 0.2);
+
+    /* Input */
+    --input-bg: rgba(255, 255, 255, 0.05);
+    --input-bg-focus: rgba(255, 255, 255, 0.12);
+    --input-border: rgba(255, 255, 255, 0.1);
+    --input-border-focus: #a18cd1;
+    --input-placeholder: #6b7280;
+
+    /* Status Colors */
+    --status-success-bg: rgba(46, 204, 113, 0.2);
+    --status-success-text: #2ecc71;
+    --status-success-border: rgba(46, 204, 113, 0.4);
+
+    --status-warning-bg: rgba(241, 196, 15, 0.2);
+    --status-warning-text: #f1c40f;
+    --status-warning-border: rgba(241, 196, 15, 0.4);
+
+    --status-danger-bg: rgba(231, 76, 60, 0.2);
+    --status-danger-text: #e74c3c;
+    --status-danger-border: rgba(231, 76, 60, 0.4);
+
+    --status-info-bg: rgba(52, 152, 219, 0.2);
+    --status-info-text: #3498db;
+    --status-info-border: rgba(52, 152, 219, 0.4);
+
+    /* Orb Colors (Background Animation) */
+    --orb-color-1: #240b36;
+    --orb-color-2: #0f0c29;
+}
+
+/* ===================
+   THEME TRANSITION
+   =================== */
+body,
+.glass-panel,
+.glass-card,
+.glass-sidebar,
+.glass-header,
+.glass-footer,
+.glass-modal {
+    transition: background-color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease,
+        color 0.3s ease;
+}
