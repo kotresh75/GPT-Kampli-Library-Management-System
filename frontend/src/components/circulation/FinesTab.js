@@ -264,8 +264,7 @@ const FinesTab = ({ initialTab }) => {
                 },
                 body: JSON.stringify({
                     fine_ids: fineIds,
-                    payment_method: 'Cash',
-                    collector_id: 'SYSTEM'
+                    payment_method: 'Cash'
                 })
             });
 
@@ -311,8 +310,7 @@ const FinesTab = ({ initialTab }) => {
                 body: JSON.stringify({
                     fine_id: fineId,
                     amount: amount,
-                    reason: reason,
-                    staff_id: 'SYSTEM'
+                    reason: reason
                 })
             });
             if (res.ok) {
@@ -338,8 +336,7 @@ const FinesTab = ({ initialTab }) => {
                 },
                 body: JSON.stringify({
                     fine_id: fineId,
-                    reason: reason,
-                    staff_id: 'SYSTEM'
+                    reason: reason
                 })
             });
             if (res.ok) {

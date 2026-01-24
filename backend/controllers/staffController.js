@@ -10,23 +10,29 @@ const auditService = require('../services/auditService');
 exports.getAllStaff = (req, res) => {
     const { search = '', designation = '', status = '' } = req.query;
 
-    let query = `SELECT id, name, email, phone, designation, access_permissions, status, last_login, created_at FROM staff WHERE status != 'Deleted'`;
+    let query = `
+        SELECT 
+            s.id, s.name, s.email, s.phone, s.designation, s.access_permissions, 
+            s.status, s.last_login, s.created_at,
+            (SELECT COUNT(*) FROM transaction_logs WHERE performed_by = s.id) as transaction_count
+        FROM staff s 
+        WHERE s.status != 'Deleted'`;
     let params = [];
 
     if (search) {
-        query += ` AND (name LIKE ? OR email LIKE ?)`;
+        query += ` AND (s.name LIKE ? OR s.email LIKE ?)`;
         params.push(`%${search}%`, `%${search}%`);
     }
     if (designation) {
-        query += ` AND designation = ?`;
+        query += ` AND s.designation = ?`;
         params.push(designation);
     }
     if (status) {
-        query += ` AND status = ?`;
+        query += ` AND s.status = ?`;
         params.push(status);
     }
 
-    query += ` ORDER BY created_at DESC`;
+    query += ` ORDER BY s.created_at DESC`;
 
     db.all(query, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -38,6 +44,35 @@ exports.getAllStaff = (req, res) => {
         }));
 
         res.json(data);
+    });
+};
+
+// GET /api/staff/stats
+exports.getStats = (req, res) => {
+    const queries = {
+        total: "SELECT COUNT(*) as count FROM staff WHERE status != 'Deleted'",
+        active: "SELECT COUNT(*) as count FROM staff WHERE status = 'Active'",
+        disabled: "SELECT COUNT(*) as count FROM staff WHERE status = 'Disabled'",
+        transactions: "SELECT COUNT(*) as count FROM transaction_logs WHERE performed_by IN (SELECT id FROM staff WHERE status != 'Deleted')"
+    };
+
+    const results = {};
+
+    db.get(queries.total, [], (err, row) => {
+        results.total = row ? row.count : 0;
+
+        db.get(queries.active, [], (err, row) => {
+            results.active = row ? row.count : 0;
+
+            db.get(queries.disabled, [], (err, row) => {
+                results.disabled = row ? row.count : 0;
+
+                db.get(queries.transactions, [], (err, row) => {
+                    results.totalTransactions = row ? row.count : 0;
+                    res.json(results);
+                });
+            });
+        });
     });
 };
 
@@ -107,18 +142,39 @@ exports.toggleStatus = (req, res) => {
     });
 };
 
-// DELETE /api/staff/:id (Soft Delete)
+// DELETE /api/staff/:id (Permanent Delete)
 exports.deleteStaff = (req, res) => {
     const { id } = req.params;
-    const actorId = req.user ? req.user.id : 'SYSTEM';
-    const actorRole = req.user ? req.user.role : 'System';
 
-    const query = `UPDATE staff SET status='Deleted', updated_at=datetime('now', '+05:30') WHERE id=?`;
-    db.run(query, [id], function (err) {
+    // Prevent deleting the System Administrator
+    if (id === 'SYSTEM' || id.toLowerCase() === 'system') {
+        return res.status(403).json({ error: "System Administrator account cannot be deleted." });
+    }
+
+    // First get staff info for audit log
+    db.get("SELECT name, email FROM staff WHERE id = ?", [id], (err, staff) => {
         if (err) return res.status(500).json({ error: err.message });
+        if (!staff) return res.status(404).json({ error: "Staff not found" });
 
-        auditService.log(req.user, 'DELETE', 'Staff Mgmt', `Soft deleted staff ${id}`, { staff_id: id });
-        res.json({ message: "Staff deleted successfully" });
+        // Clear foreign key references first
+        db.serialize(() => {
+            // Set issued_by to NULL in circulation
+            db.run("UPDATE circulation SET issued_by = NULL WHERE issued_by = ?", [id]);
+            // Set performed_by to NULL in transaction_logs
+            db.run("UPDATE transaction_logs SET performed_by = NULL WHERE performed_by = ?", [id]);
+            // Set collected_by to NULL in fines
+            db.run("UPDATE fines SET collected_by = NULL WHERE collected_by = ?", [id]);
+            // Set issued_by to NULL in legacy transactions table (Fixes SQLITE_CONSTRAINT error)
+            db.run("UPDATE transactions SET issued_by = NULL WHERE issued_by = ?", [id]);
+
+            // Now permanently delete the staff
+            db.run("DELETE FROM staff WHERE id = ?", [id], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+
+                auditService.log(req.user, 'DELETE', 'Staff Mgmt', `Deleted staff: ${staff.name} (${staff.email})`, { staff_id: id });
+                res.json({ message: "Staff deleted permanently" });
+            });
+        });
     });
 };
 

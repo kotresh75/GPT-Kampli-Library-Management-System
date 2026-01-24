@@ -27,7 +27,7 @@ const VerifyReceiptModal = ({ isOpen, onClose }) => {
                 // For now, assume exact match or numeric shortcut.
             }
 
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('auth_token');
             // Try explicit ID match first
             // Note: Backend uses LIKE %ID%, so strict formatting isn't always required but good for precision
             const response = await fetch(`http://localhost:3001/api/fines/receipt/${queryId}`, {

@@ -14,14 +14,15 @@ const ForgotPasswordPage = () => {
     const [error, setError] = useState('');
 
     const navigate = useNavigate();
-    const { theme, toggleTheme, fontSize, setFontSize } = usePreferences();
+    const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
 
     // Helper to cycle font sizes
     const cycleFontSize = () => {
-        const sizes = ['small', 'medium', 'large', 'xl'];
-        const currentIndex = sizes.indexOf(fontSize);
-        const nextIndex = (currentIndex + 1) % sizes.length;
-        setFontSize(sizes[nextIndex]);
+        const scales = [85, 100, 115, 130];
+        let currentIdx = scales.indexOf(fontScale);
+        if (currentIdx === -1) currentIdx = 1;
+        const nextIndex = (currentIdx + 1) % scales.length;
+        setFontScale(scales[nextIndex]);
     };
 
     const handleEmailSubmit = async (e) => {

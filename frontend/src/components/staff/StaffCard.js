@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mail, Phone, Edit2, Trash2, User, ToggleLeft, ToggleRight, Book, Users, Repeat, DollarSign, FileText, Eye } from 'lucide-react';
+import { Mail, Phone, Edit2, Trash2, User, ToggleLeft, ToggleRight, Book, Users, Repeat, DollarSign, FileText, Eye, Briefcase } from 'lucide-react';
 
 const StaffCard = ({ staff, onEdit, onToggleStatus, onDelete, onView }) => {
     const isActive = staff.status === 'Active';
@@ -8,6 +8,7 @@ const StaffCard = ({ staff, onEdit, onToggleStatus, onDelete, onView }) => {
         CATALOG: { label: 'Catalog', icon: Book },
         CIRCULATION: { label: 'Circulation', icon: Repeat },
         STUDENTS: { label: 'Student Mgmt', icon: Users },
+        DEPARTMENTS: { label: 'Dept Mgmt', icon: Briefcase },
         FINES: { label: 'Fine Mgmt', icon: DollarSign },
         REPORTS: { label: 'Reports', icon: FileText }
     };
@@ -52,6 +53,27 @@ const StaffCard = ({ staff, onEdit, onToggleStatus, onDelete, onView }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <Phone size={16} /> {staff.phone || 'N/A'}
                 </div>
+                {staff.last_login && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: '0.8rem' }}>
+                        <Eye size={14} /> Last login: {new Date(staff.last_login).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                    </div>
+                )}
+                {staff.transaction_count !== undefined && staff.transaction_count > 0 && (
+                    <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        marginTop: '5px',
+                        padding: '4px 10px',
+                        background: 'rgba(159, 122, 234, 0.15)',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        color: '#9f7aea',
+                        width: 'fit-content'
+                    }}>
+                        <Book size={12} /> {staff.transaction_count} transactions
+                    </div>
+                )}
             </div>
 
             {/* Permissions Footer */}

@@ -1,18 +1,20 @@
 const db = require('../db');
+const XLSX = require('xlsx');
+const PDFDocument = require('pdfkit');
 
 exports.getAllLogs = async (req, res) => {
     try {
         const { page = 1, limit = 20, startDate, endDate, action_type, module, role, search } = req.query;
         const offset = (page - 1) * limit;
 
-        // Base Query
+        // Base Query - actor_id can be UUID or email, so check both id and email matches
         let query = `
             SELECT al.*, 
                    COALESCE(a.name, s.name, 'System') as actor_name, 
-                   COALESCE(a.email, s.email, 'system@gptk.edu.in') as actor_email
+                   COALESCE(a.email, s.email, al.actor_id) as actor_email
             FROM audit_logs al
-            LEFT JOIN admins a ON al.actor_id = a.id AND al.actor_role = 'Admin'
-            LEFT JOIN staff s ON al.actor_id = s.id AND al.actor_role = 'Staff'
+            LEFT JOIN admins a ON (al.actor_id = a.id OR al.actor_id = a.email) AND al.actor_role = 'Admin'
+            LEFT JOIN staff s ON (al.actor_id = s.id OR al.actor_id = s.email) AND al.actor_role = 'Staff'
             WHERE 1=1
         `;
 
@@ -65,7 +67,7 @@ exports.getAllLogs = async (req, res) => {
             const whereClause = query.substring(whereClauseStartIndex, whereClauseEndIndex);
 
             // Re-using params (they match the WHERE clause)
-            db.get(`SELECT count(*) as total FROM audit_logs al LEFT JOIN admins a ON al.actor_id = a.id AND al.actor_role = 'Admin' LEFT JOIN staff s ON al.actor_id = s.id AND al.actor_role = 'Staff' ${whereClause}`, params, (err, row) => {
+            db.get(`SELECT count(*) as total FROM audit_logs al LEFT JOIN admins a ON (al.actor_id = a.id OR al.actor_id = a.email) AND al.actor_role = 'Admin' LEFT JOIN staff s ON (al.actor_id = s.id OR al.actor_id = s.email) AND al.actor_role = 'Staff' ${whereClause}`, params, (err, row) => {
                 if (err) reject(err);
                 else resolve(row.total);
             });
@@ -106,16 +108,18 @@ exports.getAuditStats = async (req, res) => {
             });
         };
 
-        const [totalToday, securityAlerts, adminActions] = await Promise.all([
+        const [totalToday, securityAlerts, adminActions, totalCount] = await Promise.all([
             getCount("date(timestamp) = date('now')"),
             getCount("module = 'Security' AND date(timestamp) > date('now', '-30 days')"),
-            getCount("actor_role = 'Admin' AND date(timestamp) = date('now')")
+            getCount("actor_role = 'Admin' AND date(timestamp) = date('now')"),
+            getCount("1=1")
         ]);
 
         res.json({
             today: totalToday,
             security: securityAlerts,
-            admin_today: adminActions
+            admin_today: adminActions,
+            total_logs: totalCount
         });
 
     } catch (err) {
@@ -127,14 +131,15 @@ exports.exportLogs = async (req, res) => {
     try {
         // Simple CSV export of ALL matching current filters (ignoring pagination)
         const { startDate, endDate, action_type, module, role, search } = req.query;
+        console.log("Exporting logs, format:", req.query.format);
 
         let query = `
             SELECT al.timestamp, al.actor_role, 
                    COALESCE(a.name, s.name, 'System') as actor_name, 
                    al.action_type, al.module, al.description 
             FROM audit_logs al
-            LEFT JOIN admins a ON al.actor_id = a.id AND al.actor_role = 'Admin'
-            LEFT JOIN staff s ON al.actor_id = s.id AND al.actor_role = 'Staff'
+            LEFT JOIN admins a ON (al.actor_id = a.id OR al.actor_id = a.email) AND al.actor_role = 'Admin'
+            LEFT JOIN staff s ON (al.actor_id = s.id OR al.actor_id = s.email) AND al.actor_role = 'Staff'
             WHERE 1=1
         `;
 
@@ -155,7 +160,49 @@ exports.exportLogs = async (req, res) => {
         db.all(query, params, (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
 
-            // Generate CSV
+            const format = req.query.format || 'csv';
+
+            if (format === 'xlsx') {
+                const workbook = XLSX.utils.book_new();
+                const worksheet = XLSX.utils.json_to_sheet(rows.map(row => ({
+                    Timestamp: row.timestamp,
+                    Role: row.actor_role,
+                    Name: row.actor_name,
+                    Action: row.action_type,
+                    Module: row.module,
+                    Description: row.description
+                })));
+                XLSX.utils.book_append_sheet(workbook, worksheet, "Audit Logs");
+                const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+                res.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.attachment('audit_logs.xlsx');
+                return res.send(buffer);
+            }
+
+            if (format === 'pdf') {
+                const doc = new PDFDocument();
+                res.header('Content-Type', 'application/pdf');
+                res.attachment('audit_logs.pdf');
+                doc.pipe(res);
+
+                doc.fontSize(18).text('Audit Logs', { align: 'center' });
+                doc.moveDown();
+
+                rows.forEach(row => {
+                    doc.fontSize(10).font('Helvetica-Bold').text(`[${row.timestamp}] ${row.action_type} - ${row.module}`);
+                    doc.font('Helvetica').text(`User: ${row.actor_name} (${row.actor_role})`);
+                    doc.text(`Description: ${row.description}`);
+                    doc.moveDown(0.5);
+                    doc.lineWidth(0.5).moveTo(doc.x, doc.y).lineTo(500, doc.y).stroke();
+                    doc.moveDown(0.5);
+                });
+
+                doc.end();
+                return;
+            }
+
+            // Default CSV
             const header = "Timestamp,Role,Name,Action,Module,Description\n";
             const csv = rows.map(row => {
                 const safeDesc = row.description ? `"${row.description.replace(/"/g, '""')}"` : "";

@@ -14,6 +14,62 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* =========================================
+   High Contrast Mode Overrides
+   ========================================= */
+html.high-contrast {
+  /* Override Root Variables for High Contrast */
+  --glass-bg: #000000 !important;
+  --glass-border: #ffffff !important;
+  --glass-shadow: none !important;
+
+  --text-main: #ffffff !important;
+  --text-secondary: #ffff00 !important;
+  /* Yellow for secondary text */
+  --text-muted: #00ff00 !important;
+  /* Green for muted text */
+
+  --bg-main: #000000 !important;
+  --bg-secondary: #000000 !important;
+  --bg-overlay: rgba(0, 0, 0, 0.9) !important;
+
+  /* Override Gradient Text */
+  --gradient-text: #ffffff !important;
+  /* Force white text */
+}
+
+/* Force specific elements to respect high contrast */
+html.high-contrast .glass-panel,
+html.high-contrast .glass-card,
+html.high-contrast .glass-sidebar,
+html.high-contrast .glass-header,
+html.high-contrast .glass-input,
+html.high-contrast .primary-glass-btn,
+html.high-contrast button {
+  background: #000000 !important;
+  border: 2px solid #ffffff !important;
+  box-shadow: none !important;
+  color: #ffffff !important;
+  backdrop-filter: none !important;
+}
+
+html.high-contrast .primary-glass-btn:hover,
+html.high-contrast button:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+html.high-contrast input::placeholder {
+  color: #00ff00 !important;
+  opacity: 1 !important;
+}
+
+html.high-contrast .text-transparent {
+  color: #ffffff !important;
+  background: none !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;

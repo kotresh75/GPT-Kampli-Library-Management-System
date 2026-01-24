@@ -24,8 +24,17 @@ const getSQLiteISTTimestamp = () => {
     return iso.replace('T', ' ').substring(0, 19);
 };
 
+const getISTISOWithOffset = (optionalDate) => {
+    // If date provided, assume it's a "Fake IST" date object or convert it?
+    // Actually, widespread pattern is: Create Fake IST Date -> ISO -> Replace Z.
+    // So this helper will take an Optional "Fake IST" Date, or generate one.
+    const date = optionalDate || getISTDate();
+    return date.toISOString().replace('Z', '+05:30');
+};
+
 module.exports = {
     getISTDate,
     getISTISOString,
-    getSQLiteISTTimestamp
+    getSQLiteISTTimestamp,
+    getISTISOWithOffset
 };

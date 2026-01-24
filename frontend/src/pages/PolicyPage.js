@@ -93,69 +93,68 @@ const PolicyPage = () => {
     if (loading) return <div className="p-4">Loading Policies...</div>;
     if (!policies) return <div className="p-4">Error loading policies.</div>;
 
-    const renderBorrowingTab = () => (
-        <div className="glass-panel p-4 animate-fade-in">
-            <h4 className="border-b border-glass pb-2 mb-4 font-medium flex items-center gap-2">
-                <BookOpen size={18} /> Default Borrowing Rules
-            </h4>
+    const renderBorrowingTab = () => {
+        // Single profile 'student' active by default
 
-            <div className="grid grid-cols-2 gap-6">
-                <div>
-                    <label className="field-label">Max Books Allowed</label>
-                    <input
-                        type="number" className="glass-input w-full"
-                        value={policies.policy_borrowing['student']?.maxBooks || 0}
-                        onChange={e => handleChange('policy_borrowing', 'maxBooks', parseInt(e.target.value))}
-                    />
-                </div>
-                <div>
-                    <label className="field-label">Loan Period (Days)</label>
-                    <input
-                        type="number" className="glass-input w-full"
-                        value={policies.policy_borrowing['student']?.loanDays || 0}
-                        onChange={e => handleChange('policy_borrowing', 'loanDays', parseInt(e.target.value))}
-                    />
-                </div>
-                <div>
-                    <label className="field-label">Renewal Period (Days)</label>
-                    <input
-                        type="number" className="glass-input w-full"
-                        placeholder="Same as Loan Period"
-                        value={policies.policy_borrowing['student']?.renewalDays || ''}
-                        onChange={e => handleChange('policy_borrowing', 'renewalDays', parseInt(e.target.value))}
-                    />
-                </div>
-                <div>
-                    <label className="field-label">Max Renewals</label>
-                    <input
-                        type="number" className="glass-input w-full"
-                        value={policies.policy_borrowing['student']?.maxRenewals || 0}
-                        onChange={e => handleChange('policy_borrowing', 'maxRenewals', parseInt(e.target.value))}
-                    />
-                </div>
-                <div>
-                    <label className="field-label">Grace Period (Days)</label>
-                    <input
-                        type="number" className="glass-input w-full"
-                        value={policies.policy_borrowing['student']?.gracePeriod || 0}
-                        onChange={e => handleChange('policy_borrowing', 'gracePeriod', parseInt(e.target.value))}
-                    />
+        return (
+            <div className="animate-fade-in">
+                <div className="flex items-center mb-6 border-b border-white/10 pb-4">
+                    <h4 className="font-medium flex items-center gap-2 text-lg">
+                        <BookOpen size={20} className="text-emerald-400" /> Default Borrowing Rules
+                    </h4>
                 </div>
 
-                <div className="col-span-2 mt-4 p-4 border border-red-500/30 rounded bg-red-500/5">
-                    <label className="field-label text-red-300 flex items-center gap-2"><Lock size={14} /> Auto-Block Threshold</label>
-                    <div className="flex items-center gap-2 mt-2">
-                        <span className="text-gray-400">Block borrowing if unpaid fines exceed ₹</span>
+                <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <label className="field-label">Max Books Allowed</label>
                         <input
-                            type="number" className="glass-input w-32"
-                            value={policies.policy_borrowing['student']?.blockFineThreshold || 0}
-                            onChange={e => handleChange('policy_borrowing', 'blockFineThreshold', parseInt(e.target.value))}
+                            type="number" className="glass-input w-full"
+                            value={policies.policy_borrowing[activeProfile]?.maxBooks || 0}
+                            onChange={e => handleChange('policy_borrowing', 'maxBooks', parseInt(e.target.value))}
                         />
+                    </div>
+                    <div>
+                        <label className="field-label">Loan Period (Days)</label>
+                        <input
+                            type="number" className="glass-input w-full"
+                            value={policies.policy_borrowing[activeProfile]?.loanDays || 0}
+                            onChange={e => handleChange('policy_borrowing', 'loanDays', parseInt(e.target.value))}
+                        />
+                    </div>
+                    <div>
+                        <label className="field-label">Renewal Period (Days)</label>
+                        <input
+                            type="number" className="glass-input w-full"
+                            placeholder="Same as Loan Period"
+                            value={policies.policy_borrowing[activeProfile]?.renewalDays || ''}
+                            onChange={e => handleChange('policy_borrowing', 'renewalDays', parseInt(e.target.value))}
+                        />
+                    </div>
+                    <div>
+                        <label className="field-label">Max Renewals</label>
+                        <input
+                            type="number" className="glass-input w-full"
+                            value={policies.policy_borrowing[activeProfile]?.maxRenewals || 0}
+                            onChange={e => handleChange('policy_borrowing', 'maxRenewals', parseInt(e.target.value))}
+                        />
+                    </div>
+
+
+                    <div className="col-span-2 mt-4 p-4 border border-red-500/30 rounded-xl bg-red-500/5">
+                        <label className="field-label text-red-300 flex items-center gap-2"><Lock size={14} /> Auto-Block Threshold</label>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="text-white/60">Block borrowing if unpaid fines exceed ₹</span>
+                            <input
+                                type="number" className="glass-input w-32"
+                                value={policies.policy_borrowing[activeProfile]?.blockFineThreshold || 0}
+                                onChange={e => handleChange('policy_borrowing', 'blockFineThreshold', parseInt(e.target.value))}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderFinancialTab = () => (
         <div className="glass-panel p-4 animate-fade-in space-y-6">
@@ -168,14 +167,7 @@ const PolicyPage = () => {
                         onChange={e => handleChange('policy_financial', 'dailyFineRate', parseFloat(e.target.value))}
                     />
                 </div>
-                <div>
-                    <label className="field-label">Max Fine Cap (Per Student)</label>
-                    <input
-                        type="number" className="glass-input w-full"
-                        value={policies.policy_financial.maxFinePerStudent}
-                        onChange={e => handleChange('policy_financial', 'maxFinePerStudent', parseInt(e.target.value))}
-                    />
-                </div>
+
             </div>
 
             <div>
@@ -206,77 +198,61 @@ const PolicyPage = () => {
                 </div>
             </div>
 
-            <div className="flex gap-6 mt-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={policies.policy_financial.allowStaffEditAmount}
-                        onChange={e => handleChange('policy_financial', 'allowStaffEditAmount', e.target.checked)}
-                    />
-                    <span>Allow Staff to Edit Fine Amounts</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={policies.policy_financial.allowStaffWaive}
-                        onChange={e => handleChange('policy_financial', 'allowStaffWaive', e.target.checked)}
-                    />
-                    <span>Allow Staff to Waive Fines</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={policies.policy_financial.allowStaffEditDamageLost || false}
-                        onChange={e => handleChange('policy_financial', 'allowStaffEditDamageLost', e.target.checked)}
-                    />
-                    <span>Allow Staff to Edit Damage/Lost Fines</span>
-                </label>
-            </div>
+
         </div>
     );
 
     return (
-        <div className="h-full flex flex-col p-6 overflow-hidden">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <Lock size={24} className="text-accent" /> Library Rules & Policy
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Version: {policies.policy_version ? `v${policies.policy_version}` : 'v1.0'}</p>
-                </div>
-                <div className="flex gap-3">
-                    <button className="icon-btn-ghost flex items-center gap-2" onClick={fetchPolicies}>
-                        <RotateCcw size={16} /> Reset
-                    </button>
-                    <button className="primary-glass-btn flex items-center gap-2" onClick={handleSave}>
-                        <Save size={16} /> Save & Publish
-                    </button>
-                </div>
-            </div>
+        <div className="dashboard-content">
+            {/* Header & Toolbar */}
+            <div className="flex flex-col gap-4 mb-6">
+                <div className="catalog-toolbar justify-between">
+                    {/* Title */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center text-orange-400">
+                            <Lock size={22} />
+                        </div>
+                        <div>
+                            <h1 className="text-xl font-bold text-white leading-tight flex items-center gap-2">
+                                Rules & Policy
+                                <span className="text-[10px] font-normal text-white/40 bg-white/10 px-1.5 py-0.5 rounded-full">v{policies.policy_version || '1.0'}</span>
+                            </h1>
+                        </div>
+                    </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-glass">
-                {[
-                    { id: 'borrowing', icon: BookOpen, label: 'Borrowing Rules' },
-                    { id: 'financial', icon: DollarSign, label: 'Financials' }
-                ].map(tab => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center gap-2 px-6 py-3 font-medium transition-all rounded-t-lg
-                            ${activeTab === tab.id
-                                ? 'bg-white/10 text-white border-b-2 border-accent'
-                                : 'text-gray-400 hover:text-white hover:bg-white/5'
-                            }`}
-                    >
-                        <tab.icon size={18} /> {tab.label}
-                    </button>
-                ))}
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                        <button className="toolbar-icon-btn" onClick={fetchPolicies} title="Reset Changes">
+                            <RotateCcw size={20} />
+                        </button>
+
+                        <button className="toolbar-primary-btn" onClick={handleSave}>
+                            <Save size={18} /> Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                {/* Navigation Tabs (Pill Style) - Below Toolbar */}
+                <div className="flex">
+                    <div className="glass-panel flex gap-1 p-1 rounded-full">
+                        <button
+                            onClick={() => setActiveTab('borrowing')}
+                            className={`btn rounded-full flex items-center gap-2 ${activeTab === 'borrowing' ? 'btn-primary' : 'btn-ghost'}`}
+                        >
+                            <BookOpen size={18} /> Borrowing Rules
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('financial')}
+                            className={`btn rounded-full flex items-center gap-2 ${activeTab === 'financial' ? 'btn-primary' : 'btn-ghost'}`}
+                        >
+                            <DollarSign size={18} /> Financials
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="glass-panel" style={{ flex: 1, padding: '24px', overflowY: 'auto', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
                 {activeTab === 'borrowing' && renderBorrowingTab()}
                 {activeTab === 'financial' && renderFinancialTab()}
             </div>

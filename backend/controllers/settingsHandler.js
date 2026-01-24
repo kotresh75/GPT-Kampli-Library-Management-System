@@ -58,7 +58,7 @@ exports.updateAppSettings = async (req, res) => {
 
             // Verify Password - check admins table (not staff)
             const admin = await new Promise((resolve, reject) => {
-                db.get("SELECT password_hash FROM admins WHERE id = ?", [admin_id], (err, row) => {
+                db.get("SELECT id, email, password_hash FROM admins WHERE id = ?", [admin_id], (err, row) => {
                     if (err) reject(err); else resolve(row);
                 });
             });
@@ -70,6 +70,9 @@ exports.updateAppSettings = async (req, res) => {
 
             const match = await bcrypt.compare(admin_password, admin.password_hash);
             if (!match) return res.status(401).json({ error: "Invalid Password (ERR_SET_PWD)" });
+
+            // Store admin info for audit logging
+            req.adminForAudit = { id: admin.email, role: 'Admin' };
         }
 
         // Proceed Update - using Promise to properly handle async
@@ -103,8 +106,10 @@ exports.updateAppSettings = async (req, res) => {
                                     resolve();
                                 });
                             } else {
-                                // Log Audit
-                                if (admin_id) {
+                                // Log Audit with proper user info
+                                if (req.adminForAudit) {
+                                    auditService.log(req.adminForAudit, 'UPDATE_SETTINGS', 'Settings', `Updated keys: ${keys.join(', ')}`);
+                                } else if (admin_id) {
                                     auditService.log(admin_id, 'UPDATE_SETTINGS', 'Settings', `Updated keys: ${keys.join(', ')}`);
                                 }
 

@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
-    FileText, TrendingUp, DollarSign, Package, Download, Calendar,
-    ArrowUpRight, ArrowDownRight, Printer, AlertCircle, CheckCircle, Book
+    FileText, TrendingUp, DollarSign, Package, Calendar,
+    Printer, AlertCircle, Sparkles
 } from 'lucide-react';
-import StatsCard from '../components/dashboard/StatsCard';
-import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar, PieChart, Pie, Cell, Legend
-} from 'recharts';
+import GlassSelect from '../components/common/GlassSelect';
 
-const ReportsPage = () => {
+// Import New Modular Analytics Components
+import CirculationAnalytics from '../components/analytics/CirculationAnalytics';
+import FinancialAnalytics from '../components/analytics/FinancialAnalytics';
+import InventoryAnalytics from '../components/analytics/InventoryAnalytics';
+
+const SmartReportsPage = () => {
     const [activeTab, setActiveTab] = useState('circulation');
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -36,294 +37,110 @@ const ReportsPage = () => {
         window.print();
     };
 
-    const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#00C49F'];
-
-    const renderCirculationReport = () => (
-        <div className="space-y-6 animate-fade-in">
-            {/* KPI Cards */}
-            {/* KPI Cards */}
-            <div className="dashboard-kpi-grid">
-                <StatsCard
-                    title="Active Loans"
-                    value={stats?.summary?.active_issued}
-                    icon={TrendingUp}
-                    color="blue"
-                />
-                <StatsCard
-                    title="Returns (30d)"
-                    value={stats?.summary?.monthly_returns}
-                    icon={CheckCircle}
-                    color="green"
-                />
-                <StatsCard
-                    title="Overdue Items"
-                    value={stats?.summary?.active_overdue}
-                    icon={AlertCircle}
-                    color="red"
-                />
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="glass-panel p-6 lg:col-span-2">
-                    <h3 className="font-bold text-lg mb-6">Issue vs Return Trends</h3>
-                    <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={stats?.trend || []}>
-                                <defs>
-                                    <linearGradient id="colorIssue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-                                    </linearGradient>
-                                    <linearGradient id="colorReturn" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} tickCount={7} />
-                                <YAxis stroke="#94a3b8" fontSize={12} />
-                                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                    itemStyle={{ color: '#fff' }}
-                                />
-                                <Area type="monotone" dataKey="issue" stroke="#8884d8" fillOpacity={1} fill="url(#colorIssue)" name="Issued" />
-                                <Area type="monotone" dataKey="return" stroke="#82ca9d" fillOpacity={1} fill="url(#colorReturn)" name="Returned" />
-                                <Legend />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                <div className="glass-panel p-6">
-                    <h3 className="font-bold text-lg mb-4">Top Borrowed Books</h3>
-                    <div className="overflow-y-auto max-h-80">
-                        <table className="w-full text-sm">
-                            <thead className="text-xs text-gray-500 border-b border-white/10">
-                                <tr>
-                                    <th className="text-left pb-2">Title</th>
-                                    <th className="text-right pb-2">Issues</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                                {stats?.top_books?.map((book, idx) => (
-                                    <tr key={idx} className="group hover:bg-white/5 transition-colors">
-                                        <td className="py-3 pr-2 text-gray-300 font-medium truncate max-w-[150px]" title={book.title}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-xs font-mono">{idx + 1}</span>
-                                                {book.title}
-                                            </div>
-                                        </td>
-                                        <td className="py-3 text-right font-mono text-accent">{book.count}</td>
-                                    </tr>
-                                ))}
-                                {(!stats?.top_books || stats.top_books.length === 0) && (
-                                    <tr><td colSpan="2" className="py-4 text-center text-gray-500">No data available</td></tr>
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderFinancialReport = () => (
-        <div className="space-y-6 animate-fade-in">
-            {/* KPI Cards */}
-            {/* KPI Cards */}
-            <div className="dashboard-kpi-grid">
-                <StatsCard
-                    title="Total Collected"
-                    value={`₹${stats?.summary?.collected?.toFixed(2)}`}
-                    icon={DollarSign}
-                    color="emerald"
-                />
-                <StatsCard
-                    title="Pending Dues"
-                    value={`₹${stats?.summary?.pending?.toFixed(2)}`}
-                    icon={DollarSign}
-                    color="orange"
-                />
-                <StatsCard
-                    title="Waived Amount"
-                    value={`₹${stats?.summary?.waived?.toFixed(2)}`}
-                    icon={DollarSign}
-                    color="blue"
-                />
-            </div>
-
-            <div className="glass-panel p-6">
-                <h3 className="font-bold text-lg mb-6">Daily Collection Trend (Last 30 Days)</h3>
-                <div className="h-96">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats?.trend || []}>
-                            <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                            <XAxis dataKey="date" stroke="#94a3b8" fontSize={12} />
-                            <YAxis stroke="#94a3b8" fontSize={12} />
-                            <Tooltip
-                                cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                                contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                                itemStyle={{ color: '#10b981' }}
-                            />
-                            <Bar dataKey="total" fill="#10b981" radius={[4, 4, 0, 0]} name="Collection (₹)" barSize={40} />
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderInventoryReport = () => (
-        <div className="space-y-6 animate-fade-in">
-            <div className="dashboard-kpi-grid">
-                <StatsCard
-                    title="Unique Titles"
-                    value={stats?.summary?.titles}
-                    icon={Book}
-                    color="purple"
-                />
-                <StatsCard
-                    title="Total Volumes"
-                    value={stats?.summary?.volumes}
-                    icon={Package}
-                    color="blue"
-                />
-                <StatsCard
-                    title="Est. Value"
-                    value={`₹${stats?.summary?.estimated_value?.toLocaleString()}`}
-                    icon={DollarSign}
-                    color="green"
-                />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="glass-panel p-6">
-                    <h3 className="font-bold text-lg mb-6">Distribution by Department</h3>
-                    <div className="h-80">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={stats?.distribution?.department || []}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    fill="#8884d8"
-                                    paddingAngle={2}
-                                    dataKey="count"
-                                    nameKey="name"
-                                    label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                                        // Simple Label Logic
-                                        if (percent < 0.05) return null;
-                                        return `${(percent * 100).toFixed(0)}%`;
-                                    }}
-                                >
-                                    {stats?.distribution?.department?.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none' }} />
-                                <Legend layout="vertical" align="right" verticalAlign="middle" />
-                            </PieChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                <div className="glass-panel p-6">
-                    <h3 className="font-bold text-lg mb-6">Volume Status</h3>
-                    <div className="space-y-4">
-                        {stats?.distribution?.status?.map((item, idx) => {
-                            const total = stats.summary.volumes || 1;
-                            const percent = ((item.count / total) * 100).toFixed(1);
-                            let color = 'bg-gray-500';
-                            if (item.status === 'Available') color = 'bg-green-500';
-                            if (item.status === 'Issued') color = 'bg-blue-500';
-                            if (item.status === 'Lost') color = 'bg-red-500';
-                            if (item.status === 'Damaged') color = 'bg-orange-500';
-
-                            return (
-                                <div key={idx}>
-                                    <div className="flex justify-between text-sm mb-1">
-                                        <span className="text-gray-300">{item.status}</span>
-                                        <span className="font-mono text-gray-400">{item.count} ({percent}%)</span>
-                                    </div>
-                                    <div className="w-full bg-white/5 rounded-full h-2">
-                                        <div
-                                            className={`h-2 rounded-full ${color}`}
-                                            style={{ width: `${percent}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
     return (
-        <div className="p-6 text-white h-full overflow-y-auto">
-            <div className="flex justify-between items-center mb-6 no-print">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <FileText size={24} className="text-accent" /> Reports & Analytics
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Real-time system insights</p>
-                </div>
-                <div className="flex gap-3">
-                    <div className="relative">
-                        <select
-                            value={period}
-                            onChange={(e) => setPeriod(e.target.value)}
-                            className="glass-input pl-3 pr-8 py-2 text-sm appearance-none cursor-pointer hover:bg-white/10"
-                        >
-                            <option value="7days">Last 7 Days</option>
-                            <option value="30days">Last 30 Days</option>
-                            <option value="90days">Last 3 Months</option>
-                        </select>
-                        <Calendar size={14} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+        <div className="dashboard-content h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-[#0f172a] to-slate-900">
+            {/* Header */}
+            <div className="flex-none p-6 pb-2 no-print relative z-20">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                            <div className="p-2.5 bg-indigo-500/20 rounded-xl border border-indigo-500/30 text-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                                <FileText size={28} />
+                            </div>
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+                                Library Insights
+                            </span>
+                        </h1>
+                        <p className="text-gray-400 text-sm mt-1 ml-1 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Academic Performance & Usage Metrics
+                        </p>
                     </div>
 
-                    <button className="primary-glass-btn flex items-center gap-2" onClick={handlePrint}>
-                        <Printer size={16} /> Print
-                    </button>
+                    {/* Smart Controls */}
+                    <div className="flex items-center gap-3">
+                        <div className="w-[180px]">
+                            <GlassSelect
+                                value={period}
+                                onChange={setPeriod}
+                                options={[
+                                    { value: '7days', label: 'Last 7 Days' },
+                                    { value: '30days', label: 'Last 30 Days' },
+                                    { value: '90days', label: 'Last 3 Months' },
+                                    { value: '365days', label: 'Last Year' }
+                                ]}
+                                icon={Calendar}
+                            />
+                        </div>
+
+                        <button
+                            className="btn btn-secondary text-sm backdrop-blur-md border-white/10 hover:bg-white/10 text-white"
+                            onClick={handlePrint}
+                        >
+                            <Printer size={16} />
+                            <span className="hidden md:inline">Export</span>
+                        </button>
+                    </div>
+                </div>
+
+                {/* Smart Tabs - Circulation Desk Style */}
+                <div className="flex gap-3 border-b border-white/10 relative px-6 pb-6">
+                    <div className="glass-panel flex gap-1 p-1 rounded-full">
+                        {[
+                            { id: 'circulation', label: 'Circulation', icon: TrendingUp },
+                            { id: 'financial', label: 'Financials', icon: DollarSign },
+                            { id: 'inventory', label: 'Inventory', icon: Package }
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`btn rounded-full flex items-center gap-2 ${activeTab === tab.id ? 'btn-primary' : 'btn-ghost'}`}
+                            >
+                                <tab.icon size={18} /> {tab.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-glass no-print">
-                {['circulation', 'financial', 'inventory'].map(tab => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`flex items-center gap-2 px-6 py-3 font-medium transition-all rounded-t-lg capitalize
-                        ${activeTab === tab ? 'bg-white/10 text-white border-b-2 border-accent' : 'text-gray-400 hover:text-white'}`}
-                    >
-                        {tab === 'circulation' && <TrendingUp size={16} />}
-                        {tab === 'financial' && <DollarSign size={16} />}
-                        {tab === 'inventory' && <Package size={16} />}
-                        {tab}
-                    </button>
-                ))}
-            </div>
-
-            {loading ? (
-                <div className="flex justify-center items-center h-96">
-                    <div className="spinner-lg"></div>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-4 relative z-10">
+                {/* Background Decor */}
+                <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-[-1]">
+                    <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]"></div>
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-purple-500/5 rounded-full blur-[100px]"></div>
                 </div>
-            ) : !stats ? (
-                <div className="p-20 text-center text-red-400 fade-in">Failed to load data.</div>
-            ) : (
-                <>
-                    {activeTab === 'circulation' && renderCirculationReport()}
-                    {activeTab === 'financial' && renderFinancialReport()}
-                    {activeTab === 'inventory' && renderInventoryReport()}
-                </>
-            )}
+
+                {loading ? (
+                    <div className="flex flex-col justify-center items-center h-[60vh] gap-4">
+                        <div className="relative w-20 h-20">
+                            <div className="absolute inset-0 border-4 border-indigo-500/30 rounded-full"></div>
+                            <div className="absolute inset-0 border-4 border-indigo-500 rounded-full border-t-transparent animate-spin"></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Sparkles size={24} className="text-indigo-400 animate-pulse" />
+                            </div>
+                        </div>
+                        <p className="text-gray-400 font-mono text-sm tracking-widest animate-pulse">ANALYZING METRICS...</p>
+                    </div>
+                ) : !stats ? (
+                    <div className="flex flex-col items-center justify-center h-[50vh] text-center p-8 m-4 rounded-3xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
+                        <AlertCircle size={48} className="text-red-400 mb-4 opacity-50" />
+                        <h3 className="text-xl font-bold text-white mb-2">System Offline</h3>
+                        <p className="text-gray-500 max-w-md">Analytics engine could not retrieve data. Please check your connection.</p>
+                        <button onClick={fetchReportData} className="mt-6 px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
+                            Retry Connection
+                        </button>
+                    </div>
+                ) : (
+                    <div className="pb-10 animate-fade-in-up">
+                        {activeTab === 'circulation' && <CirculationAnalytics stats={stats} loading={loading} />}
+                        {activeTab === 'financial' && <FinancialAnalytics stats={stats} />}
+                        {activeTab === 'inventory' && <InventoryAnalytics stats={stats} />}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
 
-export default ReportsPage;
+export default SmartReportsPage;

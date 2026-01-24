@@ -18,6 +18,7 @@ import SystemHealthPage from './pages/SystemHealthPage';
 import ReportsPage from './pages/ReportsPage';
 import AuditPage from './pages/AuditPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
+import UserProfile from './pages/UserProfile';
 import { PreferencesProvider } from './context/PreferencesContext';
 import './App.css';
 import './styles/index.css';
@@ -69,6 +70,7 @@ function App() {
               <Route path="notifications" element={<NotificationPage />} />
               <Route path="admins" element={<AdminManager />} />
               <Route path="audit" element={<AuditPage />} />
+              <Route path="profile" element={<UserProfile />} />
             </Route>
 
             {/* Fallback */}

@@ -8,21 +8,46 @@ const Sidebar = ({ isCollapsed }) => {
 
 
     const menuItems = [
-        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-        { path: '/dashboard/books', icon: Book, label: 'Books' },
-        { path: '/dashboard/members', icon: Users, label: 'Students' },
-        { path: '/dashboard/departments', icon: Building, label: 'Departments' },
-        { path: '/dashboard/circulation', icon: ArrowLeftRight, label: 'Circulation Desk' },
-        { path: '/dashboard/transactions', icon: Repeat, label: 'Transactions' },
-        { path: '/dashboard/reports', icon: FileText, label: 'Reports' },
-        { path: '/dashboard/notifications', icon: Bell, label: 'Broadcast' },
-        { path: '/dashboard/staff', icon: Briefcase, label: 'Staff' },
-        { path: '/dashboard/admins', icon: Shield, label: 'Admins' },
-        { path: '/dashboard/audit', icon: Shield, label: 'Audit' },
-        { path: '/dashboard/policy', icon: Shield, label: 'Policies' },
-        { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
-        { path: '/dashboard/health', icon: Activity, label: 'System Health' },
+        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true, permissions: [] }, // Always visible
+        { path: '/dashboard/books', icon: Book, label: 'Books', permissions: ['CATALOG'] },
+        { path: '/dashboard/members', icon: Users, label: 'Students', permissions: ['STUDENTS'] },
+        { path: '/dashboard/departments', icon: Building, label: 'Departments', permissions: ['DEPARTMENTS'] },
+        { path: '/dashboard/circulation', icon: ArrowLeftRight, label: 'Circulation Desk', permissions: ['CIRCULATION'] },
+        { path: '/dashboard/transactions', icon: Repeat, label: 'Transactions', permissions: ['CIRCULATION'] },
+        { path: '/dashboard/reports', icon: FileText, label: 'Reports', permissions: ['REPORTS'] },
+        { path: '/dashboard/notifications', icon: Bell, label: 'Broadcast', permissions: ['ADMIN'] },
+        { path: '/dashboard/staff', icon: Briefcase, label: 'Staff', permissions: ['ADMIN'] },
+        { path: '/dashboard/admins', icon: Shield, label: 'Admins', permissions: ['ADMIN'] },
+        { path: '/dashboard/audit', icon: Shield, label: 'Audit', permissions: ['ADMIN'] },
+        { path: '/dashboard/policy', icon: Shield, label: 'Policies', permissions: ['ADMIN'] },
+        { path: '/dashboard/settings', icon: Settings, label: 'Settings', permissions: ['ADMIN'] },
+        { path: '/dashboard/health', icon: Activity, label: 'System Health', permissions: ['ADMIN'] }
     ];
+
+    // Get User Permissions
+    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const userRole = userInfo.role || 'Guest';
+    const userPermissions = userInfo.permissions || [];
+
+    // Filter Items
+    const filteredMenu = menuItems.filter(item => {
+        // 1. Everyone sees dashboard
+        if (item.permissions.length === 0) return true;
+
+        // 2. Admins see everything
+        if (userRole === 'Admin') return true;
+
+        // 3. Staff check permissions
+        if (userRole === 'Staff') {
+            // If item requires 'ADMIN' permission explicitly, hide it from Staff
+            if (item.permissions.includes('ADMIN')) return false;
+
+            // Otherwise, check if user has at least one of the required permissions
+            return item.permissions.some(p => userPermissions.includes(p));
+        }
+
+        return false;
+    });
 
     return (
         <aside className={`glass-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
@@ -34,7 +59,7 @@ const Sidebar = ({ isCollapsed }) => {
             </div>
 
             <nav className="sidebar-nav">
-                {menuItems.map((item) => (
+                {filteredMenu.map((item) => (
                     <NavLink
                         key={item.path}
                         to={item.path}

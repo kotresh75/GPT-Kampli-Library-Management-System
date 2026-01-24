@@ -7,7 +7,7 @@ import StudentSearchSelect from '../components/common/StudentSearchSelect';
 import GlassEditor from '../components/common/GlassEditor';
 
 const NotificationPage = () => {
-    const [recipientType, setRecipientType] = useState('all');
+    const [recipientType, setRecipientType] = useState('dept');
     const [selectedDept, setSelectedDept] = useState('');
     const [targetStudents, setTargetStudents] = useState([]); // Array for multi-select
     const [subject, setSubject] = useState('');
@@ -77,10 +77,9 @@ const NotificationPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            let backendGroup = 'Students';
+            let backendGroup = '';
 
-            if (recipientType === 'all') backendGroup = 'Students';
-            else if (recipientType === 'dept') {
+            if (recipientType === 'dept') {
                 if (!selectedDept) throw new Error('Please select a department');
                 backendGroup = `Dept:${selectedDept}`;
             }
@@ -89,6 +88,12 @@ const NotificationPage = () => {
                 // Send comma-separated list of IDs
                 const ids = targetStudents.map(s => s.id).join(',');
                 backendGroup = `Student:${ids}`;
+            }
+            else if (recipientType === 'overdue') {
+                backendGroup = 'Overdue';
+            }
+            else if (recipientType === 'issued') {
+                backendGroup = 'Issued';
             }
 
             // Retrieve consistent token
@@ -130,7 +135,7 @@ const NotificationPage = () => {
 
     return (
         <div className="dashboard-content">
-            <h1 className="page-title">Broadcast Message / ಸಂದೇಶ ಪ್ರಸಾರ</h1>
+            <h1 className="page-title">Broadcast Message</h1>
 
             <div style={{ display: 'flex', gap: '20px', flexDirection: 'row', flexWrap: 'wrap' }}>
 
@@ -152,11 +157,10 @@ const NotificationPage = () => {
                                 value={recipientType}
                                 onChange={setRecipientType}
                                 options={[
-                                    { value: 'all', label: 'All Students' },
                                     { value: 'dept', label: 'Specific Department' },
                                     { value: 'student', label: 'Specific Students' },
-                                    { value: 'overdue', label: 'Overdue Students' },
-                                    { value: 'issued', label: 'Issued Students' }
+                                    { value: 'overdue', label: 'Students with Overdue Books' },
+                                    { value: 'issued', label: 'Students with Issued Books' }
                                 ]}
                             />
                         </div>

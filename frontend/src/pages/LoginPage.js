@@ -5,16 +5,31 @@ import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
 import logo from '../assets/logo.png';
 
+import StatusModal from '../components/common/StatusModal';
+
 const LoginPage = () => {
     const navigate = useNavigate();
-    const { theme, toggleTheme, fontSize, setFontSize } = usePreferences();
+    const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
+    const [showWarning, setShowWarning] = useState(false);
+
+    // Map numeric scale to labels
+    const SCALE_MAP = { 85: 'S', 100: 'M', 115: 'L', 130: 'XL' };
 
     // Helper to cycle font sizes
     const cycleFontSize = () => {
-        const sizes = ['small', 'medium', 'large', 'xl'];
-        const currentIndex = sizes.indexOf(fontSize);
-        const nextIndex = (currentIndex + 1) % sizes.length;
-        setFontSize(sizes[nextIndex]);
+        const scales = [85, 100, 115, 130];
+        let currentIdx = scales.indexOf(fontScale);
+        if (currentIdx === -1) currentIdx = 1;
+        const nextIndex = (currentIdx + 1) % scales.length;
+        setFontScale(scales[nextIndex]);
+    };
+
+    const handleThemeToggle = () => {
+        if (highContrast) {
+            setShowWarning(true);
+            return;
+        }
+        toggleTheme();
     };
 
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -61,11 +76,11 @@ const LoginPage = () => {
                 {/* Font Size Toggle */}
                 <button className="icon-btn" onClick={cycleFontSize} title="Change Font Size">
                     <Type size={18} />
-                    <span className="lang-code">{fontSize === 'xl' ? 'XL' : fontSize.toUpperCase().charAt(0)}</span>
+                    <span className="lang-code">{SCALE_MAP[fontScale] || 'C'}</span>
                 </button>
 
                 {/* Theme Toggle */}
-                <button className="icon-btn" onClick={toggleTheme} title="Toggle Theme">
+                <button className="icon-btn" onClick={handleThemeToggle} title="Toggle Theme">
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
             </div>
@@ -136,6 +151,14 @@ const LoginPage = () => {
 
                 </form>
             </div>
+
+            <StatusModal
+                isOpen={showWarning}
+                onClose={() => setShowWarning(false)}
+                type="error"
+                title="Action Locked"
+                message="High Contrast Mode is on. Please turn it off in Settings > Appearance to change themes."
+            />
         </div>
     );
 };

@@ -1,7 +1,7 @@
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const emailService = require('../services/emailService');
-const { getISTDate, getSQLiteISTTimestamp } = require('../utils/dateUtils');
+const { getISTDate, getSQLiteISTTimestamp, getISTISOWithOffset } = require('../utils/dateUtils');
 const auditService = require('../services/auditService');
 
 // --- Helper: Get Settings ---
@@ -147,9 +147,8 @@ exports.issueBook = async (req, res) => {
         }
 
         // Fix for FK Constraint: 'circulation' and 'transaction_logs' reference 'staff(id)'
-        // If actor is Admin, their ID isn't in 'staff', causing crash.
-        // We use 'SYSTEM' for these tables if not Staff, but log real ID in Audit.
-        const dbStaffId = (req.user && req.user.role === 'Staff') ? req.user.id : 'SYSTEM';
+        // Since FK constraint is removed, we can use any actor ID (Admin or Staff)
+        const dbStaffId = req.user ? req.user.id : 'SYSTEM';
         const auditActorId = req.user ? req.user.id : 'SYSTEM';
 
         const results = [];
@@ -176,10 +175,11 @@ exports.issueBook = async (req, res) => {
             }
 
             // Calculate Due Date (Dynamic)
+            // Calculate Due Date (Dynamic)
             const issueDate = getISTDate();
             const dueDate = getISTDate();
-            dueDate.setDate(issueDate.getDate() + loanDays);
-            dueDate.setHours(23, 59, 59, 999); // End of day
+            dueDate.setUTCDate(issueDate.getUTCDate() + loanDays);
+            dueDate.setUTCHours(23, 59, 59, 999); // End of day
 
             const txnId = uuidv4();
 
@@ -187,7 +187,7 @@ exports.issueBook = async (req, res) => {
             await new Promise((resolve, reject) => {
                 db.run(`INSERT INTO circulation (id, session_txn_id, student_id, copy_id, issued_by, issue_date, due_date) 
                         VALUES (?, ?, ?, ?, ?, datetime('now', '+05:30'), ?)`,
-                    [txnId, sessionTxnId, student_id, copy.id, dbStaffId, dueDate.toISOString()],
+                    [txnId, sessionTxnId, student_id, copy.id, dbStaffId, getISTISOWithOffset(dueDate)],
                     (err) => err ? reject(err) : resolve()
                 );
             });
@@ -209,7 +209,7 @@ exports.issueBook = async (req, res) => {
                 db.run(`INSERT INTO transaction_logs (id, session_txn_id, action_type, student_id, student_name, student_reg_no, student_dept, copy_id, book_title, book_isbn, performed_by, details, timestamp) 
                          VALUES (?, ?, 'ISSUE', ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+05:30'))`,
                     [uuidv4(), sessionTxnId, student_id, studentDetails?.full_name, studentDetails?.register_number, deptName, copy.id, copy.title, copy.isbn || 'N/A', dbStaffId, JSON.stringify({
-                        due_date: dueDate.toISOString(),
+                        due_date: getISTISOWithOffset(dueDate),
                         loan_days: loanDays,
                         accession: accNum,
                         author: copy.author,
@@ -229,7 +229,8 @@ exports.issueBook = async (req, res) => {
             results.push({ accession: accNum, status: 'Success', title: copy.title, due_date: dueDate });
         }
 
-        auditService.log(req.user, 'ISSUE', 'Circulation', `Issued ${results.filter(r => r.status === 'Success').length} books to students ${student_id}`, { session_id: sessionTxnId });
+        const auditUser = req.user ? { id: req.user.id, role: req.user.role } : 'SYSTEM';
+        auditService.log(auditUser, 'ISSUE', 'Circulation', `Issued ${results.filter(r => r.status === 'Success').length} books to students ${student_id}`, { session_id: sessionTxnId });
 
         // Send Email Receipt
         db.get("SELECT full_name as name, email FROM students WHERE id = ?", [student_id], (err, student) => {
@@ -284,7 +285,8 @@ exports.getStudentActiveLoans = (req, res) => {
 exports.returnBook = async (req, res) => {
     const { transaction_id, condition, remarks } = req.body;
     // Fix for FK Constraint: 'transaction_logs' and 'fines' reference 'staff(id)'
-    const dbStaffId = (req.user && req.user.role === 'Staff') ? req.user.id : 'SYSTEM';
+    // Since FK constraint is removed, we can use any actor ID (Admin or Staff)
+    const dbStaffId = req.user ? req.user.id : 'SYSTEM';
     const auditActorId = req.user ? req.user.id : 'SYSTEM';
     const staffRole = req.user ? req.user.role : 'Staff';
 
@@ -357,16 +359,7 @@ exports.returnBook = async (req, res) => {
             fineRemark += `Book Lost (Fine: ₹${lostFine}). `;
         }
 
-        // Apply Max Fine Cap (Per Student Total)
-        // If (Existing + New) > Cap, reduce New.
-        const potentialTotal = existingFines + fineAmount;
-        if (potentialTotal > maxFineCap) {
-            const allowedNewFine = Math.max(0, maxFineCap - existingFines);
-            if (fineAmount > allowedNewFine) {
-                fineRemark += ` (Capped by Max Fine Limit ₹${maxFineCap})`;
-                fineAmount = allowedNewFine;
-            }
-        }
+
 
         // 2. Insert into Transaction Logs (HISTORY) - Action: RETURN
         // Use loan details (fetched with title above) and re-fetch student details for latest snapshot
@@ -390,7 +383,7 @@ exports.returnBook = async (req, res) => {
                     condition,
                     remarks,
                     fine_amount: fineAmount,
-                    return_date: now.toISOString(),
+                    return_date: getISTISOWithOffset(), // Defaults to now
                     replacement_given: req.body.replacement_given,
                     new_accession: req.body.new_accession_number,
                     accession: loan.accession_number,
@@ -456,7 +449,8 @@ exports.returnBook = async (req, res) => {
             });
         }
 
-        auditService.log(req.user, 'RETURN', 'Circulation', `Returned loan ${transaction_id}. Condition: ${condition}`, { fine_amount: fineAmount });
+        const auditUser = req.user ? { id: req.user.id, role: req.user.role } : 'SYSTEM';
+        auditService.log(auditUser, 'RETURN', 'Circulation', `Returned loan ${transaction_id}. Condition: ${condition}`, { fine_amount: fineAmount });
 
         // Send Email Receipt
         const studentQuery = "SELECT full_name as name, email FROM students WHERE id = ?";
@@ -480,7 +474,7 @@ exports.returnBook = async (req, res) => {
 exports.renewBook = async (req, res) => {
     const { transaction_id, new_due_date } = req.body;
     // Fix for FK Constraint: 'transaction_logs' references 'staff(id)'
-    const dbStaffId = (req.user && req.user.role === 'Staff') ? req.user.id : 'SYSTEM';
+    const dbStaffId = req.user ? req.user.id : 'SYSTEM';
     const auditActorId = req.user ? req.user.id : 'SYSTEM';
     const staffRole = req.user ? req.user.role : 'Staff';
 
@@ -536,28 +530,27 @@ exports.renewBook = async (req, res) => {
         if (req.body.extend_days) {
             const extendDays = parseInt(req.body.extend_days);
             // Calculate from CURRENT DUE DATE
+            // Calculate from CURRENT DUE DATE
             const currentDueDate = new Date(loan.due_date);
             newDueDateObj = new Date(currentDueDate);
-            newDueDateObj.setDate(newDueDateObj.getDate() + extendDays);
+            newDueDateObj.setUTCDate(newDueDateObj.getUTCDate() + extendDays);
         } else if (new_due_date) {
             newDueDateObj = new Date(new_due_date);
         } else {
-            // Default Fallback (should be covered by frontend sending extend_days now)
-            // But if not, use policy renewalDays from TODAY or Due Date? 
-            // Stick to "from due date" as per user request for consistency.
+            // Default Fallback
             const currentDueDate = new Date(loan.due_date);
             newDueDateObj = new Date(currentDueDate);
-            newDueDateObj.setDate(newDueDateObj.getDate() + renewalDays);
+            newDueDateObj.setUTCDate(newDueDateObj.getUTCDate() + renewalDays);
         }
 
         // Ensure end of day
-        newDueDateObj.setHours(23, 59, 59, 999);
+        newDueDateObj.setUTCHours(23, 59, 59, 999);
 
         // 5. Update Circulation (State)
         const now = getISTDate();
         await new Promise((resolve, reject) => {
             db.run(`UPDATE circulation SET due_date = ?, last_renewed_date = ?, renewal_count = renewal_count + 1 WHERE id = ?`,
-                [newDueDateObj.toISOString(), now.toISOString(), transaction_id],
+                [getISTISOWithOffset(newDueDateObj), getISTISOWithOffset(now), transaction_id],
                 (err) => err ? reject(err) : resolve());
         });
 
@@ -579,7 +572,7 @@ exports.renewBook = async (req, res) => {
                     VALUES (?, ?, 'RENEW', ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+05:30'))`,
                 [uuidv4(), loan.session_txn_id, loan.student_id, studentDetails?.full_name, studentDetails?.register_number, deptName, loan.copy_id, loan.title, loan.book_isbn || 'N/A', dbStaffId, JSON.stringify({
                     old_due_date: loan.due_date,
-                    new_due_date: newDueDateObj.toISOString(),
+                    new_due_date: getISTISOWithOffset(newDueDateObj),
                     extend_days: req.body.extend_days || renewalDays,
                     accession: loan.accession_number,
                     author: loan.author,
@@ -593,7 +586,8 @@ exports.renewBook = async (req, res) => {
 
         const renewalsUsed = renewalCount + 1;
 
-        auditService.log(req.user, 'RENEW', 'Circulation', `Renewed loan ${transaction_id}. New Due Date: ${newDueDateObj.toISOString()}`, {
+        const auditUser = req.user ? { id: req.user.id, role: req.user.role } : 'SYSTEM';
+        auditService.log(auditUser, 'RENEW', 'Circulation', `Renewed loan ${transaction_id}. New Due Date: ${newDueDateObj.toISOString()}`, {
             old_due_date: loan.due_date,
             renewals_used: renewalsUsed
         });

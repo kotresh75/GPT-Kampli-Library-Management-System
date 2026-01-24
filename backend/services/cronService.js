@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const db = require('../db');
 const emailService = require('./emailService');
 const { v4: uuidv4 } = require('uuid');
-const { getISTDate, getSQLiteISTTimestamp } = require('../utils/dateUtils');
+const { getISTDate, getSQLiteISTTimestamp, getISTISOWithOffset } = require('../utils/dateUtils');
 
 // Scheduled Task: Check Overdue Books (Daily at 8:00 AM)
 cron.schedule('0 8 * * *', async () => {
@@ -11,7 +11,7 @@ cron.schedule('0 8 * * *', async () => {
     try {
         // 1. Get Active Overdue Loans
         // Group by Student to send one email per student
-        const now = new Date().toISOString();
+        const nowISO = getISTISOWithOffset();
 
         db.all(`
             SELECT c.id, c.student_id, c.due_date, b.title as book_title, s.full_name as student_name, s.email
@@ -19,8 +19,8 @@ cron.schedule('0 8 * * *', async () => {
             JOIN book_copies bc ON c.copy_id = bc.id
             JOIN books b ON bc.book_isbn = b.isbn
             JOIN students s ON c.student_id = s.id
-            WHERE c.due_date < datetime('now', '+05:30')
-        `, [], async (err, rows) => {
+            WHERE c.due_date < ?
+        `, [nowISO], async (err, rows) => {
             if (err) {
                 console.error('[Cron] Error fetching overdue loans:', err);
                 return;
@@ -42,7 +42,7 @@ cron.schedule('0 8 * * *', async () => {
                 }
 
                 const dueDate = new Date(row.due_date);
-                const diffTime = Math.abs(getISTDate() - dueDate);
+                const diffTime = Math.abs(new Date() - dueDate);
                 const overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 studentLoans[row.student_id].loans.push({

@@ -18,7 +18,10 @@ const AdminManager = () => {
     const fetchAdmins = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:3001/api/admins');
+            const token = localStorage.getItem('auth_token');
+            const res = await fetch('http://localhost:3001/api/admins', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             setAdmins(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -69,17 +72,27 @@ const AdminManager = () => {
         if (action === 'alert') return;
 
         try {
+            const token = localStorage.getItem('auth_token');
             let res;
             if (action === 'toggle_status') {
                 res = await fetch(`http://localhost:3001/api/admins/${data.id}/status`, {
                     method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ status: data.newStatus })
                 });
             } else if (action === 'delete') {
-                res = await fetch(`http://localhost:3001/api/admins/${data.id}`, { method: 'DELETE' });
+                res = await fetch(`http://localhost:3001/api/admins/${data.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
             } else if (action === 'reset_password') {
-                res = await fetch(`http://localhost:3001/api/admins/${data.id}/reset-password`, { method: 'POST' });
+                res = await fetch(`http://localhost:3001/api/admins/${data.id}/reset-password`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
             }
 
             if (res.ok) {
@@ -121,28 +134,30 @@ const AdminManager = () => {
 
     return (
         <div className="dashboard-content">
-            {/* Header */}
-            <div className="catalog-header">
-                <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Shield size={24} color="#f6e05e" /> Admin Management
+            {/* Header & Toolbar */}
+            <div className="mb-6">
+                <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 12, marginBottom: '5px' }}>
+                    <Shield size={28} className="text-yellow-400" /> Admin Management
                 </h1>
-                <div className="catalog-controls">
-                    <div className="catalog-search" style={{ minWidth: '300px' }}>
-                        <div style={{ position: 'relative', width: '100%' }}>
-                            <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
-                            <input
-                                className="glass-input"
-                                placeholder="Search Admins..."
-                                style={{ paddingLeft: '45px', width: '100%' }}
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
-                        </div>
+                <p className="text-white/60">Manage system administrators and their access.</p>
+            </div>
+
+            <div className="flex flex-col gap-4 mb-6">
+                <div className="catalog-toolbar" style={{ justifyContent: 'center' }}>
+                    <div className="toolbar-search" style={{ width: '400px' }}>
+                        <Search size={20} />
+                        <input
+                            type="text"
+                            placeholder="Search Admins..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
                     </div>
-                </div>
-                <div>
-                    <button className="primary-glass-btn" onClick={() => { setEditingAdmin(null); setShowAddModal(true); }}>
-                        <Plus size={18} style={{ marginRight: 8 }} /> Create New Admin
+
+                    <div className="h-8 w-px bg-white/10 mx-2"></div>
+
+                    <button className="toolbar-primary-btn whitespace-nowrap" onClick={() => { setEditingAdmin(null); setShowAddModal(true); }}>
+                        <Plus size={20} /> Create New Admin
                     </button>
                 </div>
             </div>

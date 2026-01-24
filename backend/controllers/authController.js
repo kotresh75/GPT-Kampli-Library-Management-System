@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const db = require('../db');
 const auditService = require('../services/auditService');
+const { getISTISOWithOffset } = require('../utils/dateUtils');
 
 // SECRET should eventually check system_settings, but for now we fallback
 const JWT_SECRET = 'gptk_lms_secret_temporary_key';
@@ -70,7 +71,7 @@ exports.login = (req, res) => {
     };
 
     // 1. Check Admins Table
-    const adminQuery = "SELECT id, name, email, password_hash, 'Admin' as role FROM admins WHERE email = ?";
+    const adminQuery = "SELECT id, name, email, password_hash, 'Admin' as role FROM admins WHERE email = ? AND status = 'Active'";
     db.get(adminQuery, [email], (err, admin) => {
         if (err) return res.status(500).json({ message: 'Database error' });
 
@@ -84,7 +85,9 @@ exports.login = (req, res) => {
             if (err) return res.status(500).json({ message: 'Database error' });
 
             if (staff) {
-                return verifyAndSend(staff, 'Staff');
+                // Special Case: System Administrator (stored as Staff but needs Admin role)
+                const role = staff.email === 'system@library.com' ? 'Admin' : 'Staff';
+                return verifyAndSend(staff, role);
             }
 
             // Log Login Failure (User not found in Staff)
@@ -115,7 +118,7 @@ exports.requestPasswordReset = (req, res) => {
 
         // Generate 6-digit OTP
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expiresAt = new Date(Date.now() + 10 * 60000).toISOString(); // 10 mins
+        const expiresAt = getISTISOWithOffset(new Date(Date.now() + 10 * 60000)); // 10 mins
 
         // Store OTP (Upsert: Replace if exists)
         db.run("INSERT OR REPLACE INTO password_resets (email, otp, expires_at) VALUES (?, ?, ?)",
@@ -231,6 +234,45 @@ exports.resetPassword = (req, res) => {
                 auditService.log(email, 'PASSWORD_RESET_SUCCESS', 'Auth', `Password successfully reset for ${email}`, { ip: req.ip });
 
                 res.json({ message: 'Password updated successfully. Please login.' });
+            });
+        });
+    });
+};
+
+exports.changePassword = (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const { id, role } = req.user; // from verifyToken middleware
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: 'Old and new passwords are required' });
+    }
+
+    // Special handling for System Administrator who has Admin role but is in staff table
+    let table = role === 'Admin' ? 'admins' : 'staff';
+    if (id === 'SYSTEM') table = 'staff';
+
+    // 1. Get current user to verify old password (using generic query to handle both tables if ID is unique globally, or use table)
+    // Safe to use table variable derived from token role
+    db.get(`SELECT password_hash FROM ${table} WHERE id = ?`, [id], (err, user) => {
+        if (err) return res.status(500).json({ message: 'Database error' });
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        bcrypt.compare(oldPassword, user.password_hash, (err, isMatch) => {
+            if (err) return res.status(500).json({ message: 'Authentication error' });
+            if (!isMatch) return res.status(401).json({ message: 'Incorrect old password' });
+
+            // 2. Hash new password
+            const saltRounds = 10;
+            bcrypt.hash(newPassword, saltRounds, (err, hash) => {
+                if (err) return res.status(500).json({ message: 'Encryption failed' });
+
+                // 3. Update Password
+                db.run(`UPDATE ${table} SET password_hash = ? WHERE id = ?`, [hash, id], (err) => {
+                    if (err) return res.status(500).json({ message: 'Failed to update password' });
+
+                    auditService.log(req.user, 'PASSWORD_CHANGE', 'Auth', `User changed their password`);
+                    res.json({ message: 'Password changed successfully' });
+                });
             });
         });
     });

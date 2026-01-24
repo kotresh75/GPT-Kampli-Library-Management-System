@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import PasswordPromptModal from '../components/common/PasswordPromptModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import StatusModal from '../components/common/StatusModal';
 import { usePreferences } from '../context/PreferencesContext';
 
 // Help functions
@@ -33,13 +34,23 @@ const AppearanceTab = ({ settings, handleChange, handleSave }) => (
             <label className="form-label">Theme Mode</label>
             <div className="theme-options">
                 {['light', 'dark', 'system'].map(mode => (
-                    <label key={mode} className={`theme-card ${settings.app_appearance?.theme === mode ? 'active' : ''}`}>
+                    <label
+                        key={mode}
+                        className={`theme-card ${settings.app_appearance?.theme === mode ? 'active' : ''}`}
+                        style={{
+                            opacity: settings.app_appearance?.highContrast ? 0.5 : 1,
+                            cursor: settings.app_appearance?.highContrast ? 'not-allowed' : 'pointer',
+                            pointerEvents: settings.app_appearance?.highContrast ? 'none' : 'auto'
+                        }}
+                        title={settings.app_appearance?.highContrast ? "Theme selection disabled in High Contrast Mode" : ""}
+                    >
                         <input
                             type="radio"
                             name="theme"
                             className="theme-radio"
                             checked={settings.app_appearance?.theme === mode}
                             onChange={() => handleChange('app_appearance', 'theme', mode)}
+                            disabled={settings.app_appearance?.highContrast}
                         />
                         {mode === 'light' && <Sun size={16} />}
                         {mode === 'dark' && <Moon size={16} />}
@@ -52,30 +63,7 @@ const AppearanceTab = ({ settings, handleChange, handleSave }) => (
 
 
 
-        {/* Sound Feedback */}
-        <div className="settings-card">
-            <label className="form-label">Sound Feedback</label>
-            <div className="checkbox-row">
-                <label className="checkbox-item">
-                    <input
-                        type="checkbox"
-                        checked={settings.app_appearance?.soundSuccess}
-                        onChange={e => handleChange('app_appearance', 'soundSuccess', e.target.checked)}
-                    />
-                    <Volume2 size={16} className="text-success" />
-                    <span>Success Beep</span>
-                </label>
-                <label className="checkbox-item">
-                    <input
-                        type="checkbox"
-                        checked={settings.app_appearance?.soundError}
-                        onChange={e => handleChange('app_appearance', 'soundError', e.target.checked)}
-                    />
-                    <Volume2 size={16} className="text-danger" />
-                    <span>Error Beep</span>
-                </label>
-            </div>
-        </div>
+
 
         {/* Language */}
         <div className="settings-card">
@@ -811,9 +799,10 @@ const SettingsPage = () => {
     const user = JSON.parse(localStorage.getItem('user_info')) || JSON.parse(localStorage.getItem('user')) || { role: 'Staff', id: 'guest' };
     const userRole = (user.role || '').toLowerCase();
     const isAdmin = userRole === 'admin' || userRole === 'super admin' || userRole === 'superadmin';
+    const [showWarning, setShowWarning] = useState(false);
 
-    // Preferences context for language sync
-    const { language, toggleLanguage, theme, toggleTheme, setTheme } = usePreferences();
+    // Preferences context for language sync, font scaling, and high contrast
+    const { language, toggleLanguage, theme, toggleTheme, setTheme, fontScale, setFontScale, highContrast, setHighContrast } = usePreferences();
 
     const categoryGroups = [
         {
@@ -932,6 +921,21 @@ const SettingsPage = () => {
                 }
             });
             setSettings(merged);
+
+            // Sync font scale from backend if it differs, or keep local? 
+            // Better: Validating that local context matches what we attribute to 'settings'
+            // But to avoid jarring jumps, we might want to respect local preference over server for this machine
+            // For now, let's keep them independent until save, BUT initialize the SLIDER to match local preference
+            if (merged.app_appearance) {
+                setSettings(prev => ({
+                    ...prev,
+                    app_appearance: {
+                        ...prev.app_appearance,
+                        fontScale: fontScale, // Override backend value with current active local value for the slider
+                        highContrast: highContrast // Sync checkbox with local state
+                    }
+                }));
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -940,6 +944,21 @@ const SettingsPage = () => {
     };
 
     const handleChange = (key, field, value) => {
+        // Live Preview for Theme
+        if (key === 'app_appearance' && field === 'theme') {
+            if (highContrast) {
+                // Use existing notification or alert? User wanted custom modal. 
+                // SettingsPage doesn't have a generic "StatusModal" setup yet, 
+                // but it has "ConfirmationModal". 
+                // Let's reuse showNotification for a softer warning, or add StatusModal?
+                // The user specifically asked for a custom modal replacing the electron alert.
+                // Added StatusModal to imports and state below.
+                setShowWarning(true);
+                return;
+            }
+            setTheme(value);
+        }
+
         setSettings(prev => ({
             ...prev,
             [key]: {
@@ -948,6 +967,16 @@ const SettingsPage = () => {
             }
         }));
         setUnsavedChanges(prev => ({ ...prev, [key]: true }));
+
+        // Live Preview for Font Scale
+        if (key === 'app_appearance' && field === 'fontScale') {
+            setFontScale(value);
+        }
+
+        // Live Preview for High Contrast
+        if (key === 'app_appearance' && field === 'highContrast') {
+            setHighContrast(value);
+        }
     };
 
     const handleSave = () => {
@@ -1339,6 +1368,14 @@ const SettingsPage = () => {
                 onClose={() => setIsPromptOpen(false)}
                 onSuccess={saveChanges}
                 message="Confirm Admin Password to save these sensitive settings."
+            />
+
+            <StatusModal
+                isOpen={showWarning}
+                onClose={() => setShowWarning(false)}
+                type="error"
+                title="Action Locked"
+                message="High Contrast Mode is on. Please turn it off in Settings > Appearance to change themes."
             />
 
             {/* Notification Modal (replaces browser alerts) */}

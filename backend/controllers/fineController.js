@@ -71,7 +71,15 @@ exports.getStudentFines = (req, res) => {
 
 // Collect Fine Payment
 exports.collectFine = (req, res) => {
-    const { fine_ids, payment_method, collector_id } = req.body;
+    const { fine_ids, payment_method } = req.body;
+
+    let collector_id = req.user ? req.user.id : 'SYSTEM';
+
+    // Fallback if needed but prefer authenticated user
+    if (!req.user && req.body.collector_id) {
+        collector_id = req.body.collector_id;
+    }
+
     // fine_ids is array of fine IDs to pay
 
     if (!fine_ids || fine_ids.length === 0) return res.status(400).json({ error: "No fines selected" });
@@ -119,8 +127,8 @@ exports.collectFine = (req, res) => {
 
                     // 2. Update Fine Status
                     await new Promise((resolve, reject) => {
-                        db.run(`UPDATE fines SET status = 'Paid', is_paid = 1, payment_date = ?, receipt_number = ? WHERE id = ?`,
-                            [now, receiptId, fineId], (err) => {
+                        db.run(`UPDATE fines SET status = 'Paid', is_paid = 1, payment_date = ?, receipt_number = ?, collected_by = ? WHERE id = ?`,
+                            [now, receiptId, collector_id, fineId], (err) => {
                                 if (err) reject(err);
                                 else resolve();
                             });
@@ -166,15 +174,9 @@ exports.collectFine = (req, res) => {
                     });
                 }
 
-                // 4. Update Student's Unpaid Counter (Recalculate for safety)
-                // Assuming all fines are for same student, or distinct. We should handle mixed.
-                // Let's get distinct student IDs from the fine_ids list.
-                // Simpler: Just recalculate for the student of the first fine (assuming grouping by student on frontend)
-                // 4. Update Student's Unpaid Counter - SKIPPED (Column does not exist, calculated on fly)
-                // If we need performance, we should add the column migration. For now, we skip.
-
                 // 5. Audit Log (Batch)
-                await auditService.log(req.user || collector_id, 'FINE_COLLECTED', 'Finance', `Collected ${fine_ids.length} fines. IDs: ${fine_ids.join(', ')}`);
+                const auditUser = req.user ? { id: req.user.id, role: req.user.role || 'Admin' } : collector_id;
+                await auditService.log(auditUser, 'FINE_COLLECTED', 'Finance', `Collected ${fine_ids.length} fines. IDs: ${fine_ids.join(', ')}`);
 
                 db.run("COMMIT", () => {
                     // Send Email Receipt Async
@@ -206,7 +208,8 @@ exports.collectFine = (req, res) => {
 
 // Waive Fine
 exports.waiveFine = (req, res) => {
-    const { fine_id, reason, staff_id } = req.body;
+    const { fine_id, reason } = req.body;
+    const staff_id = req.user ? req.user.id : (req.body.staff_id || 'SYSTEM');
 
     db.get(`
         SELECT f.*, f.remark as reason, 
@@ -271,7 +274,8 @@ exports.waiveFine = (req, res) => {
                     // Recalc Student Fines - SKIPPED
 
                     // Audit Log
-                    auditService.log(req.user || staff_id, 'FINE_WAIVED', 'Finance', `Waived fine ${fine_id}. Reason: ${reason}`);
+                    const auditUser = req.user ? { id: req.user.id, role: req.user.role || 'Admin' } : staff_id;
+                    auditService.log(auditUser, 'FINE_WAIVED', 'Finance', `Waived fine ${fine_id}. Reason: ${reason}`);
 
                     db.run("COMMIT", () => {
                         res.json({ success: true });
@@ -284,7 +288,8 @@ exports.waiveFine = (req, res) => {
 
 // Update fine (Edit Amount/Reason)
 exports.updateFine = (req, res) => {
-    const { fine_id, amount, reason, staff_id } = req.body;
+    const { fine_id, amount, reason } = req.body;
+    const staff_id = req.user ? req.user.id : (req.body.staff_id || 'SYSTEM');
 
     db.get(`
         SELECT f.*, f.remark as reason, 
@@ -349,7 +354,8 @@ exports.updateFine = (req, res) => {
                     // Recalc Student Fines - SKIPPED
 
                     // Audit Log
-                    auditService.log(req.user || staff_id, 'FINE_EDITED', 'Finance', `Edited fine ${fine_id}. Amount: ${oldAmount}->${amount}`);
+                    const auditUser = req.user ? { id: req.user.id, role: req.user.role || 'Admin' } : staff_id;
+                    auditService.log(auditUser, 'FINE_EDITED', 'Finance', `Edited fine ${fine_id}. Amount: ${oldAmount}->${amount}`);
 
                     db.run("COMMIT", () => {
                         res.json({ success: true });

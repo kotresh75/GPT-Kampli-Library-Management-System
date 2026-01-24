@@ -7,6 +7,7 @@ const { verifyAdmin } = require('../middleware/authMiddleware');
 router.use(verifyAdmin);
 
 router.get('/', staffController.getAllStaff);
+router.get('/stats', staffController.getStats);
 router.post('/', staffController.createStaff);
 router.put('/:id', staffController.updateStaff);
 router.patch('/:id/status', staffController.toggleStatus);

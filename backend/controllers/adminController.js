@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
+const { getISTISOWithOffset } = require('../utils/dateUtils');
 
 // GET /api/admins
 exports.getAdmins = (req, res) => {
@@ -102,7 +103,7 @@ exports.deleteAdmin = (req, res) => {
         db.run(query, [id], function (err) {
             if (err) return res.status(500).json({ error: err.message });
 
-            logAudit(actorId, actorRole, 'DELETE', 'Admin Management', `Deleted admin: ${row.email}`, { target_id: id });
+            auditService.log(req.user, 'DELETE', 'Admin Management', `Deleted admin: ${row.email}`, { target_id: id });
             res.json({ message: "Admin deleted successfully" });
         });
     });
@@ -124,7 +125,7 @@ exports.resetPassword = (req, res) => {
         db.run("UPDATE admins SET password_hash = ? WHERE id = ?", [hash, id], function (err) {
             if (err) return res.status(500).json({ error: err.message });
 
-            logAudit(actorId, actorRole, 'RESET_PASSWORD', 'Admin Management', `Reset password for admin ID: ${id}`, { target_id: id });
+            auditService.log(req.user, 'RESET_PASSWORD', 'Admin Management', `Reset password for admin ID: ${id}`, { target_id: id });
             res.json({ message: "Password reset to 'password123'" });
         });
     });
@@ -171,8 +172,8 @@ exports.broadcastMessage = async (req, res) => {
         if (recipient_group.startsWith('Dept:')) {
             const deptVal = recipient_group.split(':')[1];
             const students = await new Promise((resolve, reject) => {
-                // Check both dept_id and department name (legacy)
-                db.all("SELECT full_name as name, email FROM students WHERE status = 'Active' AND (dept_id = ? OR department = ?)", [deptVal, deptVal], (err, rows) => err ? reject(err) : resolve(rows));
+                // Check only dept_id (Schema validation confirmed 'department' column does not exist)
+                db.all("SELECT full_name as name, email FROM students WHERE status = 'Active' AND dept_id = ?", [deptVal], (err, rows) => err ? reject(err) : resolve(rows));
             });
             recipients = [...recipients, ...students];
         }
@@ -198,6 +199,32 @@ exports.broadcastMessage = async (req, res) => {
             }
         }
 
+        // Handle Overdue Students (Students with overdue books)
+        if (recipient_group === 'Overdue') {
+            const overdueStudents = await new Promise((resolve, reject) => {
+                db.all(`
+                    SELECT DISTINCT s.full_name as name, s.email 
+                    FROM students s
+                    INNER JOIN circulation c ON s.id = c.student_id
+                    WHERE s.status = 'Active' AND date(c.due_date) < date('now')
+                `, [], (err, rows) => err ? reject(err) : resolve(rows || []));
+            });
+            recipients = [...recipients, ...overdueStudents];
+        }
+
+        // Handle Issued Students (Students with currently issued books)
+        if (recipient_group === 'Issued') {
+            const issuedStudents = await new Promise((resolve, reject) => {
+                db.all(`
+                    SELECT DISTINCT s.full_name as name, s.email 
+                    FROM students s
+                    INNER JOIN circulation c ON s.id = c.student_id
+                    WHERE s.status = 'Active'
+                `, [], (err, rows) => err ? reject(err) : resolve(rows || []));
+            });
+            recipients = [...recipients, ...issuedStudents];
+        }
+
         // Send Emails (Async - don't wait for all)
         let sentCount = 0;
         recipients.forEach(u => {
@@ -216,10 +243,14 @@ exports.broadcastMessage = async (req, res) => {
             // For departments, we might want to query the name or just format it nicely
             // Ideally we'd query the Dept Name, but for now let's just make it look better
             recipientDisplay = `Department (${recipient_group.split(':')[1]})`;
+        } else if (recipient_group === 'Overdue') {
+            recipientDisplay = 'Students with Overdue Books';
+        } else if (recipient_group === 'Issued') {
+            recipientDisplay = 'Students with Issued Books';
         }
 
         // Log Audit
-        logAudit(actorId, req.user ? req.user.role : 'Admin', 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipient_group} (${sentCount} recipients)`, { subject, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
+        auditService.log(req.user, 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipient_group} (${sentCount} recipients)`, { subject, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
 
         res.json({ message: `Broadcast initiated to ${sentCount} recipients` });
 
@@ -258,8 +289,8 @@ exports.getBroadcastHistory = (req, res) => {
                     const ymd = dateStr.split(' ')[0]; // YYYY-MM-DD
                     parts = ymd.split('-');
                 } else {
-                    // Start from ISO
-                    const iso = new Date(row.timestamp).toISOString().split('T')[0];
+                    // Start from ISO (Use IST Offset Helper to ensure correct day)
+                    const iso = getISTISOWithOffset(new Date(row.timestamp)).split('T')[0];
                     parts = iso.split('-');
                 }
 

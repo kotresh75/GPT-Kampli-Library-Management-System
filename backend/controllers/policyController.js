@@ -45,7 +45,7 @@ exports.updatePolicies = async (req, res) => {
 
     // 2. Verify Admin from 'admins' table (Correct Source)
     console.log(`[Policy] Verifying admin ID: ${admin_id}`);
-    db.get("SELECT password_hash FROM admins WHERE id = ?", [admin_id], async (err, admin) => {
+    db.get("SELECT id, email, password_hash FROM admins WHERE id = ?", [admin_id], async (err, admin) => {
         if (err) {
             console.error("[Policy] DB Error during admin verification:", err);
             return res.status(500).json({ error: "Database error: " + err.message });
@@ -100,8 +100,12 @@ exports.updatePolicies = async (req, res) => {
                         return res.status(500).json({ error: "Failed to update settings" });
                     }
 
-                    // Log Audit
-                    auditService.log(admin_id, 'UPDATE_POLICY', 'Policy', `Updated keys: ${keysToUpdate.join(', ')}`).then(() => {
+                    // Log Audit with proper user object
+                    const userForAudit = {
+                        id: admin.email, // Use email as actor_id for display
+                        role: 'Admin'
+                    };
+                    auditService.log(userForAudit, 'UPDATE_POLICY', 'Policy', `Updated keys: ${keysToUpdate.join(', ')}`).then(() => {
                         // Done
                     });
 

@@ -44,7 +44,7 @@ const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword })
                     <Phone size={16} /> {admin.phone || 'N/A'}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <Activity size={16} /> Last Login: {admin.last_login ? new Date(admin.last_login).toLocaleDateString() : 'Never'}
+                    <Activity size={16} /> Last Login: {formatDate(admin.last_login, true)}
                 </div>
             </div>
 

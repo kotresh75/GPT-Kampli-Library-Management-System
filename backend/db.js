@@ -1,6 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
+const { getISTISOWithOffset } = require('./utils/dateUtils');
 
 // Ensure DB directory exists
 const dbPath = path.resolve(__dirname, '../DB/lms.sqlite');
@@ -27,6 +28,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 // DATA REPAIR: Fix missing IDs for books created before the fix
                 db.run("UPDATE books SET id = lower(hex(randomblob(16))) WHERE id IS NULL", (err) => {
                     if (!err && this.changes > 0) console.log("Fixed missing IDs for books");
+                });
+
+                // DATA REPAIR: Remove old Root Admin (if exists) as we use veerkotresh@gmail.com now
+                db.run("DELETE FROM admins WHERE email = '922f1ffd-6f3e-219e-6aab-3565b783402e@gmail.com'", (err) => {
+                    if (!err && this.changes > 0) console.log("Removed old Root Admin (922f1ffd...)");
                 });
             }
         });
@@ -133,8 +139,7 @@ function initializeTables() {
             renewal_count INTEGER DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES students(id),
-            FOREIGN KEY (copy_id) REFERENCES book_copies(id),
-            FOREIGN KEY (issued_by) REFERENCES staff(id)
+            FOREIGN KEY (copy_id) REFERENCES book_copies(id)
         )`);
 
         // 5.7 transaction_logs (History/Ledger) - Decoupled
@@ -151,8 +156,7 @@ function initializeTables() {
             book_isbn TEXT, -- SNAPSHOT
             performed_by TEXT,
             timestamp TEXT DEFAULT (datetime('now', '+05:30')),
-            details TEXT, -- JSON for remarks, fine amounts, etc.
-            FOREIGN KEY (performed_by) REFERENCES staff(id)
+            details TEXT -- JSON for remarks, fine amounts, etc.
         )`);
 
         // 5.7 fines - Decoupled
@@ -171,8 +175,7 @@ function initializeTables() {
             remark TEXT,
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
             updated_at TEXT DEFAULT (datetime('now', '+05:30')),
-            FOREIGN KEY (transaction_id) REFERENCES transaction_logs(id),
-            FOREIGN KEY (collected_by) REFERENCES staff(id)
+            FOREIGN KEY (transaction_id) REFERENCES transaction_logs(id)
         )`);
 
         // 5.9 broadcast_logs
@@ -284,12 +287,22 @@ function seedSystemUser() {
     db.get("SELECT count(*) as count FROM staff WHERE id = 'SYSTEM'", (err, row) => {
         if (!err && row && row.count === 0) {
             console.log("Seeding SYSTEM staff user...");
-            const insert = db.prepare("INSERT INTO staff (id, name, email, password_hash, status) VALUES (?, ?, ?, ?, ?)");
-            insert.run('SYSTEM', 'System Administrator', 'system@library.com', 'SYSTEM_HASH', 'Active', (err) => {
-                if (err) console.error("Failed to insert SYSTEM user:", err);
-                else console.log("SYSTEM user seeded successfully.");
+            const bcrypt = require('bcrypt');
+            const password = 'admin123';
+            const saltRounds = 10;
+
+            bcrypt.hash(password, saltRounds, (err, hash) => {
+                if (err) {
+                    console.error("Failed to hash SYSTEM password:", err);
+                    return;
+                }
+                const insert = db.prepare("INSERT INTO staff (id, name, email, password_hash, status) VALUES (?, ?, ?, ?, ?)");
+                insert.run('SYSTEM', 'System Administrator', 'system@library.com', hash, 'Active', (err) => {
+                    if (err) console.error("Failed to insert SYSTEM user:", err);
+                    else console.log("SYSTEM user seeded successfully with password 'admin123'.");
+                });
+                insert.finalize();
             });
-            insert.finalize();
         }
     });
 }
@@ -314,9 +327,9 @@ function seedAdminUser() {
                 const insert = db.prepare("INSERT INTO admins (id, name, email, password_hash, status, created_at) VALUES (?, ?, ?, ?, ?, ?)");
                 // Simple mock UUID for seed
                 const id = 'admin-seed-' + Date.now();
-                const createdAt = new Date().toISOString();
+                const createdAt = getISTISOWithOffset();
 
-                insert.run(id, 'Veer Kotresh', 'veerkotresh@gmail.com', hash, 'Active', createdAt, (err) => {
+                insert.run(id, 'System Admin', 'veerkotresh@gmail.com', hash, 'Active', createdAt, (err) => {
                     if (err) console.error("Failed to insert admin:", err);
                     else console.log("Admin user seeded successfully.");
                 });
