@@ -1,11 +1,10 @@
 const getISTDate = () => {
     const now = new Date();
-    // Offset for IST is +5.5 hours (330 minutes)
-    // We create a date object that *technically* holds the shifted time value
-    // This is useful when the system pretends this is local time
-    const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+    // To get a Date object that prints IST time when toISOString() is called,
+    // we must shift the underlying UTC timestamp by +5 hours 30 minutes.
+    // Note: This creates a "fake" UTC date that looks like IST.
     const istOffset = 5.5 * 60 * 60 * 1000;
-    return new Date(utc + istOffset);
+    return new Date(now.getTime() + istOffset);
 };
 
 const getISTISOString = () => {

@@ -620,13 +620,10 @@ const FinesTab = ({ initialTab }) => {
                                             {/* Bulk Action for Pending */}
                                             {group.totalAmount > 0 && (
                                                 <div className="flex justify-end mb-4">
-                                                    <button
-                                                        onClick={() => handleCollect(group.student.id, group.fines.map(f => f.id))}
-                                                        className="primary-glass-btn flex items-center gap-2"
-                                                        style={{ padding: '8px 20px' }}
-                                                    >
-                                                        <IndianRupee size={16} /> Collect Total (₹{group.totalAmount})
-                                                    </button>
+                                                    <div className="flex items-center gap-2 text-lg font-bold text-white bg-white/5 px-4 py-2 rounded-lg border border-white/10">
+                                                        <span>Total Fine:</span>
+                                                        <span className="text-red-300 flex items-center"><IndianRupee size={18} />{group.totalAmount}</span>
+                                                    </div>
                                                 </div>
                                             )}
 

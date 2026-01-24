@@ -17,8 +17,10 @@
 }
 
 .smart-detail-modal {
-    width: 900px;
-    height: 700px;
+    width: 90% !important;
+    max-width: 800px !important;
+    height: auto !important;
+    max-height: 85vh !important;
     background: var(--bg-color);
     border-radius: 16px;
     border: 1px solid var(--glass-border);

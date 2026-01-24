@@ -1,21 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import { formatDate } from '../utils/dateUtils';
-import { History, Search, Filter, BookOpen, AlertCircle, CheckCircle, Clock, ArrowUpRight, ArrowDownLeft, RotateCcw, Info } from 'lucide-react';
+import { History, Search, Filter, BookOpen, AlertCircle, CheckCircle, Clock, ArrowUpRight, ArrowDownLeft, RotateCcw, Info, Download, Calendar } from 'lucide-react';
 import TransactionDetailsModal from '../components/common/TransactionDetailsModal';
 import { usePreferences } from '../context/PreferencesContext';
+import GlassSelect from '../components/common/GlassSelect';
+import SmartExportModal from '../components/common/SmartExportModal';
+import SmartTransactionTable from '../components/history/SmartTransactionTable';
 
 const TransactionHistoryPage = () => {
     const { t } = usePreferences();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
+
+    // Filters
     const [statusFilter, setStatusFilter] = useState('All');
+    const [departmentFilter, setDepartmentFilter] = useState('All');
+    const [timeFilter, setTimeFilter] = useState('All'); // All, Today, Week, Month, Year
+
+    const [departments, setDepartments] = useState([]);
     const [selectedTransaction, setSelectedTransaction] = useState(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const [showExportModal, setShowExportModal] = useState(false);
+
+    // Selection
+    const [selectedIds, setSelectedIds] = useState(new Set());
+
+    // Fetch Departments for Filter
+    useEffect(() => {
+        fetch('http://localhost:3001/api/departments')
+            .then(res => res.json())
+            .then(data => Array.isArray(data) ? setDepartments(data) : [])
+            .catch(err => console.error("Failed to fetch departments", err));
+    }, []);
 
     useEffect(() => {
         fetchHistory();
-    }, [search, statusFilter]);
+    }, [search, statusFilter, departmentFilter, timeFilter]);
 
     const fetchHistory = async () => {
         setLoading(true);
@@ -23,13 +44,41 @@ const TransactionHistoryPage = () => {
             const params = new URLSearchParams();
             if (search) params.append('search', search);
             if (statusFilter !== 'All') params.append('status', statusFilter);
+            if (departmentFilter !== 'All') params.append('department', departmentFilter);
+
+            // Time Filter Logic
+            if (timeFilter !== 'All') {
+                const now = new Date();
+                let startDate = new Date();
+
+                if (timeFilter === 'Today') {
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (timeFilter === 'Week') {
+                    startDate.setDate(now.getDate() - 7);
+                    startDate.setHours(0, 0, 0, 0); // consistency
+                } else if (timeFilter === 'Month') {
+                    startDate.setDate(now.getDate() - 30);
+                    startDate.setHours(0, 0, 0, 0);
+                } else if (timeFilter === 'Year') {
+                    startDate.setDate(now.getDate() - 365);
+                    startDate.setHours(0, 0, 0, 0);
+                }
+
+                // Format as YYYY-MM-DD using Local Time
+                const year = startDate.getFullYear();
+                const month = String(startDate.getMonth() + 1).padStart(2, '0');
+                const day = String(startDate.getDate()).padStart(2, '0');
+                params.append('startDate', `${year}-${month}-${day}`);
+                // endDate is implicitly "now" / undefined means no upper bound effectively, or we can send today
+            }
 
             const token = localStorage.getItem('auth_token');
             const res = await fetch(`http://localhost:3001/api/circulation/history?${params.toString()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
-            setTransactions(data);
+            setTransactions(Array.isArray(data) ? data : []);
+            setSelectedIds(new Set());
         } catch (err) {
             console.error(err);
         } finally {
@@ -42,147 +91,106 @@ const TransactionHistoryPage = () => {
         setIsDetailsOpen(true);
     };
 
-    const StatusBadge = ({ status }) => {
-        const styles = {
-            Active: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-            Returned: 'bg-green-500/20 text-green-400 border-green-500/30',
-            Overdue: 'bg-red-500/20 text-red-400 border-red-500/30',
-            FINE_WAIVED: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-            FINE_PAID: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-        };
-        const icons = {
-            Active: <Clock size={14} />,
-            Returned: <CheckCircle size={14} />,
-            Overdue: <AlertCircle size={14} />,
-            FINE_WAIVED: <CheckCircle size={14} />, // Use CheckCircle for now
-            FINE_PAID: <CheckCircle size={14} />
-        };
+    const toggleSelect = (id) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelectedIds(newSet);
+    };
 
-        return (
-            <span className={`px-2 py-1 rounded-full text-xs border flex items-center gap-1 w-fit ${styles[status] || styles.Active}`}>
-                {icons[status]} {status}
-            </span>
-        );
+    const toggleSelectAll = (ids) => {
+        const allSelected = ids.every(id => selectedIds.has(id));
+        const newSet = new Set(selectedIds);
+
+        if (allSelected) {
+            ids.forEach(id => newSet.delete(id));
+        } else {
+            ids.forEach(id => newSet.add(id));
+        }
+        setSelectedIds(newSet);
     };
 
     return (
-        <div className="p-6 text-white h-full overflow-y-auto">
-            {/* Header */}
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <History size={24} className="text-accent" /> Transaction History
+        <div className="dashboard-content">
+            {/* --- Controls --- */}
+            <div className="flex flex-col gap-4 mb-6">
+                <div className="catalog-toolbar">
+                    <h1 className="text-2xl font-bold flex items-center gap-2 mr-4 text-white">
+                        <History size={24} className="text-accent" /> History
                     </h1>
-                    <p className="text-gray-400 text-sm mt-1">Full log of issues, returns, and renewals.</p>
-                </div>
-            </div>
 
-            {/* Controls */}
-            <div className="glass-panel p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                    <div className="relative flex-1 max-w-md">
-                        <Search className="absolute left-3 top-3 text-gray-500" size={18} />
+                    <div className="toolbar-search" style={{ flex: 1 }}>
+                        <Search size={20} />
                         <input
                             type="text"
-                            className="glass-input pl-10 w-full"
-                            placeholder="Search by Student Name, Reg No, or Book Title..."
+                            placeholder="Search History..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <Filter size={18} className="text-gray-400" />
-                        <select
-                            className="glass-select"
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="All">All Status</option>
-                            <option value="Active">Active Loans</option>
-                            <option value="Returned">Returned</option>
-                            <option value="Overdue">Overdue</option>
-                            <option value="FINE_WAIVED">Fine Waived</option>
-                            <option value="FINE_PAID">Fine Paid</option>
-                        </select>
+                    <div className="w-[180px]">
+                        <GlassSelect
+                            value={departmentFilter}
+                            onChange={(val) => setDepartmentFilter(val)}
+                            options={[
+                                { value: 'All', label: 'All Departments' },
+                                ...departments.map(d => ({ value: d.name, label: d.name }))
+                            ]}
+                            icon={Filter}
+                            placeholder="All Departments"
+                        />
                     </div>
-                </div>
-                <div className="text-sm text-gray-400">
-                    Showing last {transactions.length} records
+
+                    <div className="w-[150px]">
+                        <GlassSelect
+                            value={timeFilter}
+                            onChange={setTimeFilter}
+                            options={[
+                                { value: 'All', label: 'All Time' },
+                                { value: 'Today', label: 'Today' },
+                                { value: 'Week', label: 'Last 7 Days' },
+                                { value: 'Month', label: 'Last 30 Days' },
+                                { value: 'Year', label: 'Last Year' }
+                            ]}
+                            icon={Calendar}
+                            placeholder="Time Period"
+                        />
+                    </div>
+
+                    <div className="w-[150px]">
+                        <GlassSelect
+                            value={statusFilter}
+                            onChange={setStatusFilter}
+                            options={[
+                                { value: 'All', label: 'All Actions' },
+                                { value: 'ISSUE', label: 'Issued' },
+                                { value: 'RETURN', label: 'Returned' },
+                                { value: 'RENEW', label: 'Renewed' }
+                            ]}
+                            icon={Filter}
+                            placeholder="Status"
+                        />
+                    </div>
+
+                    <div className="h-8 w-px bg-white/10 mx-2"></div>
+
+                    <button className="toolbar-icon-btn" onClick={() => setShowExportModal(true)} title="Export Data">
+                        <Download size={20} />
+                    </button>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="glass-panel overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="border-b border-white/10 bg-white/5 text-gray-300 text-sm">
-                            <th className="p-4 font-medium">Student</th>
-                            <th className="p-4 font-medium">Book Details</th>
-                            <th className="p-4 font-medium">Issued On</th>
-                            <th className="p-4 font-medium">Due / Returned</th>
-                            <th className="p-4 font-medium">Status</th>
-                            <th className="p-4 text-left font-medium text-gray-300">Details</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                        {loading ? (
-                            <tr><td colSpan="6" className="p-8 text-center text-gray-400">Loading history...</td></tr>
-                        ) : transactions.length === 0 ? (
-                            <tr><td colSpan="6" className="p-8 text-center text-gray-400">No transactions found matching criteria.</td></tr>
-                        ) : (
-                            transactions.map((txn) => (
-                                <tr key={txn.id} className="hover:bg-white/5 transition-colors group text-sm">
-                                    <td className="p-4">
-                                        <div className="font-medium text-white">{txn.student_name}</div>
-                                        <div className="text-xs text-gray-500">{txn.register_number}</div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="flex items-center gap-2 text-white">
-                                            <BookOpen size={14} className="text-accent/70" /> {txn.book_title}
-                                        </div>
-                                        <div className="text-xs text-gray-500 mt-1">Acc: <span className="font-mono text-gray-400">{txn.accession_number}</span></div>
-                                    </td>
-                                    <td className="p-4 text-gray-300">
-                                        {formatDate(txn.issue_date)}
-                                        <div className="text-xs text-gray-500">{new Date(txn.issue_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                                    </td>
-                                    <td className="p-4">
-                                        {txn.return_date ? (
-                                            <div className="text-gray-300">
-                                                {formatDate(txn.return_date)}
-                                                <div className="text-xs text-gray-500">Returned</div>
-                                            </div>
-                                        ) : txn.status === 'FINE_WAIVED' ? (
-                                            <div className="text-purple-300">
-                                                {formatDate(txn.issue_date)}
-                                                <div className="text-xs text-purple-500">Waived</div>
-                                            </div>
-                                        ) : txn.status === 'FINE_PAID' ? (
-                                            <div className="text-emerald-300">
-                                                {formatDate(txn.issue_date)}
-                                                <div className="text-xs text-emerald-500">Paid</div>
-                                            </div>
-                                        ) : (
-                                            <div className={new Date(txn.due_date) < new Date() ? 'text-red-400' : 'text-gray-300'}>
-                                                {formatDate(txn.due_date)}
-                                                <div className="text-xs text-gray-500">Due Date</div>
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-4">
-                                        <StatusBadge status={txn.status} />
-                                    </td>
-                                    <td className="p-4">
-                                        <button onClick={() => handleViewDetails(txn)} className="text-blue-600 hover:text-blue-800 p-1">
-                                            <Info size={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            {/* Smart Table */}
+            <div className="glass-panel" style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+                <SmartTransactionTable
+                    transactions={transactions}
+                    loading={loading}
+                    selectedIds={selectedIds}
+                    onSelect={toggleSelect}
+                    onSelectAll={toggleSelectAll}
+                    onView={handleViewDetails}
+                />
             </div>
 
             <TransactionDetailsModal
@@ -190,6 +198,73 @@ const TransactionHistoryPage = () => {
                 onClose={() => setIsDetailsOpen(false)}
                 transaction={selectedTransaction}
             />
+
+            {showExportModal && (
+                <SmartExportModal
+                    onClose={() => setShowExportModal(false)}
+                    totalCount={transactions.length} // Should specificy total count from pagination ideally, but logical enough
+                    filteredCount={transactions.length}
+                    selectedCount={selectedIds.size}
+                    entityName="Transactions"
+                    onExport={(scope, format) => {
+                        // Export Logic Reusing existing data
+                        let dataToExport = transactions;
+
+                        if (scope === 'selected') {
+                            dataToExport = transactions.filter(t => selectedIds.has(t.id));
+                        }
+
+                        const cleanData = dataToExport.map(t => {
+                            let details = {};
+                            try { details = JSON.parse(t.details || '{}'); } catch (e) { }
+                            return {
+                                Date: new Date(t.timestamp || t.date).toLocaleString(),
+                                Action: t.status,
+                                Student: t.student_name,
+                                RegNo: t.register_number,
+                                Department: t.department_name,
+                                Book: t.book_title,
+                                Accession: t.accession_number,
+                                Fine: details.fine_amount || 0,
+                                Condition: details.condition || '-',
+                                Remarks: details.remarks || '-'
+                            };
+                        });
+
+                        if (format === 'xlsx') {
+                            const XLSX = require('xlsx');
+                            const ws = XLSX.utils.json_to_sheet(cleanData);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, "History");
+                            XLSX.writeFile(wb, `transaction_history_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                        } else if (format === 'csv') {
+                            const headers = Object.keys(cleanData[0]).join(',');
+                            const rows = cleanData.map(row =>
+                                Object.values(row).map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(',')
+                            ).join('\n');
+                            const link = document.createElement("a");
+                            link.href = "data:text/csv;charset=utf-8," + encodeURI(headers + "\n" + rows);
+                            link.download = "history.csv";
+                            link.click();
+                        } else if (format === 'pdf') {
+                            const jsPDF = require('jspdf').jsPDF;
+                            const autoTable = require('jspdf-autotable').default;
+                            const doc = new jsPDF();
+                            doc.text('Transaction History', 14, 15);
+
+                            const tableColumns = ['Date', 'Action', 'Student', 'Book', 'Fine'];
+                            const tableRows = cleanData.map(r => [
+                                r.Date, r.Action, r.Student, r.Book.substring(0, 20), r.Fine
+                            ]);
+
+                            autoTable(doc, {
+                                head: [tableColumns], body: tableRows, startY: 20
+                            });
+                            doc.save('history.pdf');
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };

@@ -623,13 +623,14 @@ exports.renewBook = async (req, res) => {
 
 // GET /api/circulation/history
 exports.getTransactionHistory = (req, res) => {
-    const { search, status, limit = 50 } = req.query;
+    const { search, status, limit = 1000 } = req.query;
 
     // IF status is 'Active', we want currently ISSUED books from 'circulation' table.
     // This allows the Return Page to verify what can actually be returned.
     if (status === 'Active') {
         let activeQuery = `
             SELECT c.id, c.id as transaction_id, c.issue_date, c.due_date, c.last_renewed_date, c.renewal_count, c.student_id,
+                   'Active' as status,
                    s.full_name as student_name, s.register_number, d.name as department_name,
                    b.title as book_title, b.isbn, bc.accession_number
             FROM circulation c
@@ -645,6 +646,23 @@ exports.getTransactionHistory = (req, res) => {
         if (search) {
             activeQuery += ` AND (s.full_name LIKE ? OR s.register_number LIKE ? OR b.title LIKE ? OR b.isbn LIKE ? OR bc.accession_number LIKE ? OR d.name LIKE ?)`;
             activeParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
+
+        const { department, startDate, endDate } = req.query;
+
+        if (department && department !== 'All') {
+            activeQuery += ` AND d.name = ?`;
+            activeParams.push(department);
+        }
+
+        if (startDate) {
+            activeQuery += ` AND DATE(c.issue_date) >= ?`;
+            activeParams.push(startDate);
+        }
+
+        if (endDate) {
+            activeQuery += ` AND DATE(c.issue_date) <= ?`;
+            activeParams.push(endDate);
         }
 
         activeQuery += ` ORDER BY c.issue_date DESC LIMIT ?`;
@@ -703,6 +721,25 @@ exports.getTransactionHistory = (req, res) => {
             COALESCE(d.name, l.student_dept) LIKE ?
         )`;
         params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    const { department, startDate, endDate } = req.query;
+
+    if (department && department !== 'All') {
+        const deptClause = `COALESCE(d.name, l.student_dept, json_extract(l.details, '$.student_dept'))`;
+        query += ` AND ${deptClause} = ?`;
+        params.push(department);
+    }
+
+    if (startDate) {
+        // Safe date comparison using string prefix (YYYY-MM-DD)
+        query += ` AND SUBSTR(l.timestamp, 1, 10) >= ?`;
+        params.push(startDate);
+    }
+
+    if (endDate) {
+        query += ` AND SUBSTR(l.timestamp, 1, 10) <= ?`;
+        params.push(endDate);
     }
 
     query += ` ORDER BY REPLACE(l.timestamp, 'T', ' ') DESC LIMIT ?`;
