@@ -34,6 +34,29 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 db.run("DELETE FROM admins WHERE email = '922f1ffd-6f3e-219e-6aab-3565b783402e@gmail.com'", (err) => {
                     if (!err && this.changes > 0) console.log("Removed old Root Admin (922f1ffd...)");
                 });
+
+                // SCHEMA MIGRATION: Add profile_image to students if not exists
+                db.run("ALTER TABLE students ADD COLUMN profile_image TEXT", (err) => {
+                    // Ignore error if column already exists
+                });
+
+                // SCHEMA MIGRATION: Add cover_image to books if not exists
+                db.run("ALTER TABLE books ADD COLUMN cover_image TEXT", (err) => {
+                    // DATA MIGRATION: Copy old url to new column if successful or if column exists
+                    db.run("UPDATE books SET cover_image = cover_image_url WHERE cover_image IS NULL AND cover_image_url IS NOT NULL", (err) => {
+                        if (!err && this.changes > 0) console.log("Migrated cover_image_url to cover_image");
+                    });
+                });
+
+                // SCHEMA MIGRATION: Add father_name to students if not exists
+                db.run("ALTER TABLE students ADD COLUMN father_name TEXT", (err) => {
+                    if (!err) console.log("Added father_name column to students table");
+                });
+
+                // SCHEMA MIGRATION: Add hod_signature to departments if not exists
+                db.run("ALTER TABLE departments ADD COLUMN hod_signature TEXT", (err) => {
+                    if (!err) console.log("Added hod_signature column to departments table");
+                });
             }
         });
     }
@@ -63,6 +86,7 @@ function initializeTables() {
             phone TEXT,
             dob TEXT NOT NULL,
             address TEXT,
+            profile_image TEXT,
             status TEXT CHECK(status IN ('Active', 'Blocked', 'Alumni', 'Graduated', 'Deleted')),
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
             updated_at TEXT DEFAULT (datetime('now', '+05:30')),
@@ -102,11 +126,12 @@ function initializeTables() {
             id TEXT PRIMARY KEY,
             isbn TEXT UNIQUE,
             title TEXT NOT NULL,
-            author TEXT,
+            author TEXT NOT NULL,
             publisher TEXT,
-            dept_id TEXT,
+            category TEXT,
+            cover_image TEXT,
             price REAL,
-            cover_image_url TEXT,
+            stock_total INTEGER DEFAULT 0,
             ebook_link TEXT,
             total_copies INTEGER DEFAULT 0,
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
@@ -355,5 +380,42 @@ function seedSystemSettings() {
         }
     });
 }
+
+// --- SMART BACKUP: Change Detection Hook ---
+const changeDetection = require('./services/changeDetection');
+
+// Regex to extract table name from INSERT/UPDATE/DELETE.
+// Matches "INSERT INTO table", "UPDATE table", "DELETE FROM table" case insensitive
+const TABLE_REGEX = /(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+["`]?([a-zA-Z0-9_]+)["`]?/i;
+
+const originalRun = db.run.bind(db);
+const originalPrepare = db.prepare.bind(db);
+
+// Override db.run
+db.run = function (sql, ...params) {
+    const match = sql.match(TABLE_REGEX);
+    if (match && match[1]) {
+        changeDetection.markDirty(match[1]);
+    }
+    return originalRun(sql, ...params);
+};
+
+// Override db.prepare for statements
+db.prepare = function (sql, ...params) {
+    const match = sql.match(TABLE_REGEX);
+    // If it's a write operation, we wrap the statement's run method
+    const stmt = originalPrepare(sql, ...params);
+
+    if (match && match[1]) {
+        const tableName = match[1];
+        const originalStmtRun = stmt.run.bind(stmt);
+
+        stmt.run = function (...runParams) {
+            changeDetection.markDirty(tableName);
+            return originalStmtRun(...runParams);
+        };
+    }
+    return stmt;
+};
 
 module.exports = db;

@@ -1,4 +1,5 @@
 const db = require('../db');
+const socketService = require('../services/socketService');
 const { v4: uuidv4 } = require('uuid');
 
 // Get all departments with book counts
@@ -54,6 +55,7 @@ exports.addDepartment = (req, res) => {
             }
             return res.status(500).json({ error: err.message });
         }
+        socketService.emit('dept_update', { type: 'ADD', id });
         res.status(201).json({ message: "Department created", id, name, code });
     });
 };
@@ -73,6 +75,7 @@ exports.updateDepartment = (req, res) => {
             return res.status(500).json({ error: err.message });
         }
         if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
+        socketService.emit('dept_update', { type: 'UPDATE', id });
         res.json({ message: "Department updated" });
     });
 };
@@ -93,6 +96,56 @@ exports.deleteDepartment = (req, res) => {
             return res.status(500).json({ error: err.message });
         }
         if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
+        socketService.emit('dept_update', { type: 'DELETE', id });
         res.json({ message: "Department deleted" });
+    });
+};
+
+// Upload HOD Signature for a Department
+exports.uploadHodSignature = (req, res) => {
+    const { id } = req.params;
+    const { image_data } = req.body;
+
+    if (!image_data) {
+        return res.status(400).json({ error: "No signature image provided" });
+    }
+
+    // Validate Base64 image data
+    if (!image_data.startsWith('data:image/')) {
+        return res.status(400).json({ error: "Invalid image format. Must be Base64 encoded image." });
+    }
+
+    const sql = "UPDATE departments SET hod_signature = ?, updated_at = datetime('now', '+05:30') WHERE id = ?";
+
+    db.run(sql, [image_data, id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
+        socketService.emit('dept_update', { type: 'UPDATE', id });
+        res.json({ message: "HOD signature uploaded successfully" });
+    });
+};
+
+// Delete HOD Signature for a Department
+exports.deleteHodSignature = (req, res) => {
+    const { id } = req.params;
+
+    const sql = "UPDATE departments SET hod_signature = NULL, updated_at = datetime('now', '+05:30') WHERE id = ?";
+
+    db.run(sql, [id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
+        socketService.emit('dept_update', { type: 'UPDATE', id });
+        res.json({ message: "HOD signature deleted successfully" });
+    });
+};
+
+// Get single department (for fetching HOD signature)
+exports.getDepartmentById = (req, res) => {
+    const { id } = req.params;
+
+    db.get("SELECT * FROM departments WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Department not found" });
+        res.json(row);
     });
 };

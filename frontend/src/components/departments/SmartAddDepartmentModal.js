@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Save, Building, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
+    const { t } = useLanguage();
     const isEditMode = !!initialData;
     const [formData, setFormData] = useState({
         name: '',
@@ -40,7 +42,7 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
         setError('');
 
         if (!formData.name || !formData.code) {
-            setError("Department Name and Code are required");
+            setError(t('departments.modal.err_req'));
             setLoading(false);
             return;
         }
@@ -58,12 +60,12 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Operation failed');
+            if (!res.ok) throw new Error(data.error || t('departments.modal.err_failed'));
 
             onAdded();
             onClose();
         } catch (err) {
-            setError(err.message || "Network error");
+            setError(err.message || t('departments.modal.err_network'));
         } finally {
             setLoading(false);
         }
@@ -81,7 +83,7 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Building size={18} color="white" />
                         </div>
-                        {isEditMode ? 'Edit Department' : 'Add New Department'}
+                        {isEditMode ? t('departments.modal.title_edit') : t('departments.modal.title_new')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -96,39 +98,39 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
                     <form id="department-form" onSubmit={handleSubmit} style={{ display: 'contents' }}>
 
                         <div className="form-group">
-                            <label className="form-label">Department Code</label>
+                            <label className="form-label">{t('departments.modal.code')}</label>
                             <input
                                 name="code"
                                 className="smart-input"
                                 value={formData.code}
                                 onChange={(e) => handleChange({ target: { name: 'code', value: e.target.value.toUpperCase() } })}
-                                placeholder="e.g. CSE"
+                                placeholder={t('departments.modal.code_placeholder')}
                                 required
                                 autoFocus
                             />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Department Name</label>
+                            <label className="form-label">{t('departments.modal.name')}</label>
                             <input
                                 name="name"
                                 className="smart-input"
                                 value={formData.name}
                                 onChange={handleChange}
-                                placeholder="e.g. Computer Science"
+                                placeholder={t('departments.modal.name_placeholder')}
                                 required
                             />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Description (Optional)</label>
+                            <label className="form-label">{t('departments.modal.desc')}</label>
                             <textarea
                                 name="description"
                                 className="smart-input"
                                 style={{ minHeight: 100, resize: 'vertical', fontFamily: 'inherit' }}
                                 value={formData.description}
                                 onChange={handleChange}
-                                placeholder="Enter brief description..."
+                                placeholder={t('departments.modal.desc_placeholder')}
                             />
                         </div>
 
@@ -137,9 +139,9 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
 
                 {/* Footer */}
                 <div className="smart-form-footer">
-                    <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn-cancel">{t('departments.modal.cancel')}</button>
                     <button type="submit" form="department-form" className="btn-submit" disabled={loading}>
-                        {loading ? 'Saving...' : <><Save size={18} /> Save Department</>}
+                        {loading ? t('departments.modal.saving') : <><Save size={18} /> {t('departments.modal.save')}</>}
                     </button>
                 </div>
 

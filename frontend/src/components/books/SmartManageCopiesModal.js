@@ -3,9 +3,11 @@ import ReactDOM from 'react-dom';
 import { X, Search, Filter, Plus, Trash2, AlertCircle, CheckCircle, Layers } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
 import ConfirmationModal from '../common/ConfirmationModal';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
+    const { t } = useLanguage();
     const [copies, setCopies] = useState([]);
     const [filteredCopies, setFilteredCopies] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -119,7 +121,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                             <Layers size={18} />
                         </div>
                         <div>
-                            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Manage Copies</h2>
+                            <h2 style={{ fontSize: '1.1rem', margin: 0 }}>{t('books.manage.title')}</h2>
                             <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, opacity: 0.8 }}>{book.title}</p>
                         </div>
                     </div>
@@ -129,15 +131,15 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                 {/* Stats Bar */}
                 <div style={{ display: 'flex', borderBottom: '1px solid var(--glass-border)' }}>
                     <div style={{ flex: 1, padding: '10px', textAlign: 'center', borderRight: '1px solid var(--glass-border)' }}>
-                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Total</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>{t('books.manage.total')}</div>
                         <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>{copies.length}</div>
                     </div>
                     <div style={{ flex: 1, padding: '10px', textAlign: 'center', background: 'rgba(72, 187, 120, 0.05)' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#48bb78', textTransform: 'uppercase' }}>Available</div>
+                        <div style={{ fontSize: '0.7rem', color: '#48bb78', textTransform: 'uppercase' }}>{t('books.manage.avail')}</div>
                         <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#48bb78' }}>{copies.filter(c => c.status === 'Available').length}</div>
                     </div>
                     <div style={{ flex: 1, padding: '10px', textAlign: 'center', background: 'rgba(237, 137, 54, 0.05)' }}>
-                        <div style={{ fontSize: '0.7rem', color: '#ed8936', textTransform: 'uppercase' }}>Issued</div>
+                        <div style={{ fontSize: '0.7rem', color: '#ed8936', textTransform: 'uppercase' }}>{t('books.manage.issued')}</div>
                         <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#ed8936' }}>{copies.filter(c => c.status === 'Issued').length}</div>
                     </div>
                 </div>
@@ -148,7 +150,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                         <input
                             className="smart-input"
                             style={{ padding: '8px 12px', fontSize: '0.9rem' }}
-                            placeholder="Search Accession #"
+                            placeholder={t('books.manage.search')}
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                         />
@@ -157,11 +159,11 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                     <div className="input-wrapper" style={{ width: '160px' }}>
                         <GlassSelect
                             options={[
-                                { value: "All", label: "All Status" },
-                                { value: "Available", label: "Available" },
-                                { value: "Issued", label: "Issued" },
-                                { value: "Lost", label: "Lost" },
-                                { value: "Maintenance", label: "Maintenance" }
+                                { value: "All", label: t('books.manage.status_all') },
+                                { value: "Available", label: t('books.manage.status_avail') },
+                                { value: "Issued", label: t('books.manage.status_issued') },
+                                { value: "Lost", label: t('books.manage.status_lost') },
+                                { value: "Maintenance", label: t('books.manage.status_maint') }
                             ]}
                             value={filterStatus}
                             onChange={setFilterStatus}
@@ -177,17 +179,17 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
                             <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-color)', zIndex: 1, boxShadow: '0 1px 0 var(--glass-border)' }}>
                                 <tr>
-                                    <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>ID</th>
-                                    <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>Location</th>
-                                    <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>Status</th>
-                                    <th style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>Action</th>
+                                    <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('books.manage.col_id')}</th>
+                                    <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('books.manage.col_loc')}</th>
+                                    <th style={{ padding: '10px 12px', textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('books.manage.col_status')}</th>
+                                    <th style={{ padding: '10px 12px', textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>{t('books.manage.col_action')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {loading ? (
                                     <tr><td colSpan="4" style={{ padding: '20px', textAlign: 'center' }}><div className="spinner-sm mx-auto"></div></td></tr>
                                 ) : filteredCopies.length === 0 ? (
-                                    <tr><td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No copies found.</td></tr>
+                                    <tr><td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>{t('books.manage.no_copies')}</td></tr>
                                 ) : (
                                     filteredCopies.map(copy => (
                                         <tr key={copy.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -200,10 +202,10 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                                                     <div style={{ width: '130px' }}>
                                                         <GlassSelect
                                                             options={[
-                                                                { value: "Available", label: "Available", color: '#48bb78' },
-                                                                { value: "Maintenance", label: "Maintenance", color: '#ecc94b' },
-                                                                { value: "Lost", label: "Lost", color: '#fc8181' },
-                                                                { value: "Damaged", label: "Damaged", color: '#fc8181' }
+                                                                { value: "Available", label: t('books.manage.status_avail'), color: '#48bb78' },
+                                                                { value: "Maintenance", label: t('books.manage.status_maint'), color: '#ecc94b' },
+                                                                { value: "Lost", label: t('books.manage.status_lost'), color: '#fc8181' },
+                                                                { value: "Damaged", label: t('books.manage.status_damaged'), color: '#fc8181' }
                                                             ]}
                                                             value={copy.status}
                                                             onChange={(val) => handleStatusChange(copy.id, val)}
@@ -253,7 +255,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                         className="btn-submit"
                         style={{ padding: '8px 20px', fontSize: '0.9rem' }}
                     >
-                        {adding ? 'Adding...' : <><Plus size={16} /> Add Copies</>}
+                        {adding ? t('books.manage.adding') : <><Plus size={16} /> {t('books.manage.add_btn')}</>}
                     </button>
                 </div>
 
@@ -261,9 +263,9 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                     isOpen={confirmModal.isOpen}
                     onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
                     onConfirm={executeDelete}
-                    title="Delete Copy"
-                    message="Are you sure? This cannot be undone."
-                    confirmText="Delete"
+                    title={t('books.manage.delete_title')}
+                    message={t('books.manage.delete_msg')}
+                    confirmText={t('books.manage.delete_btn')}
                     isDanger={true}
                 />
             </div>

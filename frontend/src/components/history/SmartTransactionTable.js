@@ -6,6 +6,7 @@ import {
 import GlassSelect from '../common/GlassSelect';
 import { formatDate } from '../../utils/dateUtils';
 import '../../styles/components/tables.css';
+import { useLanguage } from '../../context/LanguageContext';
 
 const SmartTransactionTable = ({
     transactions,
@@ -15,6 +16,7 @@ const SmartTransactionTable = ({
     onSelectAll,
     onView
 }) => {
+    const { t } = useLanguage();
     // Safeguard: Ensure transactions is an array
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
@@ -111,8 +113,8 @@ const SmartTransactionTable = ({
                 <div className="p-4 rounded-full bg-white/5 mb-4">
                     <Layers size={48} className="text-gray-500 opacity-50" />
                 </div>
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Transactions Found</h3>
-                <p className="text-[var(--text-secondary)]">Try adjusting your filters.</p>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('history.table.no_transactions')}</h3>
+                <p className="text-[var(--text-secondary)]">{t('history.table.no_transactions_desc')}</p>
             </div>
         );
     }
@@ -162,7 +164,7 @@ const SmartTransactionTable = ({
                                                 }}
                                                 className="popup-btn"
                                             >
-                                                Select This Page
+                                                {t('history.table.select_page')}
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -171,7 +173,7 @@ const SmartTransactionTable = ({
                                                 }}
                                                 className="popup-btn highlight"
                                             >
-                                                Select All ({safeTransactions.length})
+                                                {t('history.table.select_all')} ({safeTransactions.length})
                                             </button>
                                             <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
                                             <button
@@ -181,26 +183,26 @@ const SmartTransactionTable = ({
                                                 }}
                                                 className="popup-btn"
                                             >
-                                                Deselect All
+                                                {t('history.table.deselect_all')}
                                             </button>
                                         </div>
                                     </>
                                 )}
                             </th>
                             <th className="sortable" style={{ minWidth: '200px' }} onClick={() => handleSort('student_name')}>
-                                <div className="flex items-center gap-2 whitespace-nowrap">Student {getSortIcon('student_name')}</div>
+                                <div className="flex items-center gap-2 whitespace-nowrap">{t('history.table.student')} {getSortIcon('student_name')}</div>
                             </th>
                             <th className="sortable" style={{ minWidth: '250px' }} onClick={() => handleSort('book_title')}>
-                                <div className="flex items-center gap-2 whitespace-nowrap">Book Details {getSortIcon('book_title')}</div>
+                                <div className="flex items-center gap-2 whitespace-nowrap">{t('history.table.book_details')} {getSortIcon('book_title')}</div>
                             </th>
                             <th className="sortable" style={{ minWidth: '180px' }} onClick={() => handleSort('timestamp')}>
-                                <div className="flex items-center gap-2 whitespace-nowrap">Date & Time {getSortIcon('timestamp')}</div>
+                                <div className="flex items-center gap-2 whitespace-nowrap">{t('history.table.date_time')} {getSortIcon('timestamp')}</div>
                             </th>
                             <th className="sortable" style={{ minWidth: '120px' }} onClick={() => handleSort('status')}>
-                                <div className="flex items-center gap-2 whitespace-nowrap">Action {getSortIcon('status')}</div>
+                                <div className="flex items-center gap-2 whitespace-nowrap">{t('history.table.action')} {getSortIcon('status')}</div>
                             </th>
-                            <th style={{ minWidth: '150px' }}>Details</th>
-                            <th style={{ textAlign: 'right', minWidth: '80px' }}>Actions</th>
+                            <th style={{ minWidth: '150px' }}>{t('history.table.details')}</th>
+                            <th style={{ textAlign: 'right', minWidth: '80px' }}>{t('history.table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -269,16 +271,16 @@ const SmartTransactionTable = ({
             {totalPages > 1 && (
                 <div className="flex justify-between items-center px-4 py-2 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color-light)]">
                     <div className="text-sm text-[var(--text-tertiary)]">
-                        Showing <span className="text-[var(--text-primary)] font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-[var(--text-primary)] font-bold">{Math.min(currentPage * itemsPerPage, safeTransactions.length)}</span> of <span className="text-[var(--text-primary)] font-bold">{safeTransactions.length}</span> results
+                        {t('history.table.showing')} <span className="text-[var(--text-primary)] font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> {t('history.table.to')} <span className="text-[var(--text-primary)] font-bold">{Math.min(currentPage * itemsPerPage, safeTransactions.length)}</span> {t('history.table.of')} <span className="text-[var(--text-primary)] font-bold">{safeTransactions.length}</span> {t('history.table.results')}
                     </div>
 
                     <div className="flex items-center gap-2">
                         <div style={{ width: '130px' }}>
                             <GlassSelect
                                 options={[
-                                    { value: 10, label: '10 per page' },
-                                    { value: 20, label: '20 per page' },
-                                    { value: 50, label: '50 per page' }
+                                    { value: 10, label: `10 ${t('history.table.per_page')}` },
+                                    { value: 20, label: `20 ${t('history.table.per_page')}` },
+                                    { value: 50, label: `50 ${t('history.table.per_page')}` }
                                 ]}
                                 value={itemsPerPage}
                                 onChange={setItemsPerPage}
@@ -306,7 +308,7 @@ const SmartTransactionTable = ({
                             </button>
 
                             <span className="text-sm font-medium px-2 text-[var(--text-primary)]">
-                                Page {currentPage} of {totalPages}
+                                {t('history.table.page')} {currentPage} {t('history.table.of')} {totalPages}
                             </span>
 
                             <button

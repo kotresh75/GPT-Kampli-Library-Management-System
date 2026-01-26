@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Save, User, Hash, Briefcase, Calendar, Mail, Phone, MapPin, AlertCircle, CheckCircle } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const SmartAddStudentModal = ({ onClose, onAdd }) => {
+    const { t } = useLanguage();
     const [formData, setFormData] = useState({
         name: '',
+        father_name: '',
         register_no: '',
         department: '',
         semester: '1',
@@ -42,7 +45,7 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
         setError('');
 
         if (!formData.name || !formData.register_no || !formData.department) {
-            setError("Required fields missing");
+            setError(t('students.modal.err_req'));
             setLoading(false);
             return;
         }
@@ -55,12 +58,12 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
             });
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error || "Failed to create student");
+            if (!res.ok) throw new Error(data.error || t('students.modal.err_create'));
 
             onAdd();
             onClose();
         } catch (err) {
-            setError(err.message || "Network error");
+            setError(err.message || t('students.modal.err_network'));
         } finally {
             setLoading(false);
         }
@@ -78,7 +81,7 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <User size={18} color="white" />
                         </div>
-                        Add New Student
+                        {t('students.modal.title_new')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -95,21 +98,21 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
                         {/* Section: Academic */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Register Number</label>
+                                <label className="form-label">{t('students.modal.reg_no')}</label>
                                 <input
                                     name="register_no"
                                     className="smart-input"
                                     value={formData.register_no}
                                     onChange={(e) => handleChange({ target: { name: 'register_no', value: e.target.value.toUpperCase() } })}
-                                    placeholder="e.g. 172CS24001"
+                                    placeholder={t('students.modal.reg_no_placeholder')}
                                     required
                                     autoFocus
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Semester</label>
+                                <label className="form-label">{t('students.modal.sem')}</label>
                                 <GlassSelect
-                                    options={[1, 2, 3, 4, 5, 6, 7, 8].map(s => ({ value: s.toString(), label: `Semester ${s}` }))}
+                                    options={[1, 2, 3, 4, 5, 6, 7, 8].map(s => ({ value: s.toString(), label: t('students.modal.sem_opt', { num: s }) }))}
                                     value={formData.semester}
                                     onChange={val => handleChange({ target: { name: 'semester', value: val } })}
                                 />
@@ -117,54 +120,65 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Department</label>
+                            <label className="form-label">{t('students.modal.dept')}</label>
                             <GlassSelect
                                 options={departments.map(d => ({ value: d.id, label: d.name }))}
                                 value={formData.department}
                                 onChange={val => handleChange({ target: { name: 'department', value: val } })}
-                                placeholder="Select Department"
+                                placeholder={t('students.modal.dept_select')}
                             />
                         </div>
 
                         {/* Section: Personal */}
                         <div className="form-group">
-                            <label className="form-label">Full Name</label>
+                            <label className="form-label">{t('students.modal.name')}</label>
                             <input
                                 name="name"
                                 className="smart-input"
                                 value={formData.name}
                                 onChange={handleChange}
-                                placeholder="e.g. John Doe"
+                                placeholder={t('students.modal.name_placeholder')}
                                 required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">{t('students.modal.father')}</label>
+                            <input
+                                name="father_name"
+                                className="smart-input"
+                                value={formData.father_name}
+                                onChange={handleChange}
+                                placeholder={t('students.modal.father_placeholder')}
                             />
                         </div>
 
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Email</label>
+                                <label className="form-label">{t('students.modal.email')}</label>
                                 <input
                                     name="email"
                                     type="email"
                                     className="smart-input"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    placeholder="Optional"
+                                    placeholder={t('students.modal.optional')}
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Phone</label>
+                                <label className="form-label">{t('students.modal.phone')}</label>
                                 <input
                                     name="phone"
                                     className="smart-input"
                                     value={formData.phone}
                                     onChange={handleChange}
-                                    placeholder="Optional"
+                                    placeholder={t('students.modal.optional')}
                                 />
                             </div>
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Date of Birth</label>
+                            <label className="form-label">{t('students.modal.dob')}</label>
                             <input
                                 name="dob"
                                 type="date"
@@ -176,14 +190,14 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Address</label>
+                            <label className="form-label">{t('students.modal.address')}</label>
                             <textarea
                                 name="address"
                                 className="smart-input"
                                 style={{ minHeight: 80, resize: 'vertical', fontFamily: 'inherit' }}
                                 value={formData.address}
                                 onChange={handleChange}
-                                placeholder="Enter full address"
+                                placeholder={t('students.modal.address_placeholder')}
                             />
                         </div>
 
@@ -192,9 +206,9 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
 
                 {/* Footer */}
                 <div className="smart-form-footer">
-                    <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn-cancel">{t('students.modal.cancel')}</button>
                     <button type="submit" form="add-student-form" className="btn-submit" disabled={loading}>
-                        {loading ? 'Saving...' : <><Save size={18} /> Save Student</>}
+                        {loading ? t('students.modal.saving') : <><Save size={18} /> {t('students.modal.save')}</>}
                     </button>
                 </div>
 

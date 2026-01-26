@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { X, Save, Layers, user } from 'lucide-react';
+
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 
 const BulkEditStudentModal = ({ count, onClose, onUpdate }) => {
+    const { t } = useLanguage();
     const [field, setField] = useState('semester'); // 'semester' or 'status'
     const [value, setValue] = useState('');
     const [loading, setLoading] = useState(false);
@@ -22,18 +25,18 @@ const BulkEditStudentModal = ({ count, onClose, onUpdate }) => {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Layers size={18} /> Bulk Edit ({count} Students)
+                        <Layers size={18} /> {t('students.modal.bulk_title', { count })}
                     </h3>
                     <button onClick={onClose} className="icon-btn-ghost"><X size={18} /></button>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                     <div>
-                        <label className="field-label">Field to Update</label>
+                        <label className="field-label">{t('students.modal.bulk_field')}</label>
                         <GlassSelect
                             options={[
-                                { value: 'semester', label: 'Semester' },
-                                { value: 'status', label: 'Status' }
+                                { value: 'semester', label: t('students.modal.sem') },
+                                { value: 'status', label: t('students.table.status') }
                             ]}
                             value={field}
                             onChange={(val) => { setField(val); setValue(''); }}
@@ -42,43 +45,43 @@ const BulkEditStudentModal = ({ count, onClose, onUpdate }) => {
                     </div>
 
                     <div>
-                        <label className="field-label">New Value</label>
+                        <label className="field-label">{t('students.modal.bulk_value')}</label>
                         {field === 'semester' ? (
                             <GlassSelect
                                 options={[
-                                    ...['1', '2', '3', '4', '5', '6'].map(v => ({ value: v, label: `Semester ${v}` })),
-                                    { value: 'Alumni', label: 'Alumni' }
+                                    ...['1', '2', '3', '4', '5', '6'].map(v => ({ value: v, label: t('students.modal.sem_opt', { num: v }) })),
+                                    { value: 'Alumni', label: t('students.table.status_alumni') }
                                 ]}
                                 value={value}
                                 onChange={setValue}
                                 style={{ width: '100%' }}
-                                placeholder="Select Semester"
+                                placeholder={t('students.modal.sem')}
                             />
                         ) : (
                             <GlassSelect
                                 options={[
-                                    { value: 'Active', label: 'Active' },
-                                    { value: 'Blocked', label: 'Blocked' },
-                                    { value: 'Graduated', label: 'Graduated' }
+                                    { value: 'Active', label: t('students.table.status_active') },
+                                    { value: 'Blocked', label: t('students.table.status_blocked') },
+                                    { value: 'Graduated', label: t('students.table.status_alumni') }
                                 ]}
                                 value={value}
                                 onChange={setValue}
                                 style={{ width: '100%' }}
-                                placeholder="Select Status"
+                                placeholder={t('students.table.status')}
                             />
                         )}
                     </div>
                 </div>
 
                 <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                    <button onClick={onClose} className="icon-btn-ghost" style={{ padding: '8px 16px', borderRadius: '6px' }}>Cancel</button>
+                    <button onClick={onClose} className="icon-btn-ghost" style={{ padding: '8px 16px', borderRadius: '6px' }}>{t('common.cancel')}</button>
                     <button
                         onClick={handleSubmit}
                         className="primary-glass-btn"
                         disabled={loading || !value}
                         style={{ padding: '8px 20px' }}
                     >
-                        {loading ? 'Updating...' : 'Update All'}
+                        {loading ? t('students.modal.bulk_updating') : t('students.modal.bulk_update_btn')}
                     </button>
                 </div>
             </div>

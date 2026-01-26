@@ -3,14 +3,18 @@ import { Save, AlertTriangle, RotateCcw, Lock, Calendar, DollarSign, BookOpen, F
 import PasswordPromptModal from '../components/common/PasswordPromptModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import GlassSelect from '../components/common/GlassSelect';
+import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const PolicyPage = () => {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState('borrowing');
     const [activeProfile, setActiveProfile] = useState('student');
     const [policies, setPolicies] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isPromptOpen, setIsPromptOpen] = useState(false);
     const [unsavedChanges, setUnsavedChanges] = useState({});
+    const [settings, setSettings] = useState({}); // Store system settings for security config
 
     // Notification State
     const [notification, setNotification] = useState({ isOpen: false, title: '', message: '', type: 'info' });
@@ -20,7 +24,29 @@ const PolicyPage = () => {
     // Fetch Policies
     useEffect(() => {
         fetchPolicies();
+        fetchSettings();
     }, []);
+
+    const fetchSettings = async () => {
+        try {
+            const res = await fetch('http://localhost:3001/api/settings/app');
+            const data = await res.json();
+            setSettings(data);
+        } catch (e) {
+            console.error("Failed to fetch settings", e);
+        }
+    };
+
+    const socket = useSocket();
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Policy Update: Refreshing");
+            fetchPolicies();
+        };
+        socket.on('policy_update', handleUpdate);
+        return () => socket.off('policy_update', handleUpdate);
+    }, [socket]);
 
     const fetchPolicies = async () => {
         setLoading(true);
@@ -29,7 +55,7 @@ const PolicyPage = () => {
             const data = await res.json();
             setPolicies(data);
         } catch (err) {
-            showNotification('Error', "Failed to load policies (ERR_POL_LOAD)", 'error');
+            showNotification('Error', t('policy.actions.err_load'), 'error');
         } finally {
             setLoading(false);
         }
@@ -76,16 +102,16 @@ const PolicyPage = () => {
             const data = await res.json();
 
             if (res.ok) {
-                showNotification('Success', `Policy Updated! New Version: ${data.version}`, 'success');
+                showNotification('Success', t('policy.actions.success_update', { version: data.version }), 'success');
                 setIsPromptOpen(false);
                 setUnsavedChanges({});
                 fetchPolicies(); // Refresh
             } else {
-                showNotification('Update Failed', data.error + " (ERR_POL_UPD)", 'error');
+                showNotification(t('policy.actions.err_update'), data.error + " (ERR_POL_UPD)", 'error');
                 setIsPromptOpen(false); // Close prompt to allow retry or cancel
             }
         } catch (e) {
-            showNotification('Network Error', "Network Error (ERR_NET_POL)", 'error');
+            showNotification(t('policy.actions.err_network'), t('policy.actions.err_network'), 'error');
             setIsPromptOpen(false);
         }
     };
@@ -100,13 +126,13 @@ const PolicyPage = () => {
             <div className="animate-fade-in">
                 <div className="flex items-center mb-6 border-b border-white/10 pb-4">
                     <h4 className="font-medium flex items-center gap-2 text-lg">
-                        <BookOpen size={20} className="text-emerald-400" /> Default Borrowing Rules
+                        <BookOpen size={20} className="text-emerald-400" /> {t('policy.borrowing.title')}
                     </h4>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                     <div>
-                        <label className="field-label">Max Books Allowed</label>
+                        <label className="field-label">{t('policy.borrowing.max_books')}</label>
                         <input
                             type="number" className="glass-input w-full"
                             value={policies.policy_borrowing[activeProfile]?.maxBooks || 0}
@@ -114,7 +140,7 @@ const PolicyPage = () => {
                         />
                     </div>
                     <div>
-                        <label className="field-label">Loan Period (Days)</label>
+                        <label className="field-label">{t('policy.borrowing.loan_days')}</label>
                         <input
                             type="number" className="glass-input w-full"
                             value={policies.policy_borrowing[activeProfile]?.loanDays || 0}
@@ -122,16 +148,16 @@ const PolicyPage = () => {
                         />
                     </div>
                     <div>
-                        <label className="field-label">Renewal Period (Days)</label>
+                        <label className="field-label">{t('policy.borrowing.renewal_days')}</label>
                         <input
                             type="number" className="glass-input w-full"
-                            placeholder="Same as Loan Period"
+                            placeholder={t('policy.borrowing.renewal_placeholder')}
                             value={policies.policy_borrowing[activeProfile]?.renewalDays || ''}
                             onChange={e => handleChange('policy_borrowing', 'renewalDays', parseInt(e.target.value))}
                         />
                     </div>
                     <div>
-                        <label className="field-label">Max Renewals</label>
+                        <label className="field-label">{t('policy.borrowing.max_renewals')}</label>
                         <input
                             type="number" className="glass-input w-full"
                             value={policies.policy_borrowing[activeProfile]?.maxRenewals || 0}
@@ -141,9 +167,9 @@ const PolicyPage = () => {
 
 
                     <div className="col-span-2 mt-4 p-4 border border-red-500/30 rounded-xl bg-red-500/5">
-                        <label className="field-label text-red-300 flex items-center gap-2"><Lock size={14} /> Auto-Block Threshold</label>
+                        <label className="field-label text-red-300 flex items-center gap-2"><Lock size={14} /> {t('policy.borrowing.auto_block')}</label>
                         <div className="flex items-center gap-2 mt-2">
-                            <span className="text-white/60">Block borrowing if unpaid fines exceed ₹</span>
+                            <span className="text-white/60">{t('policy.borrowing.block_msg')}</span>
                             <input
                                 type="number" className="glass-input w-32"
                                 value={policies.policy_borrowing[activeProfile]?.blockFineThreshold || 0}
@@ -160,7 +186,7 @@ const PolicyPage = () => {
         <div className="glass-panel p-4 animate-fade-in space-y-6">
             <div className="grid grid-cols-2 gap-6">
                 <div>
-                    <label className="field-label">Daily Fine Rate (₹)</label>
+                    <label className="field-label">{t('policy.financial.daily_rate')}</label>
                     <input
                         type="number" step="0.5" className="glass-input w-full"
                         value={policies.policy_financial.dailyFineRate}
@@ -171,10 +197,10 @@ const PolicyPage = () => {
             </div>
 
             <div>
-                <h4 className="border-b border-glass pb-2 mb-4 font-medium">Damage & Lost Book Fines</h4>
+                <h4 className="border-b border-glass pb-2 mb-4 font-medium">{t('policy.financial.damage_lost_title')}</h4>
                 <div className="grid grid-cols-2 gap-6">
                     <div>
-                        <label className="field-label">Fine Amount: Damaged Book</label>
+                        <label className="field-label">{t('policy.financial.damage_amt')}</label>
                         <div className="flex items-center gap-2">
                             <span className="text-gray-400">₹</span>
                             <input
@@ -185,7 +211,7 @@ const PolicyPage = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="field-label">Fine Amount: Lost Book</label>
+                        <label className="field-label">{t('policy.financial.lost_amt')}</label>
                         <div className="flex items-center gap-2">
                             <span className="text-gray-400">₹</span>
                             <input
@@ -214,7 +240,7 @@ const PolicyPage = () => {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-white leading-tight flex items-center gap-2">
-                                Rules & Policy
+                                {t('policy.title')}
                                 <span className="text-[10px] font-normal text-white/40 bg-white/10 px-1.5 py-0.5 rounded-full">v{policies.policy_version || '1.0'}</span>
                             </h1>
                         </div>
@@ -222,12 +248,12 @@ const PolicyPage = () => {
 
                     {/* Actions */}
                     <div className="flex gap-2">
-                        <button className="toolbar-icon-btn" onClick={fetchPolicies} title="Reset Changes">
+                        <button className="toolbar-icon-btn" onClick={fetchPolicies} title={t('policy.actions.reset')}>
                             <RotateCcw size={20} />
                         </button>
 
                         <button className="toolbar-primary-btn" onClick={handleSave}>
-                            <Save size={18} /> Save Changes
+                            <Save size={18} /> {t('policy.actions.save')}
                         </button>
                     </div>
                 </div>
@@ -239,13 +265,13 @@ const PolicyPage = () => {
                             onClick={() => setActiveTab('borrowing')}
                             className={`btn rounded-full flex items-center gap-2 ${activeTab === 'borrowing' ? 'btn-primary' : 'btn-ghost'}`}
                         >
-                            <BookOpen size={18} /> Borrowing Rules
+                            <BookOpen size={18} /> {t('policy.tabs.borrowing')}
                         </button>
                         <button
                             onClick={() => setActiveTab('financial')}
                             className={`btn rounded-full flex items-center gap-2 ${activeTab === 'financial' ? 'btn-primary' : 'btn-ghost'}`}
                         >
-                            <DollarSign size={18} /> Financials
+                            <DollarSign size={18} /> {t('policy.tabs.financial')}
                         </button>
                     </div>
                 </div>
@@ -261,7 +287,7 @@ const PolicyPage = () => {
                 isOpen={isPromptOpen}
                 onClose={() => setIsPromptOpen(false)}
                 onSuccess={confirmSave}
-                message="This action will modify global system policies. Please confirm your identity."
+                message={t('policy.actions.prompt_msg')}
             />
 
             {/* Notification Modal */}

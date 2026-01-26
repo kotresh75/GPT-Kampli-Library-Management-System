@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Calendar, Clock, BookOpen, User, Hash, AlignLeft, Info, CheckCircle, AlertCircle, RefreshCw, DollarSign, Copy, FileJson, ArrowUpRight, ArrowDownLeft, RotateCcw } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
+import { useLanguage } from '../../context/LanguageContext';
 
 const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
+    const { t } = useLanguage();
     const [mounted, setMounted] = useState(false);
     const [showRaw, setShowRaw] = useState(false);
     const [copiedField, setCopiedField] = useState(null);
@@ -114,11 +116,11 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                         </div>
                         <div>
                             <div className="flex items-center gap-2 mb-0.5">
-                                <h3 className="text-base font-bold text-white">Transaction Details</h3>
+                                <h3 className="text-base font-bold text-white">{t('history.details.title')}</h3>
                                 <StatusBadge status={transaction.action_type} />
                             </div>
                             <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500">
-                                <span className="opacity-70">ID: {transaction.id}</span>
+                                <span className="opacity-70">{t('history.details.id')}: {transaction.id}</span>
                                 <button onClick={() => copyToClipboard(transaction.id, 'id')} className="hover:text-white transition-colors">
                                     {copiedField === 'id' ? <CheckCircle size={10} className="text-green-400" /> : <Copy size={10} />}
                                 </button>
@@ -141,22 +143,22 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                         {/* Student Card */}
                         <div className="p-3 rounded-lg bg-white/5 border border-white/10 flex flex-col gap-2">
                             <div className="text-[10px] font-bold text-blue-300 uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1 mb-0.5">
-                                <User size={10} /> Student
+                                <User size={10} /> {t('history.details.student')}
                             </div>
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-gray-500 uppercase">Name:</span>
+                                    <span className="text-[10px] text-gray-500 uppercase">{t('history.details.name')}:</span>
                                     <span className="text-xs font-medium text-white truncate max-w-[70%]" title={transaction.student_name}>{transaction.student_name}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-gray-500 uppercase">Reg No:</span>
+                                    <span className="text-[10px] text-gray-500 uppercase">{t('history.details.reg_no')}:</span>
                                     <div className="flex items-center gap-1">
                                         <span className="text-xs text-gray-300">{transaction.student_reg_no || transaction.register_number}</span>
                                         <button onClick={() => copyToClipboard(transaction.student_reg_no || transaction.register_number, 'reg')} className="text-gray-600 hover:text-white"><Copy size={9} /></button>
                                     </div>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-gray-500 uppercase">Dept:</span>
+                                    <span className="text-[10px] text-gray-500 uppercase">{t('history.details.dept')}:</span>
                                     <span className="text-xs text-gray-300 truncate max-w-[70%]">{transaction.student_dept || transaction.department_name}</span>
                                 </div>
                             </div>
@@ -165,15 +167,15 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                         {/* Book Card */}
                         <div className="p-3 rounded-lg bg-white/5 border border-white/10 flex flex-col gap-2">
                             <div className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1 mb-0.5">
-                                <BookOpen size={10} /> Book
+                                <BookOpen size={10} /> {t('history.details.book')}
                             </div>
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-gray-500 uppercase">Title:</span>
+                                    <span className="text-[10px] text-gray-500 uppercase">{t('history.details.book_title')}:</span>
                                     <span className="text-xs font-medium text-white truncate max-w-[70%]" title={transaction.book_title}>{transaction.book_title}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[10px] text-gray-500 uppercase">Acc/ISBN:</span>
+                                    <span className="text-[10px] text-gray-500 uppercase">{t('history.details.isbn')}:</span>
                                     <div className="flex flex-col items-end">
                                         <div className="flex items-center gap-1">
                                             <span className="text-[10px] text-gray-300 font-mono">{details.accession || transaction.accession_number}</span>
@@ -192,27 +194,27 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                     <div className="rounded-lg border border-white/10 overflow-hidden">
                         <div className="bg-white/5 px-3 py-1.5 border-b border-white/10 flex items-center gap-2">
                             <Clock size={10} className="text-purple-300" />
-                            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Timeline Details</span>
+                            <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">{t('history.details.timeline')}</span>
                         </div>
                         <div className="p-3 grid grid-cols-1 gap-2">
                             <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                <span className="text-[10px] text-gray-500 uppercase">Action Date:</span>
+                                <span className="text-[10px] text-gray-500 uppercase">{t('history.details.action_date')}:</span>
                                 <span className="text-xs font-medium text-white">{safeDate ? formatDate(safeDate) : '-'}</span>
                             </div>
                             <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                <span className="text-[10px] text-gray-500 uppercase">Time:</span>
+                                <span className="text-[10px] text-gray-500 uppercase">{t('history.details.time')}:</span>
                                 <span className="text-xs text-gray-300">{safeDate ? safeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '-'}</span>
                             </div>
 
                             {transaction.action_type === 'ISSUE' && (
                                 <>
                                     <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                        <span className="text-[10px] text-gray-500 uppercase">Due Date:</span>
+                                        <span className="text-[10px] text-gray-500 uppercase">{t('history.details.due_date')}:</span>
                                         <span className="text-xs font-medium text-blue-300">{formatDate(details.due_date)}</span>
                                     </div>
                                     <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                        <span className="text-[10px] text-gray-500 uppercase">Duration:</span>
-                                        <span className="text-xs text-gray-300">{details.loan_days} Days</span>
+                                        <span className="text-[10px] text-gray-500 uppercase">{t('history.details.duration')}:</span>
+                                        <span className="text-xs text-gray-300">{details.loan_days} {t('history.details.days')}</span>
                                     </div>
                                 </>
                             )}
@@ -220,11 +222,11 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                             {transaction.action_type === 'RETURN' && (
                                 <>
                                     <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                        <span className="text-[10px] text-gray-500 uppercase">Returned:</span>
+                                        <span className="text-[10px] text-gray-500 uppercase">{t('history.details.returned')}:</span>
                                         <span className="text-xs font-medium text-green-300">{formatDate(details.return_date)}</span>
                                     </div>
                                     <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                        <span className="text-[10px] text-gray-500 uppercase">Condition:</span>
+                                        <span className="text-[10px] text-gray-500 uppercase">{t('history.details.condition')}:</span>
                                         <span className={`text-xs font-bold ${details.condition === 'Good' ? 'text-green-400' : 'text-red-400'}`}>
                                             {details.condition}
                                         </span>
@@ -235,11 +237,11 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                             {transaction.action_type === 'RENEW' && (
                                 <>
                                     <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                        <span className="text-[10px] text-gray-500 uppercase">Extended:</span>
-                                        <span className="text-xs text-gray-300">+{details.extend_days} Days</span>
+                                        <span className="text-[10px] text-gray-500 uppercase">{t('history.details.extended')}:</span>
+                                        <span className="text-xs text-gray-300">+{details.extend_days} {t('history.details.days')}</span>
                                     </div>
                                     <div className="flex items-center justify-between px-2 py-1 bg-white/5 rounded">
-                                        <span className="text-[10px] text-gray-500 uppercase">New Due:</span>
+                                        <span className="text-[10px] text-gray-500 uppercase">{t('history.details.new_due')}:</span>
                                         <span className="text-xs font-medium text-blue-300">{formatDate(details.new_due_date)}</span>
                                     </div>
                                 </>
@@ -257,7 +259,7 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                                             <DollarSign size={14} />
                                         </div>
                                         <div>
-                                            <div className="text-[10px] text-red-300 opacity-80 uppercase tracking-wide">Fine Generated</div>
+                                            <div className="text-[10px] text-red-300 opacity-80 uppercase tracking-wide">{t('history.details.fine_generated')}</div>
                                             <div className="text-sm font-bold text-red-200">₹{details.fine_amount}</div>
                                         </div>
                                     </div>
@@ -271,7 +273,7 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
 
                             {(details.remarks || details.reason || details.waiver_reason) && (
                                 <div className="space-y-1">
-                                    <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 ml-1">Notes / Remarks</label>
+                                    <label className="text-[9px] font-bold uppercase tracking-wider text-gray-500 ml-1">{t('history.details.notes')}</label>
                                     <div className="p-2 rounded bg-white/5 border border-white/10 text-xs text-gray-300 italic">
                                         "{details.remarks || details.reason || details.waiver_reason}"
                                     </div>
@@ -287,7 +289,7 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                             className="flex items-center gap-2 text-[10px] text-blue-400 hover:text-blue-300 transition-colors opacity-70 hover:opacity-100 uppercase tracking-wide font-medium"
                         >
                             <FileJson size={12} />
-                            {showRaw ? 'Hide Raw Details' : 'View Raw Details'}
+                            {showRaw ? t('history.details.hide_raw') : t('history.details.view_raw')}
                         </button>
 
                         {showRaw && (
@@ -301,13 +303,13 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                 {/* Footer */}
                 <div className="p-4 border-t border-white/10 bg-white/5 flex justify-between items-center">
                     <div className="text-xs text-gray-500">
-                        Recorded by: <span className="text-gray-400">{transaction.performed_by || 'System'}</span>
+                        {t('history.details.recorded_by')}: <span className="text-gray-400">{transaction.performed_by || 'System'}</span>
                     </div>
                     <button
                         onClick={onClose}
                         className="px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors border border-white/5"
                     >
-                        Close
+                        {t('history.details.close')}
                     </button>
                 </div>
 

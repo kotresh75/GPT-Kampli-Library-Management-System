@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Trash2, Users, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/LanguageContext';
 
 import GlassSelect from '../components/common/GlassSelect';
 import StatusModal from '../components/common/StatusModal';
@@ -7,15 +9,34 @@ import StudentSearchSelect from '../components/common/StudentSearchSelect';
 import GlassEditor from '../components/common/GlassEditor';
 
 const NotificationPage = () => {
-    const [recipientType, setRecipientType] = useState('dept');
-    const [selectedDept, setSelectedDept] = useState('');
+    const { t } = useLanguage();
+    const [recipientType, setRecipientType] = useState('student');
     const [targetStudents, setTargetStudents] = useState([]); // Array for multi-select
     const [subject, setSubject] = useState('');
     const [message, setMessage] = useState('');
 
-    // Dynamic Data State
-    const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [isBroadcastEnabled, setIsBroadcastEnabled] = useState(true);
+
+    // Fetch Settings to check if Broadcast is enabled
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch('http://localhost:3001/api/settings/app');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.email_events && data.email_events.broadcastMessages === false) {
+                        setIsBroadcastEnabled(false);
+                    } else {
+                        setIsBroadcastEnabled(true);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch settings:", err);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     // Status Modal State
     const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
@@ -45,31 +66,19 @@ const NotificationPage = () => {
         fetchHistory();
     }, [historySort]);
 
-    // Fetch Departments & History
+    const socket = useSocket();
     useEffect(() => {
-        const fetchDepts = async () => {
-            try {
-                // Use 'auth_token' as consistent with LoginPage
-                const token = localStorage.getItem('auth_token');
-
-                const res = await fetch('http://localhost:3001/api/departments', {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
-
-                if (!res.ok) {
-                    // validation or auth error
-                    return;
-                }
-
-                const data = await res.json();
-                if (Array.isArray(data)) {
-                    setDepartments(data.map(d => ({ value: d.id, label: d.name })));
-                }
-            } catch (err) {
-                console.error("Failed to fetch departments", err);
-            }
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Broadcast History Update: Refreshing");
+            fetchHistory();
         };
-        fetchDepts();
+        socket.on('broadcast_update', handleUpdate);
+        return () => socket.off('broadcast_update', handleUpdate);
+    }, [socket, historySort]);
+
+    // Fetch History
+    useEffect(() => {
         fetchHistory();
     }, []);
 
@@ -79,12 +88,8 @@ const NotificationPage = () => {
         try {
             let backendGroup = '';
 
-            if (recipientType === 'dept') {
-                if (!selectedDept) throw new Error('Please select a department');
-                backendGroup = `Dept:${selectedDept}`;
-            }
-            else if (recipientType === 'student') {
-                if (targetStudents.length === 0) throw new Error('Please search and select at least one student');
+            if (recipientType === 'student') {
+                if (targetStudents.length === 0) throw new Error(t('broadcast.status.select_student_err'));
                 // Send comma-separated list of IDs
                 const ids = targetStudents.map(s => s.id).join(',');
                 backendGroup = `Student:${ids}`;
@@ -98,7 +103,7 @@ const NotificationPage = () => {
 
             // Retrieve consistent token
             const token = localStorage.getItem('auth_token');
-            if (!token) throw new Error("Authentication token not found. Please log in again.");
+            if (!token) throw new Error(t('broadcast.status.auth_err'));
 
             const response = await fetch('http://localhost:3001/api/admins/broadcast', {
                 method: 'POST',
@@ -120,14 +125,13 @@ const NotificationPage = () => {
                 throw new Error(errMsg);
             }
 
-            setStatusModal({ isOpen: true, type: 'success', title: 'Broadcast Sent', message: `Successfully sent to ${data.recipientCount || 'recipients'}` });
+            setStatusModal({ isOpen: true, type: 'success', title: t('broadcast.status.sent'), message: `${t('broadcast.status.success_msg')} ${data.recipientCount || t('broadcast.status.recipients')}` });
             setSubject('');
             setMessage('');
             setTargetStudents([]);
-            setSelectedDept('');
             fetchHistory(); // Refresh history
         } catch (err) {
-            setStatusModal({ isOpen: true, type: 'error', title: 'Transmission Failed', message: err.message });
+            setStatusModal({ isOpen: true, type: 'error', title: t('broadcast.status.failed'), message: err.message });
         } finally {
             setLoading(false);
         }
@@ -135,7 +139,7 @@ const NotificationPage = () => {
 
     return (
         <div className="dashboard-content">
-            <h1 className="page-title">Broadcast Message</h1>
+            <h1 className="page-title">{t('broadcast.title')}</h1>
 
             <div style={{ display: 'flex', gap: '20px', flexDirection: 'row', flexWrap: 'wrap' }}>
 
@@ -143,60 +147,68 @@ const NotificationPage = () => {
                 <div className="glass-panel" style={{ flex: '3', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', marginBottom: '10px' }}>
                         <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Send size={20} /> Compose Message
+                            <Send size={20} /> {t('broadcast.compose.title')}
                         </h2>
                     </div>
+
+                    {!isBroadcastEnabled && (
+                        <div style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.3)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            color: '#EF4444',
+                            fontSize: '0.9rem'
+                        }}>
+                            <AlertCircle size={20} />
+                            <div>
+                                <strong>Warning:</strong> Broadcast messages are currently disabled in Settings. Emails will NOT be sent.
+                            </div>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
 
                         {/* Targeting Section */}
                         <div className="form-group">
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Recipient Type</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>{t('broadcast.compose.recipient_type')}</label>
                             <GlassSelect
                                 icon={Users}
                                 value={recipientType}
                                 onChange={setRecipientType}
                                 options={[
-                                    { value: 'dept', label: 'Specific Department' },
-                                    { value: 'student', label: 'Specific Students' },
-                                    { value: 'overdue', label: 'Students with Overdue Books' },
-                                    { value: 'issued', label: 'Students with Issued Books' }
+                                    { value: 'student', label: t('broadcast.compose.types.student') },
+                                    { value: 'overdue', label: t('broadcast.compose.types.overdue') },
+                                    { value: 'issued', label: t('broadcast.compose.types.issued') }
                                 ]}
                             />
                         </div>
 
-                        {recipientType === 'dept' && (
-                            <div className="glass-card bounce-in" style={{ padding: '15px', background: 'rgba(100,100,255,0.05)' }}>
-                                <label style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Select Department:</label>
-                                <GlassSelect
-                                    value={selectedDept}
-                                    onChange={setSelectedDept}
-                                    options={departments}
-                                    placeholder="Choose Department"
-                                />
-                            </div>
-                        )}
+
 
                         {recipientType === 'student' && (
                             <div className="glass-card bounce-in" style={{ padding: '15px', background: 'rgba(100,100,255,0.05)' }}>
-                                <label style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>Search Student (Multiple):</label>
+                                <label style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>{t('broadcast.compose.search_student')}:</label>
                                 <StudentSearchSelect
                                     selectedStudents={targetStudents}
                                     onSelect={setTargetStudents}
-                                    placeholder="Enter Name or Register Number..."
+                                    placeholder={t('broadcast.compose.enter_student')}
                                 />
                             </div>
                         )}
 
                         {/* Subject */}
                         <div className="form-group">
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Subject Line</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>{t('broadcast.compose.subject')}</label>
                             <div className="input-group">
                                 <FileText className="input-icon" size={18} />
                                 <input
                                     type="text"
                                     className="glass-input"
-                                    placeholder="Enter subject..."
+                                    placeholder={t('broadcast.compose.enter_subject')}
                                     value={subject}
                                     onChange={(e) => setSubject(e.target.value)}
                                     required
@@ -206,12 +218,12 @@ const NotificationPage = () => {
 
                         {/* Message Body (WYSIWYG) */}
                         <div className="form-group" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Message Body</label>
+                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>{t('broadcast.compose.body')}</label>
                             <div style={{ flex: 1, minHeight: '200px' }}>
                                 <GlassEditor
                                     value={message}
                                     onChange={setMessage}
-                                    placeholder="Type your message here..."
+                                    placeholder={t('broadcast.compose.type_message')}
                                 />
                             </div>
                         </div>
@@ -220,15 +232,24 @@ const NotificationPage = () => {
                         <div style={{ display: 'flex', gap: '15px', marginTop: 'auto' }}>
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || !isBroadcastEnabled}
                                 className="primary-glass-btn"
-                                style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+                                style={{
+                                    flex: 1,
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    opacity: (loading || !isBroadcastEnabled) ? 0.6 : 1,
+                                    cursor: (loading || !isBroadcastEnabled) ? 'not-allowed' : 'pointer',
+                                    filter: !isBroadcastEnabled ? 'grayscale(1)' : 'none'
+                                }}
                             >
                                 {loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <Send size={18} />}
-                                {loading ? 'Sending...' : 'Send Broadcast'}
+                                {loading ? t('broadcast.compose.sending') : t('broadcast.compose.send')}
                             </button>
                             <button type="button" className="icon-btn" onClick={() => { setSubject(''); setMessage(''); }} style={{ color: '#ff6b6b', borderColor: '#ff6b6b' }}>
-                                <Trash2 size={18} /> Clear
+                                <Trash2 size={18} /> {t('broadcast.compose.clear')}
                             </button>
                         </div>
                     </form>
@@ -238,17 +259,18 @@ const NotificationPage = () => {
                 <div className="glass-panel" style={{ flex: '2', minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <Clock size={20} /> History
+                            <Clock size={20} /> {t('broadcast.history.title')}
                         </h2>
-                        <select
-                            className="glass-input"
-                            style={{ padding: '4px 8px', fontSize: '0.8rem', width: 'auto' }}
-                            value={historySort}
-                            onChange={(e) => setHistorySort(e.target.value)}
-                        >
-                            <option value="desc">Recent First</option>
-                            <option value="asc">Oldest First</option>
-                        </select>
+                        <div style={{ width: '160px' }}>
+                            <GlassSelect
+                                value={historySort}
+                                onChange={setHistorySort}
+                                options={[
+                                    { value: 'desc', label: t('broadcast.history.recent') },
+                                    { value: 'asc', label: t('broadcast.history.oldest') }
+                                ]}
+                            />
+                        </div>
                     </div>
 
                     <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -260,7 +282,7 @@ const NotificationPage = () => {
                                 </div>
                                 <h4 style={{ margin: '0 0 5px 0', fontSize: '1rem' }}>{item.subject}</h4>
                                 <div style={{ fontSize: '0.85rem', background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '4px', display: 'inline-block' }}>
-                                    To: {item.target}
+                                    {t('broadcast.history.to')}: {item.target}
                                 </div>
                             </div>
                         ))}
@@ -276,7 +298,7 @@ const NotificationPage = () => {
                 message={statusModal.message}
                 autoClose={statusModal.type === 'success' ? 3000 : 0}
             />
-        </div>
+        </div >
     );
 };
 

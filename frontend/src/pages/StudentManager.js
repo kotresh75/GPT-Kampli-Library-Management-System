@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, FileText, Upload, Trash2, Edit2, CheckCircle, XCircle, ArrowUpCircle, ArrowDownCircle, Download, Eye, Filter, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
+import {
+    Plus, Upload, Download, Trash2, Edit, Filter, Search, UserCheck,
+    ArrowUpDown, ArrowUpCircle, ArrowDownCircle, Edit2
+} from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import GlassSelect from '../components/common/GlassSelect';
 import SmartAddStudentModal from '../components/students/SmartAddStudentModal';
@@ -11,8 +16,11 @@ import StudentDetailModal from '../components/students/StudentDetailModal';
 import PromotionModal from '../components/students/PromotionModal';
 import SmartStudentTable from '../components/students/SmartStudentTable';
 import StatusModal from '../components/common/StatusModal';
+import { useLanguage } from '../context/LanguageContext';
 
 const StudentManager = () => {
+    const { t } = useLanguage();
+    const socket = useSocket();
     const [students, setStudents] = useState([]);
     const [departments, setDepartments] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,7 +68,7 @@ const StudentManager = () => {
     const [existingRegNos, setExistingRegNos] = useState(new Set());
 
     // Fetch Students
-    const fetchStudents = async () => {
+    const fetchStudents = useCallback(async (currPage = 1) => {
         setLoading(true);
         try {
             const query = new URLSearchParams({
@@ -69,26 +77,37 @@ const StudentManager = () => {
                 semester: filters.semester,
                 sortBy: sortConfig.key,
                 order: sortConfig.direction,
-                page,
+                page: currPage,
                 limit
             }).toString();
 
-            const res = await fetch(`http://localhost:3001/api/students?${query}`);
-            const data = await res.json();
-            setStudents(data.data || []);
-            setTotalPages(data.pagination?.totalPages || 1);
-            setTotalStudentsCount(data.pagination?.total || 0);
+            const res = await axios.get(`http://localhost:3001/api/students?${query}`);
+            setStudents(res.data.data || []);
+            setTotalPages(res.data.pagination?.totalPages || 1);
+            setTotalStudentsCount(res.data.pagination?.total || 0);
+            // setPagination(res.data.pagination);
             setSelectedStudents(new Set());
         } catch (err) {
             console.error(err);
         } finally {
             setLoading(false);
         }
-    };
+    }, [search, filters, sortConfig, limit]); // Removed 'page' from dependencies as it's passed as an argument
 
     useEffect(() => {
-        fetchStudents();
-    }, [search, filters, sortConfig, page, limit]);
+        fetchStudents(page);
+    }, [fetchStudents, page]);
+
+    // Socket Listener
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Real-time update: Refreshing Students");
+            fetchStudents(page);
+        };
+        socket.on('student_update', handleUpdate);
+        return () => socket.off('student_update', handleUpdate);
+    }, [socket, fetchStudents, page]);
 
     // --- Selection Logic ---
     const handleSelectAll = (e) => {
@@ -384,7 +403,7 @@ const StudentManager = () => {
                         <Search size={20} />
                         <input
                             type="text"
-                            placeholder="Search by Name or Register No..."
+                            placeholder={t('students.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -395,11 +414,11 @@ const StudentManager = () => {
                             value={filters.department}
                             onChange={(val) => setFilters(prev => ({ ...prev, department: val }))}
                             options={[
-                                { value: '', label: 'All Departments' },
+                                { value: '', label: t('students.all_departments') },
                                 ...departments.map(d => ({ value: d.name, label: d.name }))
                             ]}
                             icon={Filter}
-                            placeholder="All Departments"
+                            placeholder={t('students.all_departments')}
                         />
                     </div>
 
@@ -408,12 +427,12 @@ const StudentManager = () => {
                             value={filters.semester}
                             onChange={(val) => setFilters(prev => ({ ...prev, semester: val }))}
                             options={[
-                                { value: '', label: 'All Semesters' },
+                                { value: '', label: t('students.all_semesters') },
                                 { value: '1', label: 'Semester 1' },
                                 ...['2', '3', '4', '5', '6'].map(s => ({ value: s, label: `Semester ${s}` }))
                             ]}
                             icon={Filter}
-                            placeholder="All Semesters"
+                            placeholder={t('students.all_semesters')}
                         />
                     </div>
 
@@ -433,46 +452,46 @@ const StudentManager = () => {
                                 { value: 'semester-desc', label: 'Sort by Semester (Desc)' }
                             ]}
                             icon={ArrowUpDown}
-                            placeholder="Sort By"
+                            placeholder={t('students.sort_by')}
                         />
                     </div>
 
                     <div className="h-8 w-px bg-white/10 mx-2"></div>
 
-                    <button className="toolbar-icon-btn" style={{ width: '40px', height: '40px', flexShrink: 0 }} onClick={() => setShowExportModal(true)} title="Export Data">
+                    <button className="toolbar-icon-btn" style={{ width: '40px', height: '40px', flexShrink: 0 }} onClick={() => setShowExportModal(true)} title={t('students.export_data')}>
                         <Download size={20} />
                     </button>
 
-                    <button className="toolbar-icon-btn" style={{ width: '40px', height: '40px', flexShrink: 0 }} onClick={() => setShowImportModal(true)} title="Import CSV">
+                    <button className="toolbar-icon-btn" style={{ width: '40px', height: '40px', flexShrink: 0 }} onClick={() => setShowImportModal(true)} title={t('students.import_csv')}>
                         <Upload size={20} />
                     </button>
 
                     <button className="toolbar-primary-btn whitespace-nowrap" onClick={() => setShowAddModal(true)}>
-                        <Plus size={20} /> Add Student
+                        <Plus size={20} /> {t('students.add_student')}
                     </button>
                 </div>
 
                 {/* Row 2: Bulk Actions & Utilities */}
                 <div className="catalog-toolbar">
                     <button className="toolbar-primary-btn bg-purple-500/20 border-purple-500/40 text-purple-300 hover:bg-purple-500/30 whitespace-nowrap" onClick={() => setShowPromotionModal(true)}>
-                        <ArrowUpCircle size={20} className="mr-2" /> Promote Class
+                        <ArrowUpCircle size={20} className="mr-2" /> {t('students.promote_class')}
                     </button>
 
                     {selectedStudents.size > 0 && (
                         <>
                             <div className="h-8 w-px bg-white/10 mx-2"></div>
-                            <span className="text-sm text-white/50 px-2 font-medium">{selectedStudents.size} Selected</span>
+                            <span className="text-sm text-white/50 px-2 font-medium">{selectedStudents.size} {t('students.selected')}</span>
 
-                            <button className="toolbar-icon-btn text-green-400 hover:bg-green-500/20 hover:text-green-400" onClick={() => handleBulkPromoteDemoteRequest('promote')} title="Promote Selected">
+                            <button className="toolbar-icon-btn text-green-400 hover:bg-green-500/20 hover:text-green-400" onClick={() => handleBulkPromoteDemoteRequest('promote')} title={t('students.promote_selected')}>
                                 <ArrowUpCircle size={20} />
                             </button>
-                            <button className="toolbar-icon-btn text-orange-400 hover:bg-orange-500/20 hover:text-orange-400" onClick={() => handleBulkPromoteDemoteRequest('demote')} title="Demote Selected">
+                            <button className="toolbar-icon-btn text-orange-400 hover:bg-orange-500/20 hover:text-orange-400" onClick={() => handleBulkPromoteDemoteRequest('demote')} title={t('students.demote_selected')}>
                                 <ArrowDownCircle size={20} />
                             </button>
-                            <button className="toolbar-icon-btn text-blue-400 hover:bg-blue-500/20 hover:text-blue-400" onClick={() => setShowBulkEdit(true)} title="Bulk Edit">
+                            <button className="toolbar-icon-btn text-blue-400 hover:bg-blue-500/20 hover:text-blue-400" onClick={() => setShowBulkEdit(true)} title={t('students.bulk_edit')}>
                                 <Edit2 size={20} />
                             </button>
-                            <button className="toolbar-icon-btn text-red-400 hover:bg-red-500/20 hover:text-red-400" onClick={handleBulkDeleteClick} title="Delete Selected">
+                            <button className="toolbar-icon-btn text-red-400 hover:bg-red-500/20 hover:text-red-400" onClick={handleBulkDeleteClick} title={t('students.delete_selected')}>
                                 <Trash2 size={20} />
                             </button>
                         </>
@@ -539,6 +558,7 @@ const StudentManager = () => {
                     onImport={handleImportSubmit}
                     columns={[
                         { key: 'name', label: 'Name', required: true, aliases: ['student'] },
+                        { key: 'father_name', label: 'Father Name', aliases: ['father', 'father name', 'parent', 'guardian'] },
                         { key: 'register_no', label: 'RegNo', required: true, aliases: ['reg', 'usn'] },
                         {
                             key: 'department',
@@ -564,7 +584,7 @@ const StudentManager = () => {
                     onValidate={(row) => {
                         const errors = [];
                         if (existingRegNos.has(row.register_no?.toUpperCase())) errors.push('RegNo exists in DB');
-                        if (row.dob && !/^\d{2}-\d{2}-\d{4}$/.test(row.dob)) errors.push('Format DD-MM-YYYY');
+                        if (row.dob && !/^\d{4}-\d{2}-\d{2}$/.test(row.dob)) errors.push('Format DD-MM-YYYY');
                         // Dept validation - logic handled by Select but if imported from CSV
                         if (row.department && !departments.some(d => d.name.toLowerCase() === row.department.toLowerCase())) {
                             errors.push("Unknown Dept");
@@ -606,7 +626,47 @@ const StudentManager = () => {
                     onExport={handleExport}
                     totalStudents={totalStudentsCount}
                     selectedCount={selectedStudents.size}
+                    selectedIds={selectedStudents}
                     filteredCount={students.length}
+                    data={students.map(s => ({
+                        id: s.id, // Ensure ID is present for matching
+                        Name: s.full_name,
+                        'Father Name': s.father_name,
+                        RegNo: s.register_number,
+                        Dept: s.department,
+                        Sem: s.semester,
+                        Status: s.status,
+                        Phone: s.phone,
+                        DOB: s.dob ? s.dob.split('-').reverse().join('/') : ''
+                    }))}
+                    columns={['Name', 'Father Name', 'RegNo', 'Dept', 'Sem', 'Status', 'Phone', 'DOB']}
+                    onFetchAll={async () => {
+                        try {
+                            const query = new URLSearchParams({
+                                search,
+                                department: filters.department,
+                                semester: filters.semester,
+                                sortBy: sortConfig.key,
+                                order: sortConfig.direction,
+                                limit: 10000 // Fetch all
+                            }).toString();
+                            const res = await fetch(`http://localhost:3001/api/students?${query}`);
+                            const data = await res.json();
+                            return (data.data || []).map(s => ({
+                                id: s.id, // Include ID for selection matching
+                                Name: s.full_name,
+                                RegNo: s.register_number,
+                                Dept: s.department,
+                                Sem: s.semester,
+                                Status: s.status,
+                                Phone: s.phone,
+                                DOB: s.dob ? s.dob.split('-').reverse().join('/') : ''
+                            }));
+                        } catch (e) {
+                            console.error("Fetch all failed", e);
+                            return [];
+                        }
+                    }}
                 />
             )}
             {showDetailModal && viewingStudent && (

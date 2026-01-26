@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Save, User, Hash, Briefcase, Calendar, Mail, Phone, MapPin, AlertCircle, Activity } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
+    const { t } = useLanguage();
     const [formData, setFormData] = useState({
         name: student?.full_name || '',
+        father_name: student?.father_name || '', // New
         register_no: student?.register_number || '',
         department: student?.dept_id || '',
         semester: student?.semester || '1',
@@ -56,12 +59,12 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
             });
             const data = await res.json();
 
-            if (!res.ok) throw new Error(data.error || "Failed to update student");
+            if (!res.ok) throw new Error(data.error || t('students.modal.err_update'));
 
             onUpdate();
             onClose();
         } catch (err) {
-            setError(err.message || "Network error");
+            setError(err.message || t('students.modal.err_network'));
         } finally {
             setLoading(false);
         }
@@ -79,7 +82,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <User size={18} color="white" />
                         </div>
-                        Edit Student
+                        {t('students.modal.title_edit')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -95,7 +98,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
 
                         {/* Status Row */}
                         <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid var(--glass-border)' }}>
-                            <label className="form-label" style={{ margin: 0, display: 'flex', gap: 6, alignItems: 'center' }}><Activity size={14} /> Account Status</label>
+                            <label className="form-label" style={{ margin: 0, display: 'flex', gap: 6, alignItems: 'center' }}><Activity size={14} /> {t('students.modal.account_status')}</label>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 {['Active', 'Blocked', 'Graduated'].map(s => (
                                     <button
@@ -105,7 +108,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                                         style={{
                                             padding: '4px 10px',
                                             borderRadius: 4,
-                                            border: 'none',
+
                                             fontSize: '0.8rem',
                                             cursor: 'pointer',
                                             background: formData.status === s ?
@@ -115,7 +118,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                                             border: formData.status === s ? '1px solid transparent' : '1px solid var(--glass-border)'
                                         }}
                                     >
-                                        {s}
+                                        {s === 'Active' ? t('students.table.status_active') : s === 'Blocked' ? t('students.table.status_blocked') : t('students.table.status_alumni')}
                                     </button>
                                 ))}
                             </div>
@@ -124,7 +127,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                         {/* Section: Academic */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Register Number</label>
+                                <label className="form-label">{t('students.modal.reg_no')}</label>
                                 <input
                                     name="register_no"
                                     className="smart-input"
@@ -134,9 +137,9 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Semester</label>
+                                <label className="form-label">{t('students.modal.sem')}</label>
                                 <GlassSelect
-                                    options={[1, 2, 3, 4, 5, 6, 7, 8].map(s => ({ value: s.toString(), label: `Semester ${s}` }))}
+                                    options={[1, 2, 3, 4, 5, 6, 7, 8].map(s => ({ value: s.toString(), label: t('students.modal.sem_opt', { num: s }) }))}
                                     value={formData.semester}
                                     onChange={val => handleSelectChange('semester', val)}
                                 />
@@ -144,7 +147,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Department</label>
+                            <label className="form-label">{t('students.modal.dept')}</label>
                             <GlassSelect
                                 options={departments.map(d => ({ value: d.id, label: d.name }))}
                                 value={formData.department}
@@ -154,7 +157,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
 
                         {/* Section: Personal */}
                         <div className="form-group">
-                            <label className="form-label">Full Name</label>
+                            <label className="form-label">{t('students.modal.name')}</label>
                             <input
                                 name="name"
                                 className="smart-input"
@@ -164,9 +167,20 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                             />
                         </div>
 
+                        <div className="form-group">
+                            <label className="form-label">{t('students.modal.father')}</label>
+                            <input
+                                name="father_name"
+                                className="smart-input"
+                                value={formData.father_name}
+                                onChange={handleChange}
+                                placeholder={t('students.modal.father_placeholder')}
+                            />
+                        </div>
+
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Email</label>
+                                <label className="form-label">{t('students.modal.email')}</label>
                                 <input
                                     name="email"
                                     type="email"
@@ -176,7 +190,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Phone</label>
+                                <label className="form-label">{t('students.modal.phone')}</label>
                                 <input
                                     name="phone"
                                     className="smart-input"
@@ -187,7 +201,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Date of Birth</label>
+                            <label className="form-label">{t('students.modal.dob')}</label>
                             <input
                                 name="dob"
                                 type="date"
@@ -199,7 +213,7 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label">Address</label>
+                            <label className="form-label">{t('students.modal.address')}</label>
                             <textarea
                                 name="address"
                                 className="smart-input"
@@ -214,9 +228,9 @@ const SmartEditStudentModal = ({ student, onClose, onUpdate }) => {
 
                 {/* Footer */}
                 <div className="smart-form-footer">
-                    <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn-cancel">{t('students.modal.cancel')}</button>
                     <button type="submit" form="edit-student-form" className="btn-submit" disabled={loading}>
-                        {loading ? 'Saving...' : <><Save size={18} /> Save Changes</>}
+                        {loading ? t('students.modal.saving') : <><Save size={18} /> {t('students.modal.save_changes')}</>}
                     </button>
                 </div>
 

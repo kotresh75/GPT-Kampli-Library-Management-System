@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Search, UserPlus, Users, CheckCircle, XCircle, Activity, TrendingUp, Filter } from 'lucide-react';
-import StaffCard from '../components/staff/StaffCard';
+import {
+    User, Mail, Phone, Shield, Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Lock, RefreshCw,
+    Users, Filter, UserPlus, Activity
+} from 'lucide-react';
 import AddStaffModal from '../components/staff/AddStaffModal';
+import StaffCard from '../components/staff/StaffCard';
+import GlassSelect from '../components/common/GlassSelect';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import StatusModal from '../components/common/StatusModal';
-import GlassSelect from '../components/common/GlassSelect';
+import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const StaffManager = () => {
+    const { t } = useLanguage();
+    const socket = useSocket();
     const [staffList, setStaffList] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -88,6 +95,17 @@ const StaffManager = () => {
         fetchStaff();
     }, [search, filterDesignation, filterStatus]);
 
+    // Socket Listener
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Staff Update: Refreshing");
+            fetchStaff();
+        };
+        socket.on('staff_update', handleUpdate);
+        return () => socket.off('staff_update', handleUpdate);
+    }, [socket, search, filterDesignation, filterStatus]);
+
     // Handlers
     const handleEdit = (staff) => {
         setEditingStaff(staff);
@@ -136,18 +154,18 @@ const StaffManager = () => {
                 setStatusModal({
                     show: true,
                     type: 'success',
-                    title: action === 'delete' ? 'Staff Deleted' : 'Status Updated',
+                    title: action === 'delete' ? t('staff.actions.success_delete') : t('staff.actions.success_status'),
                     message: action === 'delete'
-                        ? `${data.name} has been permanently deleted.`
-                        : `${data.name} has been ${data.action}d successfully.`
+                        ? t('staff.actions.msg_delete', { name: data.name })
+                        : t('staff.actions.msg_status', { name: data.name, action: data.action })
                 });
             } else {
                 const err = await res.json();
                 setStatusModal({
                     show: true,
                     type: 'error',
-                    title: 'Action Failed',
-                    message: err.error || 'An error occurred while performing this action.'
+                    title: t('staff.actions.failed'),
+                    message: err.error || t('staff.actions.failed')
                 });
             }
         } catch (error) {
@@ -155,8 +173,8 @@ const StaffManager = () => {
             setStatusModal({
                 show: true,
                 type: 'error',
-                title: 'Network Error',
-                message: 'Unable to connect to server. Please check your connection.'
+                title: t('staff.actions.network_err'),
+                message: t('staff.actions.connect_err')
             });
         }
     };
@@ -164,14 +182,14 @@ const StaffManager = () => {
     const getConfirmProps = () => {
         const { action, data } = confirmConfig;
         if (action === 'delete') return {
-            title: "Delete Staff Permanently?",
-            message: `Are you sure you want to permanently delete ${data.name}? This action cannot be undone.`,
-            confirmText: "Delete", isDanger: true
+            title: t('staff.actions.delete_title'),
+            message: t('staff.actions.delete_msg', { name: data.name }),
+            confirmText: t('staff.actions.delete_btn'), isDanger: true
         };
         if (action === 'toggle_status') return {
-            title: `${data.action === 'enable' ? 'Enable' : 'Disable'} Staff?`,
-            message: `Are you sure you want to ${data.action} ${data.name}?`,
-            confirmText: data.action === 'enable' ? 'Enable' : 'Disable',
+            title: data.action === 'enable' ? t('staff.actions.enable_title') : t('staff.actions.disable_title'),
+            message: data.action === 'enable' ? t('staff.actions.enable_msg', { name: data.name }) : t('staff.actions.disable_msg', { name: data.name }),
+            confirmText: data.action === 'enable' ? t('staff.actions.enable_btn') : t('staff.actions.disable_btn'),
             isDanger: data.action === 'disable'
         };
         return {};
@@ -211,9 +229,9 @@ const StaffManager = () => {
             {/* Header & Toolbar */}
             <div className="mb-6">
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 12, marginBottom: '5px' }}>
-                    <Users size={28} className="text-blue-400" /> Staff Management
+                    <Users size={28} className="text-blue-400" /> {t('staff.title')}
                 </h1>
-                <p className="text-white/60">Manage library staff, permissions, and accounts.</p>
+                <p className="text-white/60">{t('staff.subtitle')}</p>
             </div>
 
             <div className="flex flex-col gap-4 mb-6">
@@ -222,7 +240,7 @@ const StaffManager = () => {
                         <Search size={20} />
                         <input
                             type="text"
-                            placeholder="Search Staff by Name..."
+                            placeholder={t('staff.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -231,11 +249,11 @@ const StaffManager = () => {
                     <div className="w-[200px]">
                         <GlassSelect
                             options={[
-                                { value: '', label: 'All Designations' },
-                                { value: 'Librarian', label: 'Librarian' },
-                                { value: 'Assistant Librarian', label: 'Assistant Librarian' },
-                                { value: 'Counter Staff', label: 'Counter Staff' },
-                                { value: 'Data Entry', label: 'Data Entry' }
+                                { value: '', label: t('staff.filters.all_designations') },
+                                { value: 'Librarian', label: t('staff.filters.librarian') },
+                                { value: 'Assistant Librarian', label: t('staff.filters.asst_librarian') },
+                                { value: 'Counter Staff', label: t('staff.filters.counter_staff') },
+                                { value: 'Data Entry', label: t('staff.filters.data_entry') }
                             ]}
                             value={filterDesignation}
                             onChange={(val) => setFilterDesignation(val)}
@@ -246,9 +264,9 @@ const StaffManager = () => {
                     <div className="w-[180px]">
                         <GlassSelect
                             options={[
-                                { value: '', label: 'All Status' },
-                                { value: 'Active', label: 'Active' },
-                                { value: 'Disabled', label: 'Disabled' }
+                                { value: '', label: t('staff.filters.all_status') },
+                                { value: 'Active', label: t('staff.filters.active') },
+                                { value: 'Disabled', label: t('staff.filters.disabled') }
                             ]}
                             value={filterStatus}
                             onChange={(val) => setFilterStatus(val)}
@@ -259,7 +277,7 @@ const StaffManager = () => {
                     <div className="h-8 w-px bg-white/10 mx-2"></div>
 
                     <button className="toolbar-primary-btn whitespace-nowrap" onClick={() => { setEditingStaff(null); setShowAddModal(true); }}>
-                        <UserPlus size={20} /> Add New Staff
+                        <UserPlus size={20} /> {t('staff.add_new')}
                     </button>
                 </div>
             </div>
@@ -268,29 +286,29 @@ const StaffManager = () => {
             <div style={{ display: 'flex', gap: '20px', padding: '20px', flexWrap: 'wrap' }}>
                 <StatCard
                     icon={Users}
-                    label="Total Staff"
+                    label={t('staff.stats.total')}
                     value={stats.total}
                     color="#4299e1"
                 />
                 <StatCard
                     icon={CheckCircle}
-                    label="Active Staff"
+                    label={t('staff.stats.active')}
                     value={stats.active}
                     color="#48bb78"
-                    subtext={stats.total > 0 ? `${Math.round((stats.active / stats.total) * 100)}% of total` : ''}
+                    subtext={stats.total > 0 ? `${Math.round((stats.active / stats.total) * 100)}% ${t('staff.stats.of_total')}` : ''}
                 />
                 <StatCard
                     icon={XCircle}
-                    label="Disabled Staff"
+                    label={t('staff.stats.disabled')}
                     value={stats.disabled}
                     color="#fc8181"
                 />
                 <StatCard
                     icon={Activity}
-                    label="Total Transactions"
+                    label={t('staff.stats.total_trx')}
                     value={stats.totalTransactions}
                     color="#9f7aea"
-                    subtext="Books issued/returned"
+                    subtext={t('staff.stats.books_io')}
                 />
             </div>
 
@@ -315,13 +333,13 @@ const StaffManager = () => {
                     ) : staffList.length === 0 ? (
                         <div className="glass-panel" style={{ padding: '40px', textAlign: 'center', gridColumn: '1 / -1' }}>
                             <Users size={48} color="var(--text-secondary)" style={{ marginBottom: '15px', opacity: 0.5 }} />
-                            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>No staff found matching criteria.</p>
+                            <p style={{ color: 'var(--text-secondary)', margin: 0 }}>{t('staff.no_staff')}</p>
                             <button
                                 className="primary-glass-btn"
                                 style={{ marginTop: '20px' }}
                                 onClick={() => { setEditingStaff(null); setShowAddModal(true); }}
                             >
-                                <UserPlus size={18} style={{ marginRight: 8 }} /> Add First Staff Member
+                                <UserPlus size={18} style={{ marginRight: 8 }} /> {t('staff.add_first')}
                             </button>
                         </div>
                     ) : (

@@ -1,4 +1,5 @@
 const db = require('../db');
+const socketService = require('../services/socketService');
 
 // Helper for IDs
 const generateId = () => Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -70,7 +71,7 @@ exports.getBooks = (req, res) => {
 exports.addBook = (req, res) => {
     console.log("addBook Payload:", req.body); // Debug Log
 
-    const { isbn, title, author, publisher, category, dept_id, price, total_copies, cover_image_url, ebook_link, shelf_location } = req.body;
+    const { isbn, title, author, publisher, category, dept_id, price, total_copies, cover_image, ebook_link, shelf_location } = req.body;
 
     // Use dept_id if present, else category (as fallback)
     const finalDeptId = dept_id || category; // This might be a UUID or a Name depending entirely on frontend
@@ -115,11 +116,11 @@ exports.addBook = (req, res) => {
     // Use 'dept_id' for everything.
 
     const insertBookSafe = `
-        INSERT INTO books (id, isbn, title, author, publisher, dept_id, price, total_copies, cover_image_url, ebook_link, shelf_location)
+        INSERT INTO books (id, isbn, title, author, publisher, dept_id, price, total_copies, cover_image, ebook_link, shelf_location)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.run(insertBookSafe, [bookId, isbn, title, author, publisher, finalDeptId, price, quantity, cover_image_url, ebook_link, shelf_location || ''], function (err) {
+    db.run(insertBookSafe, [bookId, isbn, title, author, publisher, finalDeptId, price, quantity, cover_image, ebook_link, shelf_location || ''], function (err) {
         if (err) {
             if (err.message.includes('UNIQUE constraint')) {
                 return res.status(400).json({ error: "Book with this ISBN already exists" });
@@ -139,6 +140,7 @@ exports.addBook = (req, res) => {
             }
             copyStmt.finalize((err) => {
                 if (err) console.error("Failed to finalize copies:", err);
+                socketService.emit('book_update', { type: 'ADD', isbn });
                 res.status(201).json({ message: "Book added successfully with copies", isbn });
             });
         });
@@ -166,20 +168,21 @@ exports.getBookDetails = (req, res) => {
 // Update Book
 exports.updateBook = (req, res) => {
     const { isbn } = req.params;
-    const { title, author, publisher, category, dept_id, price, cover_image_url, shelf_location } = req.body;
+    const { title, author, publisher, category, dept_id, price, cover_image, shelf_location } = req.body;
 
     const finalDeptId = dept_id || category;
 
     const sql = `
-        UPDATE books SET title = ?, author = ?, publisher = ?, dept_id = ?, price = ?, cover_image_url = ?, shelf_location = ?
+        UPDATE books SET title = ?, author = ?, publisher = ?, dept_id = ?, price = ?, cover_image = ?, shelf_location = ?
         WHERE isbn = ?
     `;
 
-    db.run(sql, [title, author, publisher, finalDeptId, price, cover_image_url, shelf_location || '', isbn], function (err) {
+    db.run(sql, [title, author, publisher, finalDeptId, price, cover_image, shelf_location || '', isbn], function (err) {
         if (err) {
             console.error("Update Book Error:", err.message);
             return res.status(500).json({ error: err.message });
         }
+        socketService.emit('book_update', { type: 'UPDATE', isbn });
         res.json({ message: "Book updated successfully" });
     });
 };
@@ -224,6 +227,7 @@ exports.deleteBook = (req, res) => {
                     // D. Delete Book by ID
                     db.run("DELETE FROM books WHERE id = ?", [bookId], function (err) {
                         if (err) return res.status(500).json({ error: "Failed to delete book: " + err.message });
+                        socketService.emit('book_update', { type: 'DELETE', isbn });
                         res.json({ message: "Book deleted. History preserved with suffix." });
                     });
                 });
@@ -239,6 +243,7 @@ exports.updateCopyStatus = (req, res) => {
 
     db.run("UPDATE book_copies SET status = ? WHERE id = ?", [status, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
+        socketService.emit('book_update', { type: 'COPY_UPDATE', id });
         res.json({ message: "Copy status updated" });
     });
 };
@@ -324,7 +329,7 @@ exports.bulkUploadBooks = (req, res) => {
     const processBooks = async () => {
         for (const book of books) {
 
-            const { title, author, publisher, category, price, quantity: qtyStr, cover_image_url, ebook_link, shelf_location } = book;
+            const { title, author, publisher, category, price, quantity: qtyStr, cover_image, ebook_link, shelf_location } = book;
             let { isbn } = book;
             const quantity = parseInt(qtyStr) || 1;
 
@@ -380,12 +385,12 @@ exports.bulkUploadBooks = (req, res) => {
             try {
                 await new Promise((resolve, reject) => {
                     const insertSql = `
-                        INSERT INTO books (id, isbn, title, author, publisher, dept_id, category, price, total_copies, cover_image_url, ebook_link, shelf_location) 
+                        INSERT INTO books (id, isbn, title, author, publisher, dept_id, category, price, total_copies, cover_image, ebook_link, shelf_location) 
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `;
                     // Note: We Save category string into 'category' column to populate it if dept_id is null
                     // This matches our "Smart Join" logic where we check dept_id OR category matches
-                    db.run(insertSql, [bookId, isbn, title, author, publisher, finalDeptId, category, price || 0, quantity, cover_image_url || '', ebook_link || '', shelf_location || ''], function (err) {
+                    db.run(insertSql, [bookId, isbn, title, author, publisher, finalDeptId, category, price || 0, quantity, cover_image || '', ebook_link || '', shelf_location || ''], function (err) {
                         if (err) reject(err);
                         else resolve();
                     });

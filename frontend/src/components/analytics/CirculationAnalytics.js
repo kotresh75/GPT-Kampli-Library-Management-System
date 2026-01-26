@@ -2,8 +2,10 @@ import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, ComposedChart, Line } from 'recharts';
 import { TrendingUp, ArrowUpRight, ArrowDownRight, Activity, BookOpen, Clock } from 'lucide-react';
 import StatsCard from '../dashboard/StatsCard';
+import { useLanguage } from '../../context/LanguageContext';
 
 const CirculationAnalytics = ({ stats, loading }) => {
+    const { t } = useLanguage();
     // Helper to calculate real trends from data
     const getTrend = (dataKey) => {
         if (!stats?.trend || stats.trend.length < 2) return null;
@@ -41,28 +43,28 @@ const CirculationAnalytics = ({ stats, loading }) => {
             {/* KPI Grid - Forced 2 Columns */}
             <div className="grid gap-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
                 <StatsCard
-                    title="Active Issues"
+                    title={t('reports.analytics.circ.active_issues')}
                     value={stats?.summary?.active_issued || 0}
                     icon={BookOpen}
                     color="blue"
                     trend={null} // Removed static placeholder
                 />
                 <StatsCard
-                    title="Books Returned"
+                    title={t('reports.analytics.circ.books_returned')}
                     value={stats?.summary?.monthly_returns || 0}
                     icon={TrendingUp}
                     color="green"
                     trend={returnTrend ? returnTrend.label : null}
                 />
                 <StatsCard
-                    title="Overdue Books"
+                    title={t('reports.analytics.circ.overdue_books')}
                     value={stats?.summary?.active_overdue || 0}
                     icon={Clock}
                     color="red"
-                    trend="Strict Action Required"
+                    trend={t('reports.analytics.circ.strict_action')}
                 />
                 <StatsCard
-                    title="Defaulter Ratio"
+                    title={t('reports.analytics.circ.defaulter_ratio')}
                     value={`${stats?.summary?.active_issued ? ((stats.summary.active_overdue / stats.summary.active_issued) * 100).toFixed(1) : 0}%`}
                     icon={Activity}
                     color="orange"
@@ -79,19 +81,19 @@ const CirculationAnalytics = ({ stats, loading }) => {
                     <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
                         <h3 className="font-bold text-white flex items-center gap-2">
                             <BookOpen size={16} className="text-amber-400" />
-                            Most Demanded Books
+                            {t('reports.analytics.circ.most_demanded')}
                         </h3>
                         <button className="px-3 py-1 text-xs font-medium text-indigo-300 hover:text-white bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-full transition-all">
-                            View All
+                            {t('reports.analytics.circ.view_all')}
                         </button>
                     </div>
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
                         <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase tracking-wider bg-white/[0.02]">
                                 <tr>
-                                    <th className="p-3 pl-4 rounded-l-lg">Rank</th>
-                                    <th className="p-3">Book Title</th>
-                                    <th className="p-3 text-right rounded-r-lg">Circulation</th>
+                                    <th className="p-3 pl-4 rounded-l-lg">{t('reports.analytics.circ.rank')}</th>
+                                    <th className="p-3">{t('reports.analytics.circ.book_title')}</th>
+                                    <th className="p-3 text-right rounded-r-lg">{t('reports.analytics.circ.circulation')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
@@ -124,30 +126,30 @@ const CirculationAnalytics = ({ stats, loading }) => {
                 <div className="chart-widget p-5 border-none bg-gradient-to-b from-purple-900/10 to-transparent flex flex-col gap-4">
                     <h3 className="font-bold text-white flex items-center gap-2">
                         <Activity size={16} className="text-purple-400" />
-                        Quick Stats
+                        {t('reports.analytics.circ.quick_stats')}
                     </h3>
 
                     <div className="space-y-3">
                         <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                             <div className="flex items-center gap-2 mb-1">
                                 <TrendingUp size={14} className="text-green-400" />
-                                <span className="text-xs font-bold text-green-400 uppercase tracking-wider">Most Active</span>
+                                <span className="text-xs font-bold text-green-400 uppercase tracking-wider">{t('reports.analytics.circ.most_active')}</span>
                             </div>
                             <p className="text-sm text-gray-300 leading-snug">
                                 {stats?.top_books && stats.top_books.length > 0 ? (
-                                    <>Top book is <strong className="text-white">"{stats.top_books[0].title.substring(0, 20)}..."</strong></>
-                                ) : 'Data analyzing...'}
+                                    <>{t('reports.analytics.circ.top_book_is')} <strong className="text-white">"{stats.top_books[0].title.substring(0, 20)}..."</strong></>
+                                ) : t('reports.analytics.circ.analyzing')}
                             </p>
                         </div>
 
                         <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
                             <div className="flex items-center gap-2 mb-1">
                                 <Clock size={14} className="text-blue-400" />
-                                <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">System Load</span>
+                                <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">{t('reports.analytics.circ.system_load')}</span>
                             </div>
                             <p className="text-sm text-white font-mono leading-snug">
-                                {stats?.trend ? stats.trend.reduce((acc, curr) => acc + curr.issue + curr.return, 0) : 0} transactions
-                                <span className="text-gray-400 font-sans ml-1">processed in this period.</span>
+                                {stats?.trend ? stats.trend.reduce((acc, curr) => acc + curr.issue + curr.return, 0) : 0} {t('reports.analytics.circ.transactions')}
+                                <span className="text-gray-400 font-sans ml-1">{t('reports.analytics.circ.processed')}</span>
                             </p>
                         </div>
                     </div>

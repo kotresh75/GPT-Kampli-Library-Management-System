@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Building } from 'lucide-react';
+import { Search, Plus, Building } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import SmartAddDepartmentModal from '../components/departments/SmartAddDepartmentModal';
 import SmartDepartmentTable from '../components/departments/SmartDepartmentTable';
-import StatusModal from '../components/common/StatusModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import StatusModal from '../components/common/StatusModal';
+import { useSocket } from '../context/SocketContext';
 
 const DepartmentPage = () => {
     const [departments, setDepartments] = useState([]);
@@ -11,18 +13,18 @@ const DepartmentPage = () => {
     const [showModal, setShowModal] = useState(false);
     const [selectedDept, setSelectedDept] = useState(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     // Modal States
     const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
-    const [confirmModal, setConfirmModal] = useState({ isOpen: false, id: null });
+    const [confirmModal, setConfirmModal] = useState({ isOpen: false, data: null });
+
+    const socket = useSocket();
 
     const fetchDepartments = async () => {
         setLoading(true);
         try {
-            const url = search
-                ? `http://localhost:3001/api/departments?search=${search}`
-                : 'http://localhost:3001/api/departments';
-            const res = await fetch(url);
+            const res = await fetch(`http://localhost:3001/api/departments?search=${search}`);
             const data = await res.json();
             if (Array.isArray(data)) setDepartments(data);
         } catch (error) {
@@ -36,24 +38,37 @@ const DepartmentPage = () => {
         fetchDepartments();
     }, [search]);
 
+    // Socket Listener
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Department Update: Refreshing");
+            fetchDepartments();
+        };
+        socket.on('dept_update', handleUpdate);
+        return () => socket.off('dept_update', handleUpdate);
+    }, [socket, search]);
+
     const handleDeleteClick = (id) => {
-        setConfirmModal({ isOpen: true, id });
+        setConfirmModal({ isOpen: true, data: { id } });
     };
 
     const confirmDelete = async () => {
-        const id = confirmModal.id;
+        const id = confirmModal.data?.id;
+        if (!id) return;
+
         try {
             const res = await fetch(`http://localhost:3001/api/departments/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchDepartments();
-                setStatusModal({ isOpen: true, type: 'success', title: 'Deleted', message: 'Department deleted successfully.' });
+                setStatusModal({ isOpen: true, type: 'success', title: t('departments.delete_success_title'), message: t('departments.delete_success_msg') });
             } else {
-                setStatusModal({ isOpen: true, type: 'error', title: 'Delete Failed', message: 'Department might be in use by students or books.' });
+                setStatusModal({ isOpen: true, type: 'error', title: t('departments.delete_fail_title'), message: t('departments.delete_fail_msg') });
             }
         } catch (err) {
-            setStatusModal({ isOpen: true, type: 'error', title: 'Error', message: 'Network error occurred.' });
+            setStatusModal({ isOpen: true, type: 'error', title: t('common.error'), message: 'Network error occurred.' });
         } finally {
-            setConfirmModal({ isOpen: false, id: null });
+            setConfirmModal({ isOpen: false, data: null });
         }
     };
 
@@ -63,9 +78,9 @@ const DepartmentPage = () => {
                 {/* Header */}
                 <div className="flex flex-col gap-2">
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent flex items-center gap-3">
-                        <Building size={32} className="text-blue-400" /> Department Management
+                        <Building size={32} className="text-blue-400" /> {t('departments.title')}
                     </h1>
-                    <p className="text-[var(--text-secondary)]">Manage academic departments and track associated records.</p>
+                    <p className="text-[var(--text-secondary)]">{t('departments.subtitle')}</p>
                 </div>
 
                 {/* Smart Toolbar */}
@@ -74,7 +89,7 @@ const DepartmentPage = () => {
                         <Search size={20} />
                         <input
                             type="text"
-                            placeholder="Search Name or Code..."
+                            placeholder={t('departments.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -86,7 +101,7 @@ const DepartmentPage = () => {
                         className="toolbar-primary-btn"
                         onClick={() => { setSelectedDept(null); setShowModal(true); }}
                     >
-                        <Plus size={20} /> Add Department
+                        <Plus size={20} /> {t('departments.add_department')}
                     </button>
                 </div>
 
@@ -110,11 +125,12 @@ const DepartmentPage = () => {
 
             <ConfirmationModal
                 isOpen={confirmModal.isOpen}
-                onClose={() => setConfirmModal({ isOpen: false, id: null })}
+                onClose={() => setConfirmModal({ isOpen: false, data: null })}
                 onConfirm={confirmDelete}
-                title="Delete Department?"
-                message="Are you sure you want to delete this department? This cannot be undone."
-                confirmText="Delete"
+                title={t('departments.delete_title')}
+                message={t('departments.delete_confirm_msg')}
+                confirmText={t('common.delete')}
+                cancelText={t('common.cancel')}
                 isDanger={true}
             />
 

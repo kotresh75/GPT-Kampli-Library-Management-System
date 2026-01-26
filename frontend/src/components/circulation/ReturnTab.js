@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, RotateCcw, CheckCircle, AlertCircle, RefreshCcw, User, BookOpen, Calendar, Banknote, Package, X, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import StatusModal from '../common/StatusModal';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Helper: Format date to DD/MM/YYYY
 const formatDate = (dateStr) => {
     if (!dateStr) return '-';
+    // ... same as before
     const d = new Date(dateStr);
     const day = d.getDate().toString().padStart(2, '0');
     const month = (d.getMonth() + 1).toString().padStart(2, '0');
@@ -12,19 +14,10 @@ const formatDate = (dateStr) => {
     return `${day}/${month}/${year}`;
 };
 
-// Helper: Format date with time to DD/MM/YYYY HH:MM
-const formatDateTime = (dateStr) => {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    const day = d.getDate().toString().padStart(2, '0');
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
-};
+// Helper: Format date to DD/MM/YYYY
 
 const ReturnTab = () => {
+    const { t } = useLanguage();
     // Search State
     const [searchQuery, setSearchQuery] = useState('');
     const [issuedStudents, setIssuedStudents] = useState([]);
@@ -67,8 +60,20 @@ const ReturnTab = () => {
     const [processing, setProcessing] = useState(false);
     const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
-    const showSuccess = (msg) => setStatusModal({ isOpen: true, type: 'success', title: 'Success', message: msg });
-    const showError = (msg) => setStatusModal({ isOpen: true, type: 'error', title: 'Error', message: msg });
+    const showSuccess = (msg) => setStatusModal({ isOpen: true, type: 'success', title: t('common.success'), message: msg });
+    const showError = (msg) => setStatusModal({ isOpen: true, type: 'error', title: t('common.error'), message: msg });
+
+    const [emailEvents, setEmailEvents] = useState(null);
+
+    // Fetch Email Event Settings
+    useEffect(() => {
+        fetch('http://localhost:3001/api/settings/app')
+            .then(res => res.json())
+            .then(data => {
+                if (data.email_events) setEmailEvents(data.email_events);
+            })
+            .catch(err => console.error("Failed to fetch settings:", err));
+    }, []);
 
     // Fetch Policy Defaults on Mount
     useEffect(() => {
@@ -263,7 +268,7 @@ const ReturnTab = () => {
             const data = await res.json();
 
             if (res.ok) {
-                showSuccess(`Book returned successfully. ${data.fine_generated ? `Fine: ₹${data.fine_amount}` : ''}`);
+                showSuccess(t('circulation.return.return_success'));
                 // Refresh loans and student list
                 if (student?.id) {
                     await fetchStudentLoans(student.id);
@@ -273,7 +278,7 @@ const ReturnTab = () => {
                 showError(data.error || 'Return failed');
             }
         } catch (e) {
-            showError('Network Error');
+            showError("Network Error");
         } finally {
             setProcessing(false);
             setReturnModal(prev => ({ ...prev, isOpen: false }));
@@ -302,7 +307,7 @@ const ReturnTab = () => {
             const data = await res.json();
 
             if (res.ok) {
-                showSuccess(`Book renewed! New due date: ${formatDate(data.new_due_date)}`);
+                showSuccess(t('circulation.return.renew_success').replace('{date}', formatDate(data.new_due_date)));
                 // Refresh loans
                 if (student?.id) {
                     await fetchStudentLoans(student.id);
@@ -341,7 +346,7 @@ const ReturnTab = () => {
                     <Search size={20} />
                     <input
                         type="text"
-                        placeholder="Search by Name or Register No..."
+                        placeholder={t('circulation.return.search_placeholder')}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                     />
@@ -358,7 +363,7 @@ const ReturnTab = () => {
                 {!loadingStudents && issuedStudents.length === 0 && (
                     <div className="text-center py-20 text-gray-500 opacity-60">
                         <BookOpen size={48} className="mx-auto mb-4" />
-                        <p>{searchQuery ? `No students found matching "${searchQuery}"` : 'No students currently have books issued'}</p>
+                        <p>{searchQuery ? t('circulation.return.no_students_found') : 'No students currently have books issued'}</p>
                     </div>
                 )}
 
@@ -396,9 +401,18 @@ const ReturnTab = () => {
                                                 width: '50px', height: '50px', borderRadius: '50%',
                                                 background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
                                                 display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                                border: '1px solid var(--glass-border)'
+                                                border: '1px solid var(--glass-border)',
+                                                overflow: 'hidden'
                                             }}>
-                                                <span className="text-xl font-bold text-white">{student.full_name?.charAt(0)}</span>
+                                                {student.profile_image ? (
+                                                    <img
+                                                        src={student.profile_image}
+                                                        alt={student.full_name}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    <span className="text-xl font-bold text-white">{student.full_name?.charAt(0)}</span>
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="font-bold text-lg text-white">{student.full_name}</div>
@@ -414,7 +428,7 @@ const ReturnTab = () => {
 
                                         {/* Books Count Badge */}
                                         <div className="text-right">
-                                            <div className="text-sm text-gray-400">Books Issued</div>
+                                            <div className="text-sm text-gray-400">{t('circulation.return.books_issued')}</div>
                                             <div className="text-2xl font-bold text-white">{student.books_issued}</div>
                                         </div>
                                     </div>
@@ -424,11 +438,11 @@ const ReturnTab = () => {
                                         <div className="flex items-center gap-4 text-sm">
                                             {hasOverdue ? (
                                                 <span className="flex items-center gap-1 text-red-400">
-                                                    <Clock size={14} /> {student.overdue_count} Overdue
+                                                    <Clock size={14} /> {student.overdue_count} {t('circulation.return.overdue')}
                                                 </span>
                                             ) : (
                                                 <span className="flex items-center gap-1 text-green-400">
-                                                    <CheckCircle size={14} /> All on time
+                                                    <CheckCircle size={14} /> {t('circulation.return.all_on_time')}
                                                 </span>
                                             )}
                                         </div>
@@ -450,10 +464,19 @@ const ReturnTab = () => {
                                                     return (
                                                         <div key={loan.transaction_id} className="p-4 rounded-xl border border-glass bg-white/5">
                                                             <div className="flex justify-between items-start mb-3">
-                                                                <div className="flex-1">
-                                                                    <div className="font-semibold text-white text-lg">{loan.title}</div>
-                                                                    <div className="text-sm text-gray-400">{loan.author}</div>
-                                                                    <div className="text-xs text-gray-500 font-mono mt-1">Acc: {loan.accession_number}</div>
+                                                                <div className="flex items-start gap-3 flex-1">
+                                                                    {loan.cover_image ? (
+                                                                        <img src={loan.cover_image} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
+                                                                    ) : (
+                                                                        <div className="w-6 h-8 rounded-sm bg-blue-500/10 flex items-center justify-center text-blue-400">
+                                                                            <BookOpen size={14} />
+                                                                        </div>
+                                                                    )}
+                                                                    <div>
+                                                                        <div className="font-semibold text-white text-lg">{loan.title}</div>
+                                                                        <div className="text-sm text-gray-400">{loan.author}</div>
+                                                                        <div className="text-xs text-gray-500 font-mono mt-1">Acc: {loan.accession_number}</div>
+                                                                    </div>
                                                                 </div>
                                                                 <div className="text-right">
                                                                     <div className={`px-2 py-1 rounded text-xs font-medium ${isOverdue ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
@@ -462,7 +485,7 @@ const ReturnTab = () => {
                                                                 </div>
                                                             </div>
 
-                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3">
+                                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-3 pl-14">
                                                                 <div>
                                                                     <div className="text-gray-500 text-xs">Issue Date</div>
                                                                     <div className="text-white">{formatDate(loan.issue_date)}</div>
@@ -521,7 +544,7 @@ const ReturnTab = () => {
                         <div className="p-6 border-b border-white/10 flex-shrink-0">
                             <div className="flex justify-between items-center">
                                 <h2 className="modal-title flex items-center gap-2">
-                                    <RotateCcw className="text-blue-400" /> Return Book
+                                    <RotateCcw className="text-blue-400" /> {t('circulation.return.return_book')}
                                 </h2>
                                 <button onClick={() => setReturnModal(p => ({ ...p, isOpen: false }))} className="modal-close">
                                     <X size={20} />
@@ -541,6 +564,15 @@ const ReturnTab = () => {
                                 </div>
                             </div>
 
+                            {emailEvents && emailEvents.returnReceipt === false && (
+                                <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm flex items-start gap-2">
+                                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                    <span>
+                                        <strong>Warning:</strong> Email receipts are disabled. Student will NOT receive a return receipt.
+                                    </span>
+                                </div>
+                            )}
+
                             {/* Book Info */}
                             <div className="p-4 rounded-xl mb-4" style={{ background: 'var(--hover-overlay)' }}>
                                 <div className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>{returnModal.loan?.title}</div>
@@ -552,7 +584,7 @@ const ReturnTab = () => {
 
                             {/* Condition Selector */}
                             <div className="mb-4">
-                                <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Book Condition</label>
+                                <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>{t('circulation.return.book_condition')}</label>
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     {conditions.map(c => {
                                         const isSelected = returnModal.condition === c.value;
@@ -593,7 +625,7 @@ const ReturnTab = () => {
                             {(returnModal.condition !== 'Good' || calculateOverdueFine(returnModal.loan) > 0) && (
                                 <div className="mb-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
                                     <label className="block text-sm text-orange-400 mb-2 font-medium flex items-center gap-2">
-                                        <Banknote size={16} /> Fine Amount (Editable)
+                                        <Banknote size={16} /> {t('circulation.return.fine_amount')}
                                     </label>
                                     <div className="flex items-center gap-2">
                                         <span className="text-orange-400">₹</span>
@@ -618,7 +650,7 @@ const ReturnTab = () => {
                                             className="w-5 h-5 rounded"
                                         />
                                         <span style={{ color: '#a855f7' }} className="font-medium flex items-center gap-2">
-                                            <Package size={16} /> Student is giving a replacement copy
+                                            <Package size={16} /> {t('circulation.return.replacement_copy')}
                                         </span>
                                     </label>
                                     {returnModal.replacementGiven && (
@@ -645,7 +677,7 @@ const ReturnTab = () => {
 
                             {/* Remarks */}
                             <div className="mb-6">
-                                <label className="block text-sm text-gray-400 mb-2">Remarks</label>
+                                <label className="block text-sm text-gray-400 mb-2">{t('circulation.return.remarks')}</label>
                                 <input
                                     type="text"
                                     placeholder="Optional remarks..."
@@ -661,7 +693,7 @@ const ReturnTab = () => {
                                     onClick={() => setReturnModal(p => ({ ...p, isOpen: false }))}
                                     className="btn btn-secondary flex-1 py-3"
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={executeReturn}
@@ -669,7 +701,7 @@ const ReturnTab = () => {
                                     className="btn btn-primary flex-1 py-3 flex items-center justify-center gap-2"
                                 >
                                     {processing ? <RefreshCcw className="animate-spin" size={18} /> : <CheckCircle size={18} />}
-                                    Confirm Return
+                                    {t('circulation.return.confirm_return')}
                                 </button>
                             </div>
                         </div>
@@ -684,7 +716,7 @@ const ReturnTab = () => {
                         <div className="p-6 border-b border-white/10 flex-shrink-0">
                             <div className="flex justify-between items-center">
                                 <h2 className="modal-title flex items-center gap-2">
-                                    <Calendar className="text-purple-400" /> Renew Book
+                                    <Calendar className="text-purple-400" /> {t('circulation.return.renew_book')}
                                 </h2>
                                 <button onClick={() => setRenewModal(p => ({ ...p, isOpen: false }))} className="modal-close">
                                     <X size={20} />
@@ -704,6 +736,15 @@ const ReturnTab = () => {
                                 </div>
                             </div>
 
+                            {emailEvents && emailEvents.renewalConfirmation === false && (
+                                <div className="mb-4 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm flex items-start gap-2">
+                                    <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                                    <span>
+                                        <strong>Warning:</strong> Email receipts are disabled. Student will NOT receive a renewal confirmation.
+                                    </span>
+                                </div>
+                            )}
+
                             {/* Book Info */}
                             <div className="p-4 rounded-xl mb-4" style={{ background: 'var(--hover-overlay)' }}>
                                 <div className="font-bold" style={{ color: 'var(--text-primary)' }}>{renewModal.loan?.title}</div>
@@ -712,7 +753,7 @@ const ReturnTab = () => {
 
                             {/* Days Input */}
                             <div className="mb-4">
-                                <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>Extend by (days)</label>
+                                <label className="block text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>{t('circulation.return.renew_extend_days')}</label>
                                 <input
                                     type="number"
                                     value={renewModal.extendDays}
@@ -723,7 +764,7 @@ const ReturnTab = () => {
 
                             {/* New Due Date Preview */}
                             <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl mb-6">
-                                <div className="text-sm text-purple-400">New Due Date:</div>
+                                <div className="text-sm text-purple-400">{t('circulation.return.new_due_date')}:</div>
                                 <div className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{getNewDueDatePreview()}</div>
                             </div>
 
@@ -733,7 +774,7 @@ const ReturnTab = () => {
                                     onClick={() => setRenewModal(p => ({ ...p, isOpen: false }))}
                                     className="btn btn-secondary flex-1 py-3"
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     onClick={executeRenew}
@@ -741,7 +782,7 @@ const ReturnTab = () => {
                                     className="btn btn-primary flex-1 py-3 flex items-center justify-center gap-2"
                                 >
                                     {processing ? <RefreshCcw className="animate-spin" size={18} /> : <CheckCircle size={18} />}
-                                    Confirm Renew
+                                    {t('circulation.return.confirm_renew')}
                                 </button>
                             </div>
                         </div>

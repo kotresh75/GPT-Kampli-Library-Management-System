@@ -1,5 +1,6 @@
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid'); // Added for UUID generation
+const socketService = require('../services/socketService'); // Socket
 
 // GET /api/students
 exports.getStudents = (req, res) => {
@@ -101,7 +102,7 @@ exports.getDefaulters = (req, res) => {
 
 // POST /api/students (Create)
 exports.createStudent = (req, res) => {
-    let { name, register_no, department, semester, email, phone, address, dob } = req.body;
+    let { name, father_name, register_no, department, semester, email, phone, address, dob } = req.body;
     if (!email) email = null; // Ensure empty string becomes null for UNIQUE constraint
 
     // Validate required fields (including DOB which is NOT NULL in DB)
@@ -112,24 +113,26 @@ exports.createStudent = (req, res) => {
     // Auto-generate UUID for ID if not handled by DB (DB schema defines ID as TEXT PRIMARY KEY)
     const id = uuidv4();
 
-    const query = `INSERT INTO students (id, full_name, register_number, dept_id, semester, email, phone, address, dob, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`;
-    db.run(query, [id, name, register_no, department, semester, email, phone, address, dob], function (err) {
+    const query = `INSERT INTO students (id, full_name, father_name, register_number, dept_id, semester, email, phone, address, dob, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`;
+    db.run(query, [id, name, father_name, register_no, department, semester, email, phone, address, dob], function (err) {
         if (err) {
             if (err.message.includes('UNIQUE')) return res.status(409).json({ error: "Register No or Email already exists" });
             return res.status(500).json({ error: err.message });
         }
+        socketService.emit('student_update', { type: 'CREATE', id });
         res.json({ id: id, message: "Student created successfully" });
     });
 };
 
 // PUT /api/students/:id
 exports.updateStudent = (req, res) => {
-    const { name, register_no, department, semester, email, phone, address, status, dob } = req.body;
+    const { name, father_name, register_no, department, semester, email, phone, address, status, dob } = req.body;
     const { id } = req.params;
 
-    const query = `UPDATE students SET full_name=?, register_number=?, dept_id=?, semester=?, email=?, phone=?, address=?, status=?, dob=? WHERE id=?`;
-    db.run(query, [name, register_no, department, semester, email, phone, address, status, dob, id], function (err) {
+    const query = `UPDATE students SET full_name=?, father_name=?, register_number=?, dept_id=?, semester=?, email=?, phone=?, address=?, status=?, dob=? WHERE id=?`;
+    db.run(query, [name, father_name, register_no, department, semester, email, phone, address, status, dob, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
+        socketService.emit('student_update', { type: 'UPDATE', id });
         res.json({ message: "Student updated" });
     });
 };
@@ -166,6 +169,7 @@ exports.deleteStudent = (req, res) => {
             db.run("DELETE FROM students WHERE id=?", [id], function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 if (this.changes === 0) return res.status(404).json({ error: "Student not found" });
+                socketService.emit('student_update', { type: 'DELETE', id });
                 res.json({ message: "Student permanently deleted and history anonymized." });
             });
         });
@@ -302,7 +306,7 @@ exports.exportStudents = (req, res) => {
     const { scope, format, filters, ids } = req.body;
 
     let query = `
-        SELECT s.full_name, s.register_number, d.name as department, s.semester, s.status, s.email, s.phone, s.dob, s.address
+        SELECT s.full_name, s.father_name, s.register_number, d.name as department, s.semester, s.status, s.email, s.phone, s.dob, s.address
         FROM students s
         LEFT JOIN departments d ON s.dept_id = d.id
         WHERE s.status != 'Deleted'
@@ -335,9 +339,10 @@ exports.exportStudents = (req, res) => {
 
         if (format === 'csv') {
             // Manual CSV Generation
-            const headers = ['Name', 'Register No', 'Department', 'Semester', 'Status', 'Email', 'Phone', 'DOB', 'Address'];
+            const headers = ['Name', 'Father Name', 'Register No', 'Department', 'Semester', 'Status', 'Email', 'Phone', 'DOB', 'Address'];
             const csvRows = rows.map(r => [
                 `"${r.full_name}"`,
+                `"${r.father_name || ''}"`,
                 `"${r.register_number}"`,
                 `"${r.department || ''}"`,
                 `"${r.semester}"`,
@@ -452,13 +457,13 @@ exports.bulkImport = (req, res) => {
 
     db.serialize(() => {
         db.run("BEGIN TRANSACTION");
-        const stmt = db.prepare(`INSERT OR IGNORE INTO students (id, full_name, register_number, dept_id, semester, email, phone, address, dob, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`);
+        const stmt = db.prepare(`INSERT OR IGNORE INTO students (id, full_name, father_name, register_number, dept_id, semester, email, phone, address, dob, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')`);
 
         students.forEach(s => {
             const id = uuidv4();
             // Ensure DOB is present, else skip or default? 
             // If missing DOB, it will fail NOT NULL constraint (failed++).
-            stmt.run([id, s.name, s.register_no, s.department, s.semester || '1', s.email, s.phone, s.address, s.dob], function (err) {
+            stmt.run([id, s.name, s.father_name, s.register_no, s.department, s.semester || '1', s.email, s.phone, s.address, s.dob], function (err) {
                 if (err) {
                     console.error("Import Error:", err.message);
                     failed++;
@@ -472,5 +477,54 @@ exports.bulkImport = (req, res) => {
         db.run("COMMIT", () => {
             res.json({ message: "Bulk import complete", success, failed });
         });
+    });
+};
+// POST /api/students/photo/upload
+exports.uploadPhoto = (req, res) => {
+    const { register_no, image_data } = req.body;
+
+    if (!register_no || !image_data) {
+        return res.status(400).json({ error: "Missing Register No or Image Data" });
+    }
+
+    const query = `UPDATE students SET profile_image = ? WHERE register_number = ?`;
+
+    db.run(query, [image_data, register_no], function (err) {
+        if (err) {
+            console.error("Photo Upload Error:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        if (this.changes === 0) {
+            return res.status(404).json({ error: "Student not found" });
+        }
+
+        socketService.emit('student_update', { type: 'UPDATE', register_no });
+        res.json({ message: "Photo updated successfully" });
+    });
+};
+
+// POST /api/students/photo/bulk-delete
+exports.bulkDeletePhotos = (req, res) => {
+    const query = `UPDATE students SET profile_image = NULL`;
+
+    db.run(query, function (err) {
+        if (err) {
+            console.error("Bulk Photo Delete Error:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+
+        socketService.emit('student_update', { type: 'BULK_UPDATE' });
+        res.json({ message: `Successfully deleted profile images for ${this.changes} students.` });
+    });
+};
+// GET /api/students/photo/stats
+exports.getPhotoStats = (req, res) => {
+    const query = `SELECT COUNT(*) as count FROM students WHERE profile_image IS NOT NULL AND profile_image != ''`;
+    db.get(query, (err, row) => {
+        if (err) {
+            console.error("Photo Stats Error:", err);
+            return res.status(500).json({ error: "Database error" });
+        }
+        res.json({ count: row.count || 0 });
     });
 };

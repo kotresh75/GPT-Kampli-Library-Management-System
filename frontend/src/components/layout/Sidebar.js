@@ -2,26 +2,27 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Book, Users, Repeat, Settings, FileText, Bell, Building, Shield, Briefcase, ArrowLeftRight, Activity } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
+import { useLanguage } from '../../context/LanguageContext';
 import logo from '../../assets/logo.png';
 
 const Sidebar = ({ isCollapsed }) => {
-
+    const { t } = useLanguage();
 
     const menuItems = [
-        { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true, permissions: [] }, // Always visible
-        { path: '/dashboard/books', icon: Book, label: 'Books', permissions: ['CATALOG'] },
-        { path: '/dashboard/members', icon: Users, label: 'Students', permissions: ['STUDENTS'] },
-        { path: '/dashboard/departments', icon: Building, label: 'Departments', permissions: ['DEPARTMENTS'] },
-        { path: '/dashboard/circulation', icon: ArrowLeftRight, label: 'Circulation Desk', permissions: ['CIRCULATION'] },
-        { path: '/dashboard/transactions', icon: Repeat, label: 'Transactions', permissions: ['CIRCULATION'] },
-        { path: '/dashboard/reports', icon: FileText, label: 'Reports', permissions: ['REPORTS'] },
-        { path: '/dashboard/notifications', icon: Bell, label: 'Broadcast', permissions: ['ADMIN'] },
-        { path: '/dashboard/staff', icon: Briefcase, label: 'Staff', permissions: ['ADMIN'] },
-        { path: '/dashboard/admins', icon: Shield, label: 'Admins', permissions: ['ADMIN'] },
-        { path: '/dashboard/audit', icon: Shield, label: 'Audit', permissions: ['ADMIN'] },
-        { path: '/dashboard/policy', icon: Shield, label: 'Policies', permissions: ['ADMIN'] },
-        { path: '/dashboard/settings', icon: Settings, label: 'Settings', permissions: ['ADMIN'] },
-        { path: '/dashboard/health', icon: Activity, label: 'System Health', permissions: ['ADMIN'] }
+        { path: '/dashboard', icon: LayoutDashboard, label: t('sidebar.dashboard'), exact: true, permissions: [] }, // Always visible
+        { path: '/dashboard/books', icon: Book, label: t('sidebar.books'), permissions: ['CATALOG'] },
+        { path: '/dashboard/members', icon: Users, label: t('sidebar.students'), permissions: ['STUDENTS'] },
+        { path: '/dashboard/departments', icon: Building, label: t('sidebar.departments'), permissions: ['DEPARTMENTS'] },
+        { path: '/dashboard/circulation', icon: ArrowLeftRight, label: t('sidebar.circulation'), permissions: ['CIRCULATION'] },
+        { path: '/dashboard/transactions', icon: Repeat, label: t('sidebar.transactions'), permissions: ['CIRCULATION'] },
+        { path: '/dashboard/reports', icon: FileText, label: t('sidebar.reports'), permissions: ['REPORTS'] },
+        { path: '/dashboard/notifications', icon: Bell, label: t('sidebar.broadcast'), permissions: ['ADMIN'] },
+        { path: '/dashboard/staff', icon: Briefcase, label: t('sidebar.staff'), permissions: ['ADMIN'] },
+        { path: '/dashboard/admins', icon: Shield, label: t('sidebar.admins'), permissions: ['ADMIN'] },
+        { path: '/dashboard/audit', icon: Shield, label: t('sidebar.audit'), permissions: ['ADMIN'] },
+        { path: '/dashboard/policy', icon: Shield, label: t('sidebar.policies'), permissions: ['ADMIN'] },
+        { path: '/dashboard/settings', icon: Settings, label: t('sidebar.settings'), permissions: ['ADMIN'] },
+        { path: '/dashboard/health', icon: Activity, label: t('sidebar.system_health'), permissions: ['ADMIN'] }
     ];
 
     // Get User Permissions

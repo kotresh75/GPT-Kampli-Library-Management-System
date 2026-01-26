@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Save, BookOpen, Lock } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
+    const { t } = useLanguage();
     // 1. Data State (Pre-filled)
     const [formData, setFormData] = useState({
         isbn: book.isbn,
@@ -56,7 +58,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to update book');
+            if (!res.ok) throw new Error(data.error || t('books.modal.err_update'));
 
             onUpdated();
             onClose();
@@ -78,7 +80,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <BookOpen size={18} color="white" />
                         </div>
-                        Edit Book Details
+                        {t('books.modal.title_edit')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -89,7 +91,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                 <div className="smart-form-body">
                     {/* ISBN Section (Read Only) */}
                     <div className="form-group">
-                        <label className="form-label">ISBN-13 (Locked)</label>
+                        <label className="form-label">{t('books.modal.isbn_locked')}</label>
                         <div className="input-wrapper">
                             <input
                                 value={formData.isbn}
@@ -108,24 +110,24 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                         {/* Title & Author */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Title</label>
+                                <label className="form-label">{t('books.modal.title')}</label>
                                 <input
                                     name="title"
                                     className="smart-input"
                                     value={formData.title}
                                     onChange={handleChange}
-                                    placeholder="Book Title"
+                                    placeholder={t('books.modal.title_placeholder')}
                                     required
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Author</label>
+                                <label className="form-label">{t('books.modal.author')}</label>
                                 <input
                                     name="author"
                                     className="smart-input"
                                     value={formData.author}
                                     onChange={handleChange}
-                                    placeholder="Author Name"
+                                    placeholder={t('books.modal.author_placeholder')}
                                     required
                                 />
                             </div>
@@ -133,19 +135,19 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
 
                         {/* Department */}
                         <div className="form-group">
-                            <label className="form-label">Department</label>
+                            <label className="form-label">{t('books.modal.dept')}</label>
                             <GlassSelect
                                 options={departments.map(d => ({ value: d.id, label: d.name }))}
                                 value={formData.dept_id}
                                 onChange={handleDeptChange}
-                                placeholder="Select Department"
+                                placeholder={t('books.modal.dept_select')}
                             />
                         </div>
 
                         {/* Details Grid */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Publisher</label>
+                                <label className="form-label">{t('books.modal.publisher')}</label>
                                 <input
                                     name="publisher"
                                     className="smart-input"
@@ -154,7 +156,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Price</label>
+                                <label className="form-label">{t('books.modal.price')}</label>
                                 <input
                                     name="price"
                                     type="number"
@@ -164,7 +166,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Quantity (Read Only)</label>
+                                <label className="form-label">{t('books.modal.qty_readonly')}</label>
                                 <div className="input-wrapper">
                                     <input
                                         value={formData.total_copies}
@@ -182,7 +184,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                         {/* Cover & Location */}
                         <div className="form-row">
                             <div className="form-col form-group" style={{ flex: 2 }}>
-                                <label className="form-label">Cover Image URL</label>
+                                <label className="form-label">{t('books.modal.cover')}</label>
                                 <input
                                     name="cover_image_url"
                                     className="smart-input"
@@ -192,7 +194,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Shelf Location</label>
+                                <label className="form-label">{t('books.modal.shelf')}</label>
                                 <input
                                     name="shelf_location"
                                     className="smart-input"
@@ -207,9 +209,9 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
 
                 {/* Footer */}
                 <div className="smart-form-footer">
-                    <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn-cancel">{t('books.modal.cancel')}</button>
                     <button type="submit" form="edit-book-form" disabled={loading} className="btn-submit">
-                        {loading ? 'Saving...' : <><Save size={18} /> Update Book</>}
+                        {loading ? t('books.modal.saving') : <><Save size={18} /> {t('books.modal.update')}</>}
                     </button>
                 </div>
             </div>

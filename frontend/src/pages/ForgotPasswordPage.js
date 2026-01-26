@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { KeyRound, Mail, CheckCircle, AlertCircle, Sun, Moon, Type } from 'lucide-react';
+import { KeyRound, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const ForgotPasswordPage = () => {
     const [step, setStep] = useState(1); // 1: Email, 2: OTP, 3: New Password
@@ -14,16 +15,8 @@ const ForgotPasswordPage = () => {
     const [error, setError] = useState('');
 
     const navigate = useNavigate();
-    const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
-
-    // Helper to cycle font sizes
-    const cycleFontSize = () => {
-        const scales = [85, 100, 115, 130];
-        let currentIdx = scales.indexOf(fontScale);
-        if (currentIdx === -1) currentIdx = 1;
-        const nextIndex = (currentIdx + 1) % scales.length;
-        setFontScale(scales[nextIndex]);
-    };
+    const { theme } = usePreferences();
+    const { t, language } = useLanguage();
 
     const handleEmailSubmit = async (e) => {
         e.preventDefault();
@@ -39,9 +32,13 @@ const ForgotPasswordPage = () => {
             const data = await res.json();
             if (res.ok) {
                 setStep(2);
-                setMessage("OTP sent to your email.");
+                setMessage(t('auth.otp_sent'));
             } else {
-                setError((data.message || 'Failed to send OTP') + " (ERR_AUTH_OTP_SEND)");
+                if (data.error_code === 'ERR_EMAIL_DISABLED') {
+                    setError("Email services are disabled for security purposes.");
+                } else {
+                    setError((data.message || 'Failed to send OTP') + " (ERR_AUTH_OTP_SEND)");
+                }
             }
         } catch (err) {
             setError('Network error (ERR_NET_OTP)');
@@ -63,7 +60,7 @@ const ForgotPasswordPage = () => {
             const data = await res.json();
             if (res.ok) {
                 setStep(3);
-                setMessage("OTP Verified.");
+                setMessage(t('auth.otp_verified'));
             } else {
                 setError((data.message || 'Invalid OTP') + " (ERR_AUTH_OTP_INV)");
             }
@@ -77,7 +74,7 @@ const ForgotPasswordPage = () => {
     const handlePasswordReset = async (e) => {
         e.preventDefault();
         if (newPassword !== confirmPassword) {
-            setError("Passwords do not match (ERR_VAL_PWD_MATCH)");
+            setError(t('auth.passwords_mismatch') + " (ERR_VAL_PWD_MATCH)");
             return;
         }
         setLoading(true);
@@ -90,7 +87,7 @@ const ForgotPasswordPage = () => {
             });
             const data = await res.json();
             if (res.ok) {
-                setMessage("Password reset successfully!");
+                setMessage(t('auth.pwd_reset_success'));
                 setTimeout(() => navigate('/login'), 2000);
             } else {
                 setError((data.message || 'Reset failed') + " (ERR_AUTH_RST_FAIL)");
@@ -109,17 +106,16 @@ const ForgotPasswordPage = () => {
             <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] animate-pulse-slow delay-1000"></div>
 
 
-
             <div className="glass-panel p-8 w-full max-w-md relative z-10 animate-fade-in-up">
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
                         <KeyRound size={32} className="text-accent" />
                     </div>
-                    <h2 className="text-2xl font-bold">Reset Password</h2>
+                    <h2 className="text-2xl font-bold">{t('auth.reset_password_title')}</h2>
                     <p className="text-gray-400 text-sm mt-2">
-                        {step === 1 && "Enter your email to receive an OTP"}
-                        {step === 2 && `Enter the 6-digit OTP sent to ${email}`}
-                        {step === 3 && "Create a new strong password"}
+                        {step === 1 && t('auth.email_step_desc')}
+                        {step === 2 && t('auth.otp_step_desc')}
+                        {step === 3 && t('auth.new_pwd_step_desc')}
                     </p>
                 </div>
 
@@ -137,20 +133,20 @@ const ForgotPasswordPage = () => {
                 {step === 1 && (
                     <form onSubmit={handleEmailSubmit}>
                         <div className="mb-6">
-                            <label className="block text-sm text-gray-400 mb-2">Email Address</label>
+                            <label className="block text-sm text-gray-400 mb-2">{t('auth.email_label')}</label>
                             <div className="input-group">
                                 <Mail className="input-icon" size={20} />
                                 <input
                                     type="email"
                                     required
-                                    placeholder="Enter your registered email"
+                                    placeholder={t('auth.email_placeholder')}
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
                                 />
                             </div>
                         </div>
                         <button type="submit" className="primary-glass-btn w-full justify-center" disabled={loading}>
-                            {loading ? "Sending..." : "Send OTP"}
+                            {loading ? t('auth.sending_btn') : t('auth.send_otp_btn')}
                         </button>
                     </form>
                 )}
@@ -158,7 +154,7 @@ const ForgotPasswordPage = () => {
                 {step === 2 && (
                     <form onSubmit={handleOtpSubmit}>
                         <div className="mb-6">
-                            <label className="block text-sm text-gray-400 mb-2">OTP Code</label>
+                            <label className="block text-sm text-gray-400 mb-2">{t('auth.otp_label')}</label>
                             <input
                                 type="text"
                                 required
@@ -170,7 +166,7 @@ const ForgotPasswordPage = () => {
                             />
                         </div>
                         <button type="submit" className="primary-glass-btn w-full justify-center" disabled={loading}>
-                            {loading ? "Verifying..." : "Verify OTP"}
+                            {loading ? t('auth.verifying_btn') : t('auth.verify_otp_btn')}
                         </button>
                     </form>
                 )}
@@ -178,7 +174,7 @@ const ForgotPasswordPage = () => {
                 {step === 3 && (
                     <form onSubmit={handlePasswordReset}>
                         <div className="mb-4">
-                            <label className="block text-sm text-gray-400 mb-2">New Password</label>
+                            <label className="block text-sm text-gray-400 mb-2">{t('auth.new_pwd_label')}</label>
                             <div className="input-group">
                                 <KeyRound className="input-icon" size={20} />
                                 <input
@@ -192,7 +188,7 @@ const ForgotPasswordPage = () => {
                             </div>
                         </div>
                         <div className="mb-6">
-                            <label className="block text-sm text-gray-400 mb-2">Confirm Password</label>
+                            <label className="block text-sm text-gray-400 mb-2">{t('auth.confirm_pwd_label')}</label>
                             <div className="input-group">
                                 <KeyRound className="input-icon" size={20} />
                                 <input
@@ -205,14 +201,14 @@ const ForgotPasswordPage = () => {
                             </div>
                         </div>
                         <button type="submit" className="primary-glass-btn w-full justify-center" disabled={loading}>
-                            {loading ? "Resetting..." : "Reset Password"}
+                            {loading ? t('auth.resetting_btn') : t('auth.reset_pwd_btn')}
                         </button>
                     </form>
                 )}
 
                 <div className="mt-6 text-center">
                     <Link to="/login" className="text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-1">
-                        Back to Login
+                        {t('auth.back_to_login')}
                     </Link>
                 </div>
             </div>

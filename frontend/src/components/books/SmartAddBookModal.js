@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Save, BookOpen, Search, AlertCircle, CheckCircle } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const SmartAddBookModal = ({ onClose, onAdded }) => {
+    const { t } = useLanguage();
     // 1. Data State
     const [formData, setFormData] = useState({
         isbn: '',
@@ -52,7 +54,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
     const generateAutoISBN = () => {
         const randomId = `AG-${Math.floor(Math.random() * 10000000000)}`;
         setFormData(prev => ({ ...prev, isbn: randomId }));
-        setFetchSuccess('Auto-generated ID ready');
+        setFetchSuccess(t('books.modal.ready_auto'));
     };
 
     const fetchMetadata = async () => {
@@ -78,7 +80,8 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                     publisher: book.publisher || prev.publisher,
                     cover_image_url: book.imageLinks?.thumbnail?.replace('http:', 'https:') || prev.cover_image_url,
                 }));
-                setFetchSuccess('Found on Google Books');
+
+                setFetchSuccess(t('books.modal.found_google'));
                 setFetchLoading(false);
                 return;
             }
@@ -97,15 +100,16 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                     publisher: book.publishers ? book.publishers.map(p => p.name).join(', ') : prev.publisher,
                     cover_image_url: book.cover?.medium || book.cover?.large || prev.cover_image_url
                 }));
-                setFetchSuccess('Found on OpenLibrary');
+
+                setFetchSuccess(t('books.modal.found_ol'));
                 setFetchLoading(false);
                 return;
             }
 
-            setError("Book details not found. Please fill manually.");
+            setError(t('books.modal.not_found'));
         } catch (err) {
             console.error("Fetch metadata failed", err);
-            setError("Network error fetching metadata.");
+            setError(t('books.modal.err_network'));
         } finally {
             setFetchLoading(false);
         }
@@ -117,7 +121,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
         setError('');
 
         if (!formData.dept_id) {
-            setError("Please select a department");
+            setError(t('books.modal.err_dept'));
             setLoading(false);
             return;
         }
@@ -130,7 +134,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to save book');
+            if (!res.ok) throw new Error(data.error || t('books.modal.err_save'));
 
             onAdded();
             onClose();
@@ -152,7 +156,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <BookOpen size={18} color="white" />
                         </div>
-                        Add New Book
+                        {t('books.modal.title_new')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -163,14 +167,14 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                 <div className="smart-form-body">
                     {/* ISBN Section */}
                     <div className="form-group">
-                        <label className="form-label">ISBN-13 or ID</label>
+                        <label className="form-label">{t('books.modal.isbn_label')}</label>
                         <div className="input-wrapper">
                             <input
                                 name="isbn"
                                 className={`smart-input ${error && !formData.title ? 'error' : ''}`}
                                 value={formData.isbn}
                                 onChange={handleChange}
-                                placeholder="Enter ISBN to auto-fill details"
+                                placeholder={t('books.modal.isbn_placeholder')}
                                 autoFocus
                                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); fetchMetadata(); } }}
                                 onBlur={() => { if (formData.isbn && !formData.title) fetchMetadata(); }}
@@ -178,7 +182,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                             <div style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 8 }}>
                                 {fetchLoading && <div className="spinner-sm" style={{ width: 16, height: 16 }} />}
                                 <button type="button" onClick={generateAutoISBN} className="input-action-btn">
-                                    Auto ID
+                                    {t('books.modal.auto_id')}
                                 </button>
                             </div>
                         </div>
@@ -190,24 +194,24 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                         {/* Title & Author */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Title</label>
+                                <label className="form-label">{t('books.modal.title')}</label>
                                 <input
                                     name="title"
                                     className="smart-input"
                                     value={formData.title}
                                     onChange={handleChange}
-                                    placeholder="Book Title"
+                                    placeholder={t('books.modal.title_placeholder')}
                                     required
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Author</label>
+                                <label className="form-label">{t('books.modal.author')}</label>
                                 <input
                                     name="author"
                                     className="smart-input"
                                     value={formData.author}
                                     onChange={handleChange}
-                                    placeholder="Author Name"
+                                    placeholder={t('books.modal.author_placeholder')}
                                     required
                                 />
                             </div>
@@ -215,19 +219,19 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
 
                         {/* Department */}
                         <div className="form-group">
-                            <label className="form-label">Department</label>
+                            <label className="form-label">{t('books.modal.dept')}</label>
                             <GlassSelect
                                 options={departments.map(d => ({ value: d.id, label: d.name }))}
                                 value={formData.dept_id}
                                 onChange={handleDeptChange}
-                                placeholder="Select Department"
+                                placeholder={t('books.modal.dept_select')}
                             />
                         </div>
 
                         {/* Details Grid */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Publisher</label>
+                                <label className="form-label">{t('books.modal.publisher')}</label>
                                 <input
                                     name="publisher"
                                     className="smart-input"
@@ -236,7 +240,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Price</label>
+                                <label className="form-label">{t('books.modal.price')}</label>
                                 <input
                                     name="price"
                                     type="number"
@@ -246,7 +250,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Quantity</label>
+                                <label className="form-label">{t('books.modal.qty')}</label>
                                 <input
                                     name="total_copies"
                                     type="number"
@@ -262,7 +266,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                         {/* Cover & Location */}
                         <div className="form-row">
                             <div className="form-col form-group" style={{ flex: 2 }}>
-                                <label className="form-label">Cover Image URL</label>
+                                <label className="form-label">{t('books.modal.cover')}</label>
                                 <input
                                     name="cover_image_url"
                                     className="smart-input"
@@ -272,7 +276,7 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Shelf Location</label>
+                                <label className="form-label">{t('books.modal.shelf')}</label>
                                 <input
                                     name="shelf_location"
                                     className="smart-input"
@@ -287,9 +291,9 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
 
                 {/* Footer */}
                 <div className="smart-form-footer">
-                    <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn-cancel">{t('books.modal.cancel')}</button>
                     <button type="submit" form="add-book-form" disabled={loading} className="btn-submit">
-                        {loading ? 'Saving...' : <><Save size={18} /> Save Book</>}
+                        {loading ? t('books.modal.saving') : <><Save size={18} /> {t('books.modal.save')}</>}
                     </button>
                 </div>
             </div>

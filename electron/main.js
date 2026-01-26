@@ -31,8 +31,8 @@ function startbackend() {
     console.log("Starting backend from:", backendPath);
     serverProcess = spawn('node', [backendPath], {
         cwd: path.join(__dirname, '../backend'),
-        stdio: 'inherit', // Keep output in the main terminal for debugging
-        windowsHide: true // Prevent a new console window from popping up
+        stdio: ['inherit', 'inherit', 'inherit', 'ipc'], // Enable IPC for graceful shutdown
+        windowsHide: true
     });
 
     serverProcess.on('error', (err) => {
@@ -54,9 +54,33 @@ app.on('activate', function () {
     if (mainWindow === null) createWindow();
 });
 
-app.on('will-quit', () => {
-    if (serverProcess) {
-        console.log("Terminating backend Process...");
-        serverProcess.kill('SIGTERM');
+let isQuitting = false;
+
+app.on('before-quit', (e) => {
+    // If we haven't stopped the backend yet, prevent quit and stop it
+    if (serverProcess && !isQuitting) {
+        e.preventDefault();
+        isQuitting = true; // Prevent infinite loop
+
+        console.log("Terminating backend Process and waiting for graceful shutdown...");
+
+        // Use IPC for reliable shutdown on Windows
+        if (serverProcess.send) {
+            serverProcess.send('shutdown');
+        } else {
+            serverProcess.kill('SIGTERM');
+        }
+
+        // Wait for backend to close
+        serverProcess.on('close', (code) => {
+            console.log(`Backend exited with code ${code}`);
+            app.quit(); // Quit for real this time
+        });
+
+        // Force quit if backend hangs (e.g. 15 seconds)
+        setTimeout(() => {
+            console.error("Backend shutdown timed out. Forcing quit.");
+            app.quit();
+        }, 15000);
     }
 });

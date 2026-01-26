@@ -4,13 +4,17 @@ import {
     Printer, AlertCircle, Sparkles
 } from 'lucide-react';
 import GlassSelect from '../components/common/GlassSelect';
+import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // Import New Modular Analytics Components
 import CirculationAnalytics from '../components/analytics/CirculationAnalytics';
 import FinancialAnalytics from '../components/analytics/FinancialAnalytics';
+import SmartExportModal from '../components/common/SmartExportModal';
 import InventoryAnalytics from '../components/analytics/InventoryAnalytics';
 
 const SmartReportsPage = () => {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState('circulation');
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -19,6 +23,24 @@ const SmartReportsPage = () => {
     useEffect(() => {
         fetchReportData();
     }, [activeTab, period]);
+
+    const socket = useSocket();
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Report Data Update: Refreshing");
+            fetchReportData();
+        };
+        // Listen to all relevant sources
+        socket.on('circulation_update', handleUpdate);
+        socket.on('fine_update', handleUpdate);
+        socket.on('book_update', handleUpdate);
+        return () => {
+            socket.off('circulation_update', handleUpdate);
+            socket.off('fine_update', handleUpdate);
+            socket.off('book_update', handleUpdate);
+        };
+    }, [socket, activeTab, period]);
 
     const fetchReportData = async () => {
         setLoading(true);
@@ -33,8 +55,58 @@ const SmartReportsPage = () => {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
+    const [showExportModal, setShowExportModal] = useState(false);
+
+    const getExportData = () => {
+        if (!stats) return { data: [], columns: [] };
+
+        if (activeTab === 'circulation') {
+            const trendData = (stats.trend || []).map(trend => ({
+                [t('reports.export.dates')]: new Date(trend.date).toLocaleDateString(),
+                [t('reports.export.issues')]: trend.issue,
+                [t('reports.export.returns')]: trend.return,
+                [t('reports.export.renewals')]: trend.renew || 0
+            }));
+
+            return {
+                title: t('reports.export.circ_title'),
+                data: trendData,
+                columns: [t('reports.export.dates'), t('reports.export.issues'), t('reports.export.returns'), t('reports.export.renewals')]
+            };
+        }
+
+        if (activeTab === 'financial') {
+            const financialData = (stats.transactions || []).map(tx => ({
+                [t('reports.export.dates')]: new Date(tx.date).toLocaleDateString(),
+                [t('reports.export.desc')]: tx.description,
+                [t('reports.export.amount')]: tx.amount,
+                [t('reports.export.type')]: tx.type
+            }));
+            return {
+                title: t('reports.export.fin_title'),
+                data: financialData,
+                columns: [t('reports.export.dates'), t('reports.export.desc'), t('reports.export.amount'), t('reports.export.type')]
+            };
+        }
+
+        if (activeTab === 'inventory') {
+            const inventoryData = (stats.categories || []).map(c => ({
+                [t('reports.export.cat')]: c._id || c.name,
+                [t('reports.export.count')]: c.count,
+                [t('reports.export.val')]: c.total_value || 0
+            }));
+            return {
+                title: t('reports.export.inv_title'),
+                data: inventoryData,
+                columns: [t('reports.export.cat'), t('reports.export.count'), t('reports.export.val')]
+            };
+        }
+
+        return { data: [], columns: [] };
+    };
+
+    const handlePrintClick = () => {
+        setShowExportModal(true);
     };
 
     return (
@@ -48,12 +120,12 @@ const SmartReportsPage = () => {
                                 <FileText size={28} />
                             </div>
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                                Library Insights
+                                {t('reports.title')}
                             </span>
                         </h1>
                         <p className="text-gray-400 text-sm mt-1 ml-1 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Academic Performance & Usage Metrics
+                            {t('reports.subtitle')}
                         </p>
                     </div>
 
@@ -64,10 +136,10 @@ const SmartReportsPage = () => {
                                 value={period}
                                 onChange={setPeriod}
                                 options={[
-                                    { value: '7days', label: 'Last 7 Days' },
-                                    { value: '30days', label: 'Last 30 Days' },
-                                    { value: '90days', label: 'Last 3 Months' },
-                                    { value: '365days', label: 'Last Year' }
+                                    { value: '7days', label: t('reports.period.7days') },
+                                    { value: '30days', label: t('reports.period.30days') },
+                                    { value: '90days', label: t('reports.period.90days') },
+                                    { value: '365days', label: t('reports.period.365days') }
                                 ]}
                                 icon={Calendar}
                             />
@@ -75,10 +147,10 @@ const SmartReportsPage = () => {
 
                         <button
                             className="btn btn-secondary text-sm backdrop-blur-md border-white/10 hover:bg-white/10 text-white"
-                            onClick={handlePrint}
+                            onClick={handlePrintClick}
                         >
                             <Printer size={16} />
-                            <span className="hidden md:inline">Export</span>
+                            <span className="hidden md:inline">{t('reports.export_print')}</span>
                         </button>
                     </div>
                 </div>
@@ -87,9 +159,9 @@ const SmartReportsPage = () => {
                 <div className="flex gap-3 border-b border-white/10 relative px-6 pb-6">
                     <div className="glass-panel flex gap-1 p-1 rounded-full">
                         {[
-                            { id: 'circulation', label: 'Circulation', icon: TrendingUp },
-                            { id: 'financial', label: 'Financials', icon: DollarSign },
-                            { id: 'inventory', label: 'Inventory', icon: Package }
+                            { id: 'circulation', label: t('reports.tabs.circulation'), icon: TrendingUp },
+                            { id: 'financial', label: t('reports.tabs.financial'), icon: DollarSign },
+                            { id: 'inventory', label: t('reports.tabs.inventory'), icon: Package }
                         ].map(tab => (
                             <button
                                 key={tab.id}
@@ -120,15 +192,15 @@ const SmartReportsPage = () => {
                                 <Sparkles size={24} className="text-indigo-400 animate-pulse" />
                             </div>
                         </div>
-                        <p className="text-gray-400 font-mono text-sm tracking-widest animate-pulse">ANALYZING METRICS...</p>
+                        <p className="text-gray-400 font-mono text-sm tracking-widest animate-pulse">{t('reports.loading')}</p>
                     </div>
                 ) : !stats ? (
                     <div className="flex flex-col items-center justify-center h-[50vh] text-center p-8 m-4 rounded-3xl border border-white/5 bg-white/[0.02] backdrop-blur-sm">
                         <AlertCircle size={48} className="text-red-400 mb-4 opacity-50" />
-                        <h3 className="text-xl font-bold text-white mb-2">System Offline</h3>
-                        <p className="text-gray-500 max-w-md">Analytics engine could not retrieve data. Please check your connection.</p>
+                        <h3 className="text-xl font-bold text-white mb-2">{t('reports.offline_title')}</h3>
+                        <p className="text-gray-500 max-w-md">{t('reports.offline_desc')}</p>
                         <button onClick={fetchReportData} className="mt-6 px-6 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">
-                            Retry Connection
+                            {t('reports.retry')}
                         </button>
                     </div>
                 ) : (
@@ -139,6 +211,31 @@ const SmartReportsPage = () => {
                     </div>
                 )}
             </div>
+
+            {showExportModal && (
+                <SmartExportModal
+                    onClose={() => setShowExportModal(false)}
+                    totalCount={getExportData().data.length}
+                    filteredCount={getExportData().data.length}
+                    selectedCount={0}
+                    entityName={getExportData().title}
+                    data={getExportData().data}
+                    columns={getExportData().columns}
+                    allowedFormats={['print']}
+                    // No need for onFetchAll here as 'stats' contains the full summary dataset
+                    onExport={(scope, format) => {
+                        if (format === 'print') {
+                            // Open separate print window
+                            window.open(`/print/report?period=${period}`, '_blank');
+                            setShowExportModal(false);
+                            return true; // Signal handled
+                        } else {
+                            // For now validation log
+                            console.log("Exporting", format, getExportData().data);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };

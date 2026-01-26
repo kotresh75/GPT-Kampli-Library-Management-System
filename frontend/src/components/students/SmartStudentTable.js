@@ -5,6 +5,7 @@ import {
     CheckCircle, XCircle, GraduationCap, Layers
 } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/tables.css';
 
 const SmartStudentTable = ({
@@ -20,6 +21,7 @@ const SmartStudentTable = ({
     onSort,
     pagination // { currentPage, totalPages, itemsPerPage, onPageChange, onItemsPerPageChange, totalItems }
 }) => {
+    const { t } = useLanguage();
     const [showSelectPopup, setShowSelectPopup] = useState(false);
 
     // --- Formatters ---
@@ -27,19 +29,19 @@ const SmartStudentTable = ({
         if (status === 'Active') {
             return (
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-1 w-fit">
-                    <CheckCircle size={12} /> Active
+                    <CheckCircle size={12} /> {t('students.table.status_active')}
                 </span>
             );
         } else if (status === 'Blocked') {
             return (
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-500/10 text-red-400 border border-red-500/20 flex items-center gap-1 w-fit">
-                    <XCircle size={12} /> Blocked
+                    <XCircle size={12} /> {t('students.table.status_blocked')}
                 </span>
             );
         } else if (status === 'Graduated') {
             return (
                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center gap-1 w-fit">
-                    <GraduationCap size={12} /> Alumni
+                    <GraduationCap size={12} /> {t('students.table.status_alumni')}
                 </span>
             );
         } else {
@@ -66,8 +68,8 @@ const SmartStudentTable = ({
                 <div className="p-4 rounded-full bg-white/5 mb-4">
                     <Layers size={48} className="text-gray-500 opacity-50" />
                 </div>
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Students Found</h3>
-                <p className="text-[var(--text-secondary)]">Try adjusting your search or filters.</p>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('students.table.no_students')}</h3>
+                <p className="text-[var(--text-secondary)]">{t('students.table.no_students_hint')}</p>
             </div>
         );
     }
@@ -101,7 +103,7 @@ const SmartStudentTable = ({
                                             }
                                         }}
                                         className="cursor-pointer"
-                                        title={selectedIds.size > 0 ? `${selectedIds.size} selected - Click to manage` : "Select Students"}
+                                        title={selectedIds.size > 0 ? t('students.table.selected_count', { count: selectedIds.size }) : t('students.table.select_tooltip')}
                                     />
                                 </div>
                                 {/* Selection Popup */}
@@ -145,7 +147,7 @@ const SmartStudentTable = ({
                                                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
                                                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
                                             >
-                                                Select This Page <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({students.length})</span>
+                                                {t('students.table.select_page')} <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({students.length})</span>
                                             </button>
 
                                             {/* Global Select All Option */}
@@ -171,7 +173,7 @@ const SmartStudentTable = ({
                                                     onMouseEnter={(e) => e.target.style.background = 'rgba(99, 179, 237, 0.1)'}
                                                     onMouseLeave={(e) => e.target.style.background = 'transparent'}
                                                 >
-                                                    Select All Students <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({pagination.totalItems})</span>
+                                                    {t('students.table.select_all_global')} <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({pagination.totalItems})</span>
                                                 </button>
                                             )}
 
@@ -197,27 +199,29 @@ const SmartStudentTable = ({
                                                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
                                                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
                                             >
-                                                Deselect All
+                                                {t('students.table.deselect_all')}
                                             </button>
                                         </div>
                                     </>
                                 )}
                             </th>
+
                             <th style={{ width: '60px' }}>#</th>
+                            <th style={{ width: '50px' }}>{t('students.table.profile')}</th>
                             <th className="sortable" onClick={() => onSort('name')}>
-                                <div className="flex items-center gap-2">Student Name {getSortIcon('name')}</div>
+                                <div className="flex items-center gap-2">{t('students.table.name')} {getSortIcon('name')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('register_no')}>
-                                <div className="flex items-center gap-2">Register No {getSortIcon('register_no')}</div>
+                                <div className="flex items-center gap-2">{t('students.table.reg_no')} {getSortIcon('register_no')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('department')}>
-                                <div className="flex items-center gap-2">Department {getSortIcon('department')}</div>
+                                <div className="flex items-center gap-2">{t('students.table.dept')} {getSortIcon('department')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('semester')}>
-                                <div className="flex items-center gap-2">Semester {getSortIcon('semester')}</div>
+                                <div className="flex items-center gap-2">{t('students.table.sem')} {getSortIcon('semester')}</div>
                             </th>
-                            <th>Status</th>
-                            <th style={{ textAlign: 'right', minWidth: '120px' }}>Action</th>
+                            <th>{t('students.table.status')}</th>
+                            <th style={{ textAlign: 'right', minWidth: '120px' }}>{t('students.table.action')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -233,6 +237,27 @@ const SmartStudentTable = ({
                                 </td>
                                 <td className="text-[var(--text-secondary)]">
                                     {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
+                                </td>
+                                <td>
+                                    {student.profile_image ? (
+                                        <img
+                                            src={student.profile_image}
+                                            alt={student.full_name}
+                                            style={{
+                                                width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover',
+                                                border: '2px solid var(--glass-border)'
+                                            }}
+                                        />
+                                    ) : (
+                                        <div style={{
+                                            width: '36px', height: '36px', borderRadius: '50%',
+                                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontWeight: 'bold', fontSize: '0.9rem', border: '2px solid rgba(255,255,255,0.1)'
+                                        }}>
+                                            {student.full_name.charAt(0).toUpperCase()}
+                                        </div>
+                                    )}
                                 </td>
                                 <td>
                                     <span
@@ -259,21 +284,21 @@ const SmartStudentTable = ({
                                         <button
                                             onClick={() => onView && onView(student)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                                            title="View Details"
+                                            title={t('students.table.view')}
                                         >
                                             <Eye size={18} />
                                         </button>
                                         <button
                                             onClick={() => onEdit && onEdit(student)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-500/20 text-blue-400 transition-colors"
-                                            title="Edit Student"
+                                            title={t('students.table.edit')}
                                         >
                                             <Edit2 size={18} />
                                         </button>
                                         <button
                                             onClick={() => onDelete && onDelete(student.id)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
-                                            title="Delete Student"
+                                            title={t('students.table.delete')}
                                         >
                                             <Trash2 size={18} />
                                         </button>
@@ -289,7 +314,7 @@ const SmartStudentTable = ({
             {pagination.totalPages > 1 && (
                 <div className="flex justify-between items-center px-4 py-2 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color-light)] mt-2">
                     <div className="text-sm text-[var(--text-tertiary)]">
-                        Showing <span className="text-[var(--text-primary)] font-bold">{(pagination.currentPage - 1) * pagination.itemsPerPage + 1}</span> to <span className="text-[var(--text-primary)] font-bold">{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}</span> of <span className="text-[var(--text-primary)] font-bold">{pagination.totalItems}</span> students
+                        {t('students.table.showing')} <span className="text-[var(--text-primary)] font-bold">{(pagination.currentPage - 1) * pagination.itemsPerPage + 1}</span> {t('students.table.to')} <span className="text-[var(--text-primary)] font-bold">{Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}</span> {t('students.table.of')} <span className="text-[var(--text-primary)] font-bold">{pagination.totalItems}</span> {t('students.table.students')}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -303,9 +328,9 @@ const SmartStudentTable = ({
                                 <div style={{ width: '130px' }}>
                                     <GlassSelect
                                         options={[
-                                            { value: 10, label: '10 per page' },
-                                            { value: 20, label: '20 per page' },
-                                            { value: 50, label: '50 per page' }
+                                            { value: 10, label: `10 ${t('students.table.per_page')}` },
+                                            { value: 20, label: `20 ${t('students.table.per_page')}` },
+                                            { value: 50, label: `50 ${t('students.table.per_page')}` }
                                         ]}
                                         value={pagination.itemsPerPage}
                                         onChange={(val) => pagination.onItemsPerPageChange(val)}
@@ -334,7 +359,7 @@ const SmartStudentTable = ({
                             </button>
 
                             <span className="text-sm font-medium px-2 text-[var(--text-primary)]">
-                                Page {pagination.currentPage} of {pagination.totalPages}
+                                {t('students.table.page')} {pagination.currentPage} {t('students.table.of')} {pagination.totalPages}
                             </span>
 
                             <button

@@ -1,24 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { formatDate } from '../utils/dateUtils';
-import { IndianRupee, Clock, CheckCircle, AlertCircle, FileText, Filter, Search, Trash2 } from 'lucide-react';
+import { IndianRupee, Search, Filter, DollarSign, CheckCircle, XCircle, AlertCircle, Receipt } from 'lucide-react';
+import GlassSelect from '../components/common/GlassSelect';
 import ReceiptPreviewModal from '../components/finance/ReceiptPreviewModal';
 import ConfirmationModal from '../components/common/ConfirmationModal'; // Assuming exists
+import { useSocket } from '../context/SocketContext';
 
 const FineManagementPage = () => {
     const [activeTab, setActiveTab] = useState('pending');
     const [fines, setFines] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedFines, setSelectedFines] = useState([]);
+    const [selectedFines, setSelectedFines] = useState(new Set());
     const [showReceipt, setShowReceipt] = useState(false);
     const [currentReceiptData, setCurrentReceiptData] = useState(null);
     const [confirmAction, setConfirmAction] = useState(null); // { type: 'waive', id: ... }
+    const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
 
-    useEffect(() => {
-        fetchFines();
-    }, [activeTab]);
+    // Permission Check
+    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const userPermissions = userInfo.permissions || [];
+    const isFinancialAdmin = userInfo.role === 'Admin' || userPermissions.includes('FINANCE') || userPermissions.includes('CIRCULATION');
 
-    const fetchFines = async () => {
+    const socket = useSocket();
+
+    const fetchFines = useCallback(async () => {
         setLoading(true);
         try {
             // Mapping tabs to status: pending -> Unpaid, history -> Paid/Waived
@@ -30,8 +36,8 @@ const FineManagementPage = () => {
             const res = await fetch(url);
             const data = await res.json();
 
-            // If history tab, maybe filter out Unpaid locally or backend supports multiple status? 
-            // For now backend supports single status filter. 
+            // If history tab, maybe filter out Unpaid locally or backend supports multiple status?
+            // For now backend supports single status filter.
             // Let's filter client side if history tab.
             if (Array.isArray(data)) {
                 // If history tab, filter out Unpaid locally
@@ -49,7 +55,22 @@ const FineManagementPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab]);
+
+    useEffect(() => {
+        fetchFines();
+    }, [fetchFines]);
+
+    // Socket Listener
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Real-time update: Refreshing Fines");
+            fetchFines();
+        };
+        socket.on('fine_update', handleUpdate);
+        return () => socket.off('fine_update', handleUpdate);
+    }, [socket, fetchFines]);
 
     const handleCollect = async () => {
         if (selectedFines.length === 0) return;

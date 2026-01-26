@@ -3,9 +3,11 @@ import {
     X, BookOpen, Clock, Users, Edit, Layers, Copy, Check,
     Calendar, AlertTriangle, Book, CreditCard, User, Bookmark
 } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-book-detail.css';
 
 const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState('overview'); // overview, circulation, history
     const [holders, setHolders] = useState([]);
     const [loadingHolders, setLoadingHolders] = useState(false);
@@ -63,9 +65,8 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
 
     const formatDate = (ds) => {
         if (!ds) return '-';
-        return new Date(ds).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'short', day: 'numeric'
-        });
+        const d = new Date(ds);
+        return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
     };
 
     // Calculate availability percentage for ring
@@ -126,20 +127,20 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                         className={`smart-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
                         onClick={() => setActiveTab('overview')}
                     >
-                        <Book size={18} /> Overview
+                        <Book size={18} /> {t('books.detail.tabs.overview')}
                     </button>
                     <button
                         className={`smart-tab-btn ${activeTab === 'circulation' ? 'active' : ''}`}
                         onClick={() => setActiveTab('circulation')}
                     >
-                        <Users size={18} /> Holders
-                        {holders.length > 0 && <span className="text-xs bg-white/10 px-2 rounded-full">{holders.length} active</span>}
+                        <Users size={18} /> {t('books.detail.tabs.holders')}
+                        {holders.length > 0 && <span className="text-xs bg-white/10 px-2 rounded-full">{holders.length} {t('books.detail.tabs.active')}</span>}
                     </button>
                     <button
                         className={`smart-tab-btn ${activeTab === 'history' ? 'active' : ''}`}
                         onClick={() => setActiveTab('history')}
                     >
-                        <Clock size={18} /> History
+                        <Clock size={18} /> {t('books.detail.tabs.history')}
                     </button>
                 </div>
 
@@ -150,26 +151,26 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                             <div className="detail-left">
                                 <div className="detail-card">
                                     <div className="card-header">
-                                        <h3 className="card-title">Bibliographic Information</h3>
+                                        <h3 className="card-title">{t('books.detail.biblio')}</h3>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">ISBN-13</span>
+                                        <span className="data-label">{t('books.detail.isbn')}</span>
                                         <span className="data-value font-mono">{book.isbn}</span>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">Category</span>
+                                        <span className="data-label">{t('books.detail.category')}</span>
                                         <span className="data-value">{book.category}</span>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">Publisher</span>
+                                        <span className="data-label">{t('books.detail.publisher')}</span>
                                         <span className="data-value">{book.publisher || '-'}</span>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">Price</span>
+                                        <span className="data-label">{t('books.detail.price')}</span>
                                         <span className="data-value">{book.price ? `$${book.price}` : '-'}</span>
                                     </div>
                                     <div className="data-row">
-                                        <span className="data-label">Full Title</span>
+                                        <span className="data-label">{t('books.detail.full_title')}</span>
                                         <span className="data-value">{book.title}</span>
                                     </div>
                                 </div>
@@ -177,7 +178,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
 
                             <div className="detail-right">
                                 <div className="detail-card" style={{ textAlign: 'center' }}>
-                                    <h3 className="card-title" style={{ justifyContent: 'center', marginBottom: '20px' }}>Current Availability</h3>
+                                    <h3 className="card-title" style={{ justifyContent: 'center', marginBottom: '20px' }}>{t('books.detail.availability')}</h3>
 
                                     <div className="availability-ring">
                                         <svg width="120" height="120" viewBox="0 0 120 120">
@@ -190,30 +191,30 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                                             <span className="ring-number" style={{ color: ringColor }}>
                                                 {book.available_copies || 0}
                                             </span>
-                                            <span className="ring-label">Available</span>
+                                            <span className="ring-label">{t('books.detail.avail')}</span>
                                         </div>
                                     </div>
 
                                     <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '10px' }}>
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{book.total_copies}</div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Total</div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{t('books.detail.total')}</div>
                                         </div>
                                         <div style={{ textAlign: 'center' }}>
                                             <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ed8936' }}>
                                                 {book.total_copies - (book.available_copies || 0)}
                                             </div>
-                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>Issued</div>
+                                            <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>{t('books.detail.issued')}</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div className="action-grid">
                                     <button className="smart-action-btn primary" onClick={() => onEdit(book)}>
-                                        <Edit size={16} /> Edit Book Details
+                                        <Edit size={16} /> {t('books.detail.edit_btn')}
                                     </button>
                                     <button className="smart-action-btn secondary" onClick={() => onManageCopies(book)}>
-                                        <Layers size={16} /> Manage Copies
+                                        <Layers size={16} /> {t('books.detail.manage_btn')}
                                     </button>
                                 </div>
                             </div>
@@ -227,8 +228,8 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                             ) : holders.length === 0 ? (
                                 <div className="smart-import-empty">
                                     <Users size={48} />
-                                    <p>No active holders.</p>
-                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>All copies are currently on the shelf.</span>
+                                    <p>{t('books.detail.no_holders')}</p>
+                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('books.detail.no_holders_hint')}</span>
                                 </div>
                             ) : (
                                 <div className="holder-list">
@@ -242,17 +243,17 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                                             </div>
                                             <div className="holder-status">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-                                                    <span className="text-xs text-[var(--text-secondary)]">Copy:</span>
+                                                    <span className="text-xs text-[var(--text-secondary)]">{t('books.detail.copy')}:</span>
                                                     <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-xs">#{loan.accession_number}</span>
                                                 </div>
                                                 <div style={{ marginTop: '5px' }}>
                                                     {loan.overdue_days > 0 ? (
                                                         <span className="copy-badge lost">
-                                                            Overdue {Math.floor(loan.overdue_days)} days
+                                                            {t('books.detail.overdue', { days: Math.floor(loan.overdue_days) })}
                                                         </span>
                                                     ) : (
                                                         <span className="copy-badge available">
-                                                            Due: {formatDate(loan.due_date)}
+                                                            {t('books.detail.due')}: {formatDate(loan.due_date)}
                                                         </span>
                                                     )}
                                                 </div>
@@ -271,15 +272,15 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                             ) : history.length === 0 ? (
                                 <div className="smart-import-empty">
                                     <Clock size={48} />
-                                    <p>No circulation history.</p>
-                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>This book has no recorded transactions yet.</span>
+                                    <p>{t('books.detail.no_history')}</p>
+                                    <span style={{ fontSize: '0.8rem', opacity: 0.6 }}>{t('books.detail.no_history_hint')}</span>
                                 </div>
                             ) : (
                                 <div className="holder-list">
                                     {history.map((tx, idx) => (
                                         <div key={tx.id || idx} className="holder-item">
                                             <div className="holder-info">
-                                                <h4>{tx.student_name || 'Unknown Student'}</h4>
+                                                <h4>{tx.student_name || t('books.detail.unknown_student')}</h4>
                                                 <div className="holder-meta">
                                                     {tx.register_number} {tx.department_name ? `• ${tx.department_name}` : ''}
                                                 </div>
@@ -289,7 +290,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
                                             </div>
                                             <div className="holder-status">
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-                                                    <span className="text-xs text-[var(--text-secondary)]">Copy:</span>
+                                                    <span className="text-xs text-[var(--text-secondary)]">{t('books.detail.copy')}:</span>
                                                     <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-xs">#{tx.accession_number}</span>
                                                 </div>
                                                 <div style={{ marginTop: '5px' }}>

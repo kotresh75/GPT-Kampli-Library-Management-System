@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { formatDate } from '../utils/dateUtils';
 import { History, Search, Filter, BookOpen, AlertCircle, CheckCircle, Clock, ArrowUpRight, ArrowDownLeft, RotateCcw, Info, Download, Calendar } from 'lucide-react';
 import TransactionDetailsModal from '../components/common/TransactionDetailsModal';
-import { usePreferences } from '../context/PreferencesContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useSocket } from '../context/SocketContext';
 import GlassSelect from '../components/common/GlassSelect';
 import SmartExportModal from '../components/common/SmartExportModal';
 import SmartTransactionTable from '../components/history/SmartTransactionTable';
 
 const TransactionHistoryPage = () => {
-    const { t } = usePreferences();
+    const { t } = useLanguage();
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
@@ -37,6 +38,17 @@ const TransactionHistoryPage = () => {
     useEffect(() => {
         fetchHistory();
     }, [search, statusFilter, departmentFilter, timeFilter]);
+
+    const socket = useSocket();
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("History Update: Refreshing");
+            fetchHistory();
+        };
+        socket.on('circulation_update', handleUpdate);
+        return () => socket.off('circulation_update', handleUpdate);
+    }, [socket, search, statusFilter, departmentFilter, timeFilter]);
 
     const fetchHistory = async () => {
         setLoading(true);
@@ -116,14 +128,14 @@ const TransactionHistoryPage = () => {
             <div className="flex flex-col gap-4 mb-6">
                 <div className="catalog-toolbar">
                     <h1 className="text-2xl font-bold flex items-center gap-2 mr-4 text-white">
-                        <History size={24} className="text-accent" /> History
+                        <History size={24} className="text-accent" /> {t('history.title')}
                     </h1>
 
                     <div className="toolbar-search" style={{ flex: 1 }}>
                         <Search size={20} />
                         <input
                             type="text"
-                            placeholder="Search History..."
+                            placeholder={t('history.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -134,11 +146,11 @@ const TransactionHistoryPage = () => {
                             value={departmentFilter}
                             onChange={(val) => setDepartmentFilter(val)}
                             options={[
-                                { value: 'All', label: 'All Departments' },
+                                { value: 'All', label: t('history.filter_dept_all') },
                                 ...departments.map(d => ({ value: d.name, label: d.name }))
                             ]}
                             icon={Filter}
-                            placeholder="All Departments"
+                            placeholder={t('history.filter_dept_all')}
                         />
                     </div>
 
@@ -147,14 +159,14 @@ const TransactionHistoryPage = () => {
                             value={timeFilter}
                             onChange={setTimeFilter}
                             options={[
-                                { value: 'All', label: 'All Time' },
-                                { value: 'Today', label: 'Today' },
-                                { value: 'Week', label: 'Last 7 Days' },
-                                { value: 'Month', label: 'Last 30 Days' },
-                                { value: 'Year', label: 'Last Year' }
+                                { value: 'All', label: t('history.filter_time_all') },
+                                { value: 'Today', label: t('history.time_today') },
+                                { value: 'Week', label: t('history.time_week') },
+                                { value: 'Month', label: t('history.time_month') },
+                                { value: 'Year', label: t('history.time_year') }
                             ]}
                             icon={Calendar}
-                            placeholder="Time Period"
+                            placeholder={t('history.filter_time')}
                         />
                     </div>
 
@@ -163,19 +175,19 @@ const TransactionHistoryPage = () => {
                             value={statusFilter}
                             onChange={setStatusFilter}
                             options={[
-                                { value: 'All', label: 'All Actions' },
-                                { value: 'ISSUE', label: 'Issued' },
-                                { value: 'RETURN', label: 'Returned' },
-                                { value: 'RENEW', label: 'Renewed' }
+                                { value: 'All', label: t('history.filter_status_all') },
+                                { value: 'ISSUE', label: t('history.status_issue') },
+                                { value: 'RETURN', label: t('history.status_return') },
+                                { value: 'RENEW', label: t('history.status_renew') }
                             ]}
                             icon={Filter}
-                            placeholder="Status"
+                            placeholder={t('history.filter_status')}
                         />
                     </div>
 
                     <div className="h-8 w-px bg-white/10 mx-2"></div>
 
-                    <button className="toolbar-icon-btn" onClick={() => setShowExportModal(true)} title="Export Data">
+                    <button className="toolbar-icon-btn" onClick={() => setShowExportModal(true)} title={t('history.export_tooltip')}>
                         <Download size={20} />
                     </button>
                 </div>
@@ -202,10 +214,35 @@ const TransactionHistoryPage = () => {
             {showExportModal && (
                 <SmartExportModal
                     onClose={() => setShowExportModal(false)}
-                    totalCount={transactions.length} // Should specificy total count from pagination ideally, but logical enough
+                    totalCount={transactions.length}
                     filteredCount={transactions.length}
                     selectedCount={selectedIds.size}
-                    entityName="Transactions"
+                    entityName={t('history.entity_name')}
+                    data={transactions.map(txn => {
+                        let details = {};
+                        try { details = JSON.parse(txn.details || '{}'); } catch (e) { }
+                        return {
+                            [t('history.cols.date')]: new Date(txn.timestamp || txn.date).toLocaleString(),
+                            [t('history.cols.action')]: txn.status,
+                            [t('history.cols.student')]: txn.student_name,
+                            [t('history.cols.regno')]: txn.register_number,
+                            [t('history.cols.dept')]: txn.department_name,
+                            [t('history.cols.book')]: txn.book_title,
+                            [t('history.cols.accession')]: txn.accession_number,
+                            [t('history.cols.fine')]: details.fine_amount || 0,
+                            [t('history.cols.condition')]: details.condition || '-',
+                        };
+                    })}
+                    columns={[
+                        t('history.cols.date'),
+                        t('history.cols.action'),
+                        t('history.cols.student'),
+                        t('history.cols.regno'),
+                        t('history.cols.dept'),
+                        t('history.cols.book'),
+                        t('history.cols.accession'),
+                        t('history.cols.fine')
+                    ]}
                     onExport={(scope, format) => {
                         // Export Logic Reusing existing data
                         let dataToExport = transactions;

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type, Globe } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
+import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
 
 import StatusModal from '../components/common/StatusModal';
@@ -10,6 +11,7 @@ import StatusModal from '../components/common/StatusModal';
 const LoginPage = () => {
     const navigate = useNavigate();
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
+    const { t, language, toggleLanguage } = useLanguage();
     const [showWarning, setShowWarning] = useState(false);
 
     // Map numeric scale to labels
@@ -35,17 +37,26 @@ const LoginPage = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [fieldError, setFieldError] = useState(''); // 'email' or 'password'
+    const [shake, setShake] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
         setError('');
+        setFieldError('');
+    };
+
+    const triggerShake = () => {
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
+        setFieldError('');
 
         try {
             const response = await axios.post('http://localhost:3001/api/auth/login', credentials);
@@ -57,10 +68,25 @@ const LoginPage = () => {
 
             navigate('/dashboard');
         } catch (err) {
+            triggerShake();
             if (err.response) {
-                setError((err.response.data.message || 'Login failed') + " (ERR_AUTH_LOGIN)");
+                const { message, error_code, field } = err.response.data;
+                // Use backend message or map codes if needed
+                setError(message || 'Login failed');
+
+                // Highlight specific field if provided
+                if (field) {
+                    setFieldError(field);
+                } else if (error_code === 'ERR_WRONG_PASSWORD') {
+                    setFieldError('password');
+                } else if (error_code === 'ERR_USER_NOT_FOUND') {
+                    setFieldError('email');
+                }
+
+                // If specific error code available, we can append it or use it for specialized UI if needed
+                // setError(`${message} (${error_code || 'ERR_AUTH'})`);
             } else {
-                setError('Server unreachable (ERR_NET_CONN)');
+                setError('Server unreachable. Check connection.');
             }
         } finally {
             setLoading(false);
@@ -73,14 +99,20 @@ const LoginPage = () => {
 
             {/* Top Right Controls */}
             <div className="login-controls">
+                {/* Language Toggle */}
+                <button className="icon-btn" onClick={toggleLanguage} title="Switch Language">
+                    <Globe size={18} />
+                    <span className="lang-code">{language === 'en' ? 'KN' : 'EN'}</span>
+                </button>
+
                 {/* Font Size Toggle */}
-                <button className="icon-btn" onClick={cycleFontSize} title="Change Font Size">
+                <button className="icon-btn" onClick={cycleFontSize} title={t('change_font_size')}>
                     <Type size={18} />
                     <span className="lang-code">{SCALE_MAP[fontScale] || 'C'}</span>
                 </button>
 
                 {/* Theme Toggle */}
-                <button className="icon-btn" onClick={handleThemeToggle} title="Toggle Theme">
+                <button className="icon-btn" onClick={handleThemeToggle} title={t('toggle_theme')}>
                     {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                 </button>
             </div>
@@ -89,18 +121,18 @@ const LoginPage = () => {
 
                 <div className="login-header text-center flex flex-col items-center justify-center">
                     <img src={logo} alt="Logo" className="login-logo" />
-                    <h2 className="login-title">Welcome Back</h2>
-                    <p className="login-subtitle">Sign in to access your dashboard</p>
+                    <h2 className="login-title">{t('auth.welcome_back')}</h2>
+                    <p className="login-subtitle">{t('auth.sign_in_subtitle')}</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="login-form">
 
-                    <div className={`input-group ${error ? 'error-glow' : ''}`}>
-                        <Mail className="input-icon" size={20} />
+                    <div className={`input-group ${fieldError === 'email' ? 'error-glow' : ''} ${shake && fieldError === 'email' ? 'shake-animation' : ''}`}>
+                        <Mail className={`input-icon ${fieldError === 'email' ? 'text-red-400' : ''}`} size={20} />
                         <input
                             type="email"
                             name="email"
-                            placeholder="Enter your email"
+                            placeholder={t('auth.email_placeholder')}
                             value={credentials.email}
                             onChange={handleChange}
                             required
@@ -108,12 +140,12 @@ const LoginPage = () => {
                         />
                     </div>
 
-                    <div className={`input-group ${error ? 'error-glow' : ''}`}>
-                        <Lock className="input-icon" size={20} />
+                    <div className={`input-group ${fieldError === 'password' ? 'error-glow' : ''} ${shake && fieldError === 'password' ? 'shake-animation' : ''}`}>
+                        <Lock className={`input-icon ${fieldError === 'password' ? 'text-red-400' : ''}`} size={20} />
                         <input
                             type={showPassword ? "text" : "password"}
                             name="password"
-                            placeholder="Enter your password"
+                            placeholder={t('auth.password_placeholder')}
                             value={credentials.password}
                             onChange={handleChange}
                             required
@@ -129,15 +161,18 @@ const LoginPage = () => {
                     </div>
 
                     {error && (
-                        <div className="error-banner">
-                            {error}
+                        <div className={`error-banner ${shake && !fieldError ? 'shake-animation' : ''}`}>
+                            <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                {error}
+                            </div>
                         </div>
                     )}
 
                     <button type="submit" className="login-btn primary-glass-btn" disabled={loading}>
                         {loading ? <div className="spinner-sm"></div> : (
                             <>
-                                <span>Sign In</span>
+                                <span>{t('auth.sign_in_btn')}</span>
                                 <LogIn size={20} className="ml-2" />
                             </>
                         )}
@@ -145,7 +180,7 @@ const LoginPage = () => {
 
                     <div className="forgot-password">
                         <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }}>
-                            Forgot Password?
+                            {t('auth.forgot_password')}
                         </a>
                     </div>
 
@@ -156,8 +191,8 @@ const LoginPage = () => {
                 isOpen={showWarning}
                 onClose={() => setShowWarning(false)}
                 type="error"
-                title="Action Locked"
-                message="High Contrast Mode is on. Please turn it off in Settings > Appearance to change themes."
+                title={t('action_locked')}
+                message={t('high_contrast_warning')}
             />
         </div>
     );

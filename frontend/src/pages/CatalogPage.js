@@ -1,7 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Filter, Download, Upload, Trash2, Edit, Layers, MoreHorizontal, FileQuestion, BookOpen, ArrowUpDown } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, Plus, Upload, Filter, Grid, List as ListIcon, ArrowUpDown, Trash2, Download, BookOpen, Book, BarChart2, MoreVertical, X, CheckCircle, AlertTriangle } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
+import { useLanguage } from '../context/LanguageContext';
 import GlassSelect from '../components/common/GlassSelect';
+import { useSocket } from '../context/SocketContext';
 import SmartAddBookModal from '../components/books/SmartAddBookModal';
 import SmartEditBookModal from '../components/books/SmartEditBookModal';
 import SmartManageCopiesModal from '../components/books/SmartManageCopiesModal';
@@ -12,6 +14,8 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import SmartBookTable from '../components/books/SmartBookTable';
 
 const CatalogPage = () => {
+    const socket = useSocket();
+    const { t } = useLanguage();
     const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [successModal, setSuccessModal] = useState({ isOpen: false, title: '', message: '' });
@@ -26,12 +30,11 @@ const CatalogPage = () => {
 
     const [departments, setDepartments] = useState([]); // Store full dept objects
     const [departmentOptions, setDepartmentOptions] = useState([
-        { value: 'All', label: 'All Departments' }
+        { value: 'All', label: t('catalog.all_departments') }
     ]);
 
     // Selection state
     const [selectedIds, setSelectedIds] = useState(new Set());
-    // const { t } = usePreferences();
 
     // Modals
     const [showAddModal, setShowAddModal] = useState(false);
@@ -126,6 +129,17 @@ const CatalogPage = () => {
         fetchBooks();
     }, [search, category, sortBy]); // Removed viewMode dependency
 
+    // Socket Listener
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Book Update: Refreshing");
+            fetchBooks();
+        };
+        socket.on('book_update', handleUpdate);
+        return () => socket.off('book_update', handleUpdate);
+    }, [socket, search, category, sortBy]); // Depend on search, category, sortBy to ensure fetchBooks has latest state
+
     // Handlers
     const toggleSelectAll = () => {
         if (selectedIds.size === books.length) {
@@ -178,11 +192,11 @@ const CatalogPage = () => {
         if (selectedIds.size === 0) return;
         setConfirmationModal({
             isOpen: true,
-            title: 'Confirm Permanent Deletion',
-            message: `Are you sure you want to PERMANENTLY delete ${selectedIds.size} book(s)? This will remove all copies and history.`,
+            title: t('catalog.delete_permanent_title'),
+            message: t('catalog.delete_permanent_msg').replace('{count}', selectedIds.size),
             onConfirm: executeBulkDelete,
-            confirmText: 'Delete Permanently',
-            cancelText: 'Cancel',
+            confirmText: t('catalog.delete_permanent_btn'),
+            cancelText: t('common.cancel'),
             isDanger: true
         });
     };
@@ -218,7 +232,7 @@ const CatalogPage = () => {
                         <Search size={20} />
                         <input
                             type="text"
-                            placeholder="Search by Title, Author, ISBN..."
+                            placeholder={t('catalog.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -228,9 +242,9 @@ const CatalogPage = () => {
                         <GlassSelect
                             value={category}
                             onChange={setCategory}
-                            options={departmentOptions.map(opt => opt.value === 'All' ? { ...opt, label: 'All Departments' } : opt)}
+                            options={departmentOptions.map(opt => opt.value === 'All' ? { ...opt, label: t('catalog.all_departments') } : opt)}
                             icon={Filter}
-                            placeholder="All Departments"
+                            placeholder={t('catalog.all_departments')}
                         />
                     </div>
 
@@ -239,33 +253,33 @@ const CatalogPage = () => {
                             value={sortBy}
                             onChange={setSortBy}
                             options={[
-                                { value: 'newest', label: 'Recently Added' },
-                                { value: 'title', label: 'Title (A-Z)' },
-                                { value: 'availability', label: 'Availability' }
+                                { value: 'newest', label: t('catalog.recently_added') },
+                                { value: 'title', label: t('catalog.title_az') },
+                                { value: 'availability', label: t('catalog.availability') }
                             ]}
                             icon={ArrowUpDown}
-                            placeholder="Sort By"
+                            placeholder={t('catalog.sort_by')}
                         />
                     </div>
 
                     <div className="h-8 w-px bg-white/10 mx-2"></div>
 
                     {selectedIds.size > 0 && (
-                        <button className="toolbar-icon-btn text-red-400 hover:bg-red-500/20 hover:text-red-400" onClick={handleBulkDeleteClick} title="Delete Selected">
+                        <button className="toolbar-icon-btn text-red-400 hover:bg-red-500/20 hover:text-red-400" onClick={handleBulkDeleteClick} title={t('catalog.delete_selected')}>
                             <Trash2 size={20} />
                         </button>
                     )}
 
-                    <button className="toolbar-icon-btn" onClick={() => setShowExportModal(true)} title="Export Data">
+                    <button className="toolbar-icon-btn" onClick={() => setShowExportModal(true)} title={t('catalog.export_data')}>
                         <Download size={20} />
                     </button>
 
-                    <button className="toolbar-icon-btn" onClick={() => setShowImportModal(true)} title="Import CSV">
+                    <button className="toolbar-icon-btn" onClick={() => setShowImportModal(true)} title={t('catalog.import_csv')}>
                         <Upload size={20} />
                     </button>
 
                     <button className="toolbar-primary-btn" onClick={handleAddBook}>
-                        <Plus size={20} /> Add Book
+                        <Plus size={20} /> {t('catalog.add_book')}
                     </button>
                 </div>
             </div>
@@ -296,9 +310,10 @@ const CatalogPage = () => {
                     onDelete={(book) => {
                         setConfirmationModal({
                             isOpen: true,
-                            title: 'Delete Book',
-                            message: `Are you sure you want to delete "${book.title}"? This action cannot be undone.`,
-                            confirmText: 'Delete',
+                            title: t('catalog.delete_book_title'),
+                            message: t('catalog.delete_confirm_msg').replace('{title}', book.title),
+                            confirmText: t('catalog.delete_btn'),
+                            cancelText: t('common.cancel'),
                             isDanger: true,
                             onConfirm: async () => {
                                 setIsDeleting(true);
@@ -327,7 +342,7 @@ const CatalogPage = () => {
                 <SmartBulkImportModal
                     isOpen={showImportModal}
                     onClose={() => setShowImportModal(false)}
-                    title="Smart Import Books (CSV/Excel)"
+                    title={t('catalog.import_csv')}
                     duplicateKey="isbn"
                     columns={[
                         { key: 'isbn', label: 'ISBN', required: true, width: '140px', aliases: ['id', 'code'] },
@@ -384,7 +399,7 @@ const CatalogPage = () => {
                             onClick={async () => {
                                 const rowsToFetch = data.filter(row => row.isbn && !String(row.isbn).startsWith('AG-'));
                                 if (rowsToFetch.length === 0) {
-                                    setSuccessModal({ isOpen: true, title: "Info", message: "No valid ISBNs to fetch (AG- prefixes are skipped)." });
+                                    setSuccessModal({ isOpen: true, title: t('common.warning'), message: "No valid ISBNs to fetch (AG- prefixes are skipped)." });
                                     return;
                                 }
 
@@ -486,8 +501,8 @@ const CatalogPage = () => {
                                 setAutoFillProgress('');
                                 setSuccessModal({
                                     isOpen: true,
-                                    title: "Auto-Fill Complete",
-                                    message: `Successfully updated details for ${updatedCount} books.`
+                                    title: t('catalog.auto_fill_complete_title'),
+                                    message: t('catalog.auto_fill_complete_msg').replace('{count}', updatedCount)
                                 });
                             }}
                         >
@@ -498,7 +513,7 @@ const CatalogPage = () => {
                                 </>
                             ) : (
                                 <>
-                                    <BookOpen size={14} style={{ marginRight: 6 }} /> Auto-Fill Info
+                                    <BookOpen size={14} style={{ marginRight: 6 }} /> {t('catalog.auto_fill_btn')}
                                 </>
                             )}
                         </button>
@@ -514,10 +529,10 @@ const CatalogPage = () => {
 
                         setConfirmationModal({
                             isOpen: true,
-                            title: 'Import Successful',
-                            message: data.message || `Successfully added ${data.details?.success || booksData.length} books!`,
+                            title: t('catalog.import_success_title'),
+                            message: t('catalog.import_success_msg').replace('{count}', data.details?.success || booksData.length),
                             onConfirm: () => setConfirmationModal(prev => ({ ...prev, isOpen: false })),
-                            confirmText: 'Great',
+                            confirmText: t('common.confirm'),
                             cancelText: null,
                             isDanger: false
                         });
@@ -537,6 +552,40 @@ const CatalogPage = () => {
                         const matchesCategory = category === 'All' || b.category === category;
                         return matchesSearch && matchesCategory;
                     }).length}
+                    data={books.filter(b => {
+                        const matchesSearch = b.title.toLowerCase().includes(search.toLowerCase()) ||
+                            b.author.toLowerCase().includes(search.toLowerCase()) ||
+                            b.isbn.includes(search);
+                        const matchesCategory = category === 'All' || b.category === category;
+                        return matchesSearch && matchesCategory;
+                    }).map(b => ({
+                        ISBN: b.isbn,
+                        Title: b.title,
+                        Author: b.author,
+                        Publisher: b.publisher,
+                        Department: b.department_name || b.category || '-',
+                        Location: b.location || 'Main Stack',
+                        Total: b.total_copies || 0,
+                        Available: b.available_copies || 0
+                    }))}
+                    columns={['ISBN', 'Title', 'Author', 'Publisher', 'Department', 'Location', 'Total', 'Available']}
+                    onFetchAll={async () => {
+                        try {
+                            const query = new URLSearchParams({ search, department: category, sort: sortBy, limit: 10000 }).toString();
+                            const res = await fetch(`http://localhost:3001/api/books?${query}`);
+                            const data = await res.json();
+                            return (Array.isArray(data) ? data : []).map(b => ({
+                                ISBN: b.isbn,
+                                Title: b.title,
+                                Author: b.author,
+                                Publisher: b.publisher,
+                                Department: b.department_name || b.category || '-',
+                                Location: b.location || 'Main Stack',
+                                Total: b.total_copies || 0,
+                                Available: b.available_copies || 0
+                            }));
+                        } catch (e) { console.error(e); return []; }
+                    }}
                     onExport={(scope, format) => {
                         // 1. Determine Data Source
                         let dataToExport = books;

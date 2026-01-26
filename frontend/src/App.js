@@ -19,7 +19,11 @@ import ReportsPage from './pages/ReportsPage';
 import AuditPage from './pages/AuditPage';
 import TransactionHistoryPage from './pages/TransactionHistoryPage';
 import UserProfile from './pages/UserProfile';
+import PrintableReport from './pages/PrintableReport';
 import { PreferencesProvider } from './context/PreferencesContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { SessionProvider, useSession } from './context/SessionContext';
+import LockScreen from './components/common/LockScreen';
 import './App.css';
 import './styles/index.css';
 
@@ -45,39 +49,45 @@ const DbStatusCheck = () => {
 function App() {
   return (
     <PreferencesProvider>
-      <Router>
-        <div className="app-container">
-          <div className="gradient-bg" />
-          <DbStatusCheck />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <LanguageProvider>
+        <SessionProvider>
+          <Router>
+            <div className="app-container">
+              <div className="gradient-bg" />
+              <DbStatusCheck />
+              <LockScreen />
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/print/report" element={<PrintableReport />} />
 
-            {/* Protected Dashboard Routes */}
-            <Route path="/dashboard" element={<MainLayout />}>
-              <Route index element={<DashboardHome />} />
-              <Route path="books" element={<CatalogPage />} />
-              <Route path="departments" element={<DepartmentPage />} />
-              <Route path="members" element={<StudentManager />} />
-              <Route path="staff" element={<StaffManager />} />
-              <Route path="circulation" element={<CirculationPage />} />
-              <Route path="policy" element={<PolicyPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="health" element={<SystemHealthPage />} />
-              <Route path="transactions" element={<TransactionHistoryPage />} />
-              <Route path="reports" element={<ReportsPage />} />
-              <Route path="notifications" element={<NotificationPage />} />
-              <Route path="admins" element={<AdminManager />} />
-              <Route path="audit" element={<AuditPage />} />
-              <Route path="profile" element={<UserProfile />} />
-            </Route>
+                {/* Protected Dashboard Routes */}
+                <Route path="/dashboard" element={<MainLayout />}>
+                  <Route index element={<DashboardHome />} />
+                  <Route path="books" element={<CatalogPage />} />
+                  <Route path="departments" element={<DepartmentPage />} />
+                  <Route path="members" element={<StudentManager />} />
+                  <Route path="staff" element={<StaffManager />} />
+                  <Route path="circulation" element={<CirculationPage />} />
+                  <Route path="policy" element={<PolicyPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="health" element={<SystemHealthPage />} />
+                  <Route path="transactions" element={<TransactionHistoryPage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="notifications" element={<NotificationPage />} />
+                  <Route path="admins" element={<AdminManager />} />
+                  <Route path="audit" element={<AuditPage />} />
+                  <Route path="profile" element={<UserProfile />} />
+                </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </div>
-      </Router>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </Router>
+        </SessionProvider>
+      </LanguageProvider>
     </PreferencesProvider>
   );
 }

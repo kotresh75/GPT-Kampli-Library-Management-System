@@ -79,6 +79,41 @@ cron.schedule('0 8 * * *', async () => {
     }
 });
 
+// Scheduled Task: Cloud Backup (Daily at Midnight)
+cron.schedule('0 0 * * *', async () => {
+    console.log('[Cron] Checking Cloud Backup schedule...');
+    const cloudBackupService = require('./cloudBackupService');
+
+    // Get Config
+    db.get("SELECT value FROM system_settings WHERE key = 'backup_config'", async (err, row) => {
+        if (!err && row) {
+            try {
+                const config = JSON.parse(row.value);
+                if (config.autoBackup && config.connectionUri) {
+                    // Check frequency
+                    if (config.frequency === 'on_close') {
+                        console.log('[Cron] Backup frequency set to "on_close". Skipping daily schedule.');
+                        return;
+                    }
+
+                    if (config.frequency === 'weekly') {
+                        const day = new Date().getDay(); // 0 = Sunday
+                        if (day !== 0) {
+                            console.log('[Cron] Weekly backup active. Today is not Sunday. Skipping.');
+                            return;
+                        }
+                    }
+
+                    console.log('[Cron] Starting Auto-Backup to Cloud...');
+                    await cloudBackupService.performCloudBackup();
+                }
+            } catch (e) {
+                console.error('[Cron] Error parsing backup config:', e);
+            }
+        }
+    });
+});
+
 module.exports = {
     init: () => console.log('[Cron] Service Initialized')
 };

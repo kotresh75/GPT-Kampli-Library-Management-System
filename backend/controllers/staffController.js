@@ -2,6 +2,7 @@ const db = require('../db');
 const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const auditService = require('../services/auditService');
+const socketService = require('../services/socketService');
 
 // Helper for Audit Logging (Reusing the concept, ideally this would be a shared utility)
 
@@ -101,6 +102,7 @@ exports.createStaff = (req, res) => {
             }
 
             auditService.log(req.user, 'CREATE', 'Staff Mgmt', `Created staff: ${name} (${designation})`, { staff_id: id });
+            socketService.emit('staff_update', { type: 'CREATE', id });
             res.json({ message: "Staff created successfully", id });
         });
     });
@@ -120,6 +122,7 @@ exports.updateStaff = (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
 
         auditService.log(req.user, 'UPDATE', 'Staff Mgmt', `Updated staff: ${name}`, { staff_id: id });
+        socketService.emit('staff_update', { type: 'UPDATE', id });
         res.json({ message: "Staff updated successfully" });
     });
 };
@@ -138,6 +141,7 @@ exports.toggleStatus = (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
 
         auditService.log(req.user, 'STATUS_CHANGE', 'Staff Mgmt', `Changed status of staff ${id} to ${status}`, { staff_id: id, status });
+        socketService.emit('staff_update', { type: 'UPDATE', id });
         res.json({ message: "Status updated" });
     });
 };
@@ -172,6 +176,7 @@ exports.deleteStaff = (req, res) => {
                 if (err) return res.status(500).json({ error: err.message });
 
                 auditService.log(req.user, 'DELETE', 'Staff Mgmt', `Deleted staff: ${staff.name} (${staff.email})`, { staff_id: id });
+                socketService.emit('staff_update', { type: 'DELETE', id });
                 res.json({ message: "Staff deleted permanently" });
             });
         });
@@ -194,6 +199,7 @@ exports.resetPassword = (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             auditService.log(req.user, 'RESET_PASSWORD', 'Staff Mgmt', `Reset password for staff ${id}`, { staff_id: id });
+            socketService.emit('staff_update', { type: 'UPDATE', id });
             res.json({ message: "Password reset to 'password123'" });
         });
     });

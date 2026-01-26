@@ -1,5 +1,7 @@
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
+const socketService = require('./socketService');
+
 
 /**
  * Centalized Log Audit Function
@@ -55,6 +57,9 @@ exports.log = (user, actionType, moduleName, description, metadata = {}) => {
                     // We typically resolve anyway so as not to block the main flow
                     resolve(null);
                 } else {
+                    socketService.emit('audit_log', {
+                        id, actorId, actorRole, actionType, moduleName, description, metadata, ipAddress, timestamp: new Date().toISOString()
+                    });
                     resolve(id);
                 }
             });

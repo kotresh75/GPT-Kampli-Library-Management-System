@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, BookOpen, DollarSign, Calendar, Mail, Phone, MapPin, AlertCircle, Clock, CheckCircle, Info, Hash, Award, AlertTriangle, Check } from 'lucide-react';
+import { X, User, BookOpen, DollarSign, Calendar, Mail, Phone, MapPin, AlertCircle, Clock, CheckCircle, Info, Hash, Award, AlertTriangle, Check, CreditCard } from 'lucide-react';
 import TransactionDetailsModal from '../common/TransactionDetailsModal';
+import IDCardPreviewModal from './IDCardPreviewModal'; // Updated import
 import '../../styles/components/smart-book-detail.css'; // Reusing the shared smart styling
 
 const StudentDetailModal = ({ student, onClose }) => {
@@ -12,6 +13,7 @@ const StudentDetailModal = ({ student, onClose }) => {
     const [selectedFineOrTxn, setSelectedFineOrTxn] = useState(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
     const [copiedId, setCopiedId] = useState(false);
+    const [showIDCard, setShowIDCard] = useState(false);
 
     // Fetch Data
     useEffect(() => {
@@ -92,8 +94,16 @@ const StudentDetailModal = ({ student, onClose }) => {
                     </button>
 
                     <div className="hero-content">
-                        <div className="book-cover-large" style={{ borderRadius: '50%', width: '140px', height: '140px', background: 'var(--surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(255,255,255,0.1)' }}>
-                            <User size={60} style={{ opacity: 0.8 }} />
+                        <div className="book-cover-large" style={{ borderRadius: '50%', width: '140px', height: '140px', background: 'var(--surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                            {student.profile_image ? (
+                                <img
+                                    src={student.profile_image}
+                                    alt={student.full_name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <User size={60} style={{ opacity: 0.8 }} />
+                            )}
                         </div>
                         <div className="hero-info" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '10px' }}>
                             <h1 className="hero-title">{student.full_name}</h1>
@@ -105,6 +115,13 @@ const StudentDetailModal = ({ student, onClose }) => {
                                 <span className="hero-badge" style={{ background: getStatusColor(student.status), border: 'none', color: '#fff' }}>
                                     {student.status}
                                 </span>
+                                <button
+                                    className="hero-badge"
+                                    style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', color: '#fff' }}
+                                    onClick={() => setShowIDCard(true)}
+                                >
+                                    <CreditCard size={14} /> ID Card
+                                </button>
                             </div>
                             <div className="hero-meta" style={{ marginTop: '8px', fontSize: '0.9rem' }}>
                                 <span style={{ opacity: 0.7 }}>{student.department_name}</span>
@@ -138,6 +155,10 @@ const StudentDetailModal = ({ student, onClose }) => {
                                         <h3 className="card-title"><Info size={18} /> Personal Information</h3>
                                     </div>
                                     <div className="data-row">
+                                        <span className="data-label">Father Name</span>
+                                        <span className="data-value">{student.father_name || '-'}</span>
+                                    </div>
+                                    <div className="data-row">
                                         <span className="data-label">Email Address</span>
                                         <span className="data-value">{student.email}</span>
                                     </div>
@@ -147,7 +168,9 @@ const StudentDetailModal = ({ student, onClose }) => {
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Date of Birth</span>
-                                        <span className="data-value">{student.dob}</span>
+                                        <span className="data-value">
+                                            {student.dob ? student.dob.split('-').reverse().join('/') : '-'}
+                                        </span>
                                     </div>
                                     <div className="data-row">
                                         <span className="data-label">Address</span>
@@ -240,6 +263,13 @@ const StudentDetailModal = ({ student, onClose }) => {
                 onClose={() => setIsDetailsOpen(false)}
                 transaction={selectedFineOrTxn}
             />
+            {/* ID Card Generator */}
+            {showIDCard && (
+                <IDCardPreviewModal
+                    student={student}
+                    onClose={() => setShowIDCard(false)}
+                />
+            )}
         </div>
     );
 };

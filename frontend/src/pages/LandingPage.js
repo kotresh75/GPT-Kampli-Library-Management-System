@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Type, LogIn } from 'lucide-react';
+import { Sun, Moon, Type, LogIn, Globe } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
+import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
-
 import StatusModal from '../components/common/StatusModal';
 
 const LandingPage = () => {
     const navigate = useNavigate();
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
+    const { t, language, toggleLanguage } = useLanguage();
     const [showWarning, setShowWarning] = useState(false);
 
     // Map numeric scale to labels
@@ -50,14 +51,20 @@ const LandingPage = () => {
                     </div>
 
                     <div className="header-actions flex gap-2">
+                        {/* Language Toggle */}
+                        <button className="icon-btn" onClick={toggleLanguage} title="Switch Language">
+                            <Globe size={18} />
+                            <span className="lang-code">{language === 'en' ? 'KN' : 'EN'}</span>
+                        </button>
+
                         {/* Font Size Toggle */}
-                        <button className="icon-btn" onClick={cycleFontSize} title="Change Font Size">
+                        <button className="icon-btn" onClick={cycleFontSize} title={t('landing.change_font_size') || "Change Font Size"}>
                             <Type size={18} />
                             <span className="lang-code">{SCALE_MAP[fontScale] || 'C'}</span>
                         </button>
 
                         {/* Theme Toggle */}
-                        <button className="icon-btn" onClick={handleThemeToggle} title="Toggle Theme">
+                        <button className="icon-btn" onClick={handleThemeToggle} title={t('landing.toggle_theme') || "Toggle Theme"}>
                             {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
                     </div>
@@ -67,32 +74,32 @@ const LandingPage = () => {
                 <main className="landing-hero">
                     <div className="hero-text-group">
                         <h1 className="hero-title">
-                            Welcome to GPTK Library
+                            {t('landing.welcome')}
                         </h1>
                         <h2 className="hero-subtitle-gradient">
-                            Your Gateway to Knowledge
+                            {t('landing.subtitle')}
                         </h2>
                     </div>
 
                     <p className="hero-description">
-                        Access thousands of books, resources, and digital assets. Manage your library account seamlessly.
+                        {t('landing.description')}
                     </p>
 
                     {/* 3. Call to Action */}
                     <div className="cta-section">
                         <button className="primary-glass-btn" onClick={() => navigate('/login')}>
                             <span className="flex items-center gap-2">
-                                Access Portal <LogIn size={20} />
+                                {t('landing.access_portal')} <LogIn size={20} />
                             </span>
                         </button>
                         <p className="login-hint">
-                            Restricted to Staff & Administrators
+                            {t('landing.restricted_msg')}
                         </p>
                     </div>
                 </main>
 
                 <footer className="landing-footer">
-                    <p className="copyright">© {new Date().getFullYear()} Government Polytechnic Kampli. All Rights Reserved.</p>
+                    <p className="copyright">{t('landing.copyright').replace('{year}', new Date().getFullYear())}</p>
                 </footer>
             </div>
 
@@ -100,8 +107,8 @@ const LandingPage = () => {
                 isOpen={showWarning}
                 onClose={() => setShowWarning(false)}
                 type="error"
-                title="Action Locked"
-                message="High Contrast Mode is on. Please turn it off in Settings > Appearance to change themes."
+                title={t('landing.action_locked') || "Action Locked"}
+                message={t('landing.high_contrast_warning') || "High Contrast Mode is on. Please turn it off in Settings > Appearance to change themes."}
             />
         </div>
     );

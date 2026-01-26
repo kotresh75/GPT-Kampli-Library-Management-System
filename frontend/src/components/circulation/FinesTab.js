@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/components/tables.css';
 import { formatDate } from '../../utils/dateUtils';
-import { IndianRupee, Clock, FileText, Search, User, ChevronDown, ChevronUp, Edit, Filter, Calendar, CheckCircle, Download } from 'lucide-react';
+import { IndianRupee, Clock, FileText, Search, User, ChevronDown, ChevronUp, Edit, Filter, Calendar, CheckCircle, Download, BookOpen, AlertCircle } from 'lucide-react';
 import ReceiptPreviewModal from '../finance/ReceiptPreviewModal';
 import VerifyReceiptModal from './VerifyReceiptModal';
 import EditFineModal from './EditFineModal';
@@ -10,8 +10,10 @@ import FineHistoryTable from './FineHistoryTable';
 import TransactionDetailModal from './TransactionDetailModal';
 import GlassSelect from '../common/GlassSelect'; // Assuming this exists or using native select
 import ExportModal from '../books/ExportModal';
+import { useLanguage } from '../../context/LanguageContext';
 
 const FinesTab = ({ initialTab }) => {
+    const { t } = useLanguage();
     const [activeTab, setActiveTab] = useState(initialTab || 'pending');
     const [fines, setFines] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -35,6 +37,17 @@ const FinesTab = ({ initialTab }) => {
     const [detailModal, setDetailModal] = useState({ isOpen: false, transaction: null });
     const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
     const [showExportModal, setShowExportModal] = useState(false);
+    const [emailEvents, setEmailEvents] = useState(null);
+
+    // Fetch Email Event Settings
+    useEffect(() => {
+        fetch('http://localhost:3001/api/settings/app')
+            .then(res => res.json())
+            .then(data => {
+                if (data.email_events) setEmailEvents(data.email_events);
+            })
+            .catch(err => console.error("Failed to fetch settings:", err));
+    }, []);
 
     // Helpers
     const fetchFines = React.useCallback(async () => {
@@ -226,7 +239,8 @@ const FinesTab = ({ initialTab }) => {
                     student: {
                         id: fine.student_id,
                         name: fine.student_name,
-                        regNo: fine.roll_number
+                        regNo: fine.roll_number,
+                        profile_image: fine.profile_image // Propagate this
                     },
                     fines: [],
                     totalAmount: 0
@@ -284,8 +298,9 @@ const FinesTab = ({ initialTab }) => {
                     payment_method: 'Cash'
                 });
                 setShowReceipt(true);
+                setShowReceipt(true);
                 fetchFines();
-                showSuccess('Payment Collected', `Successfully collected ₹${total}`);
+                showSuccess(t('circulation.fines.collect_success'), `Successfully collected ₹${total}`);
             } else {
                 showError("Payment processing failed");
             }
@@ -342,7 +357,7 @@ const FinesTab = ({ initialTab }) => {
             if (res.ok) {
                 fetchFines();
                 setEditModal({ isOpen: false, fine: null });
-                showSuccess('Fine Waived', 'The fine has been waived successfully.');
+                showSuccess(t('circulation.fines.waive_success'), 'The fine has been waived successfully.');
             } else {
                 showError("Failed to waive fine");
             }
@@ -399,7 +414,7 @@ const FinesTab = ({ initialTab }) => {
             });
             const data = await res.json();
             if (res.ok) {
-                showSuccess('Email Sent', 'Receipt has been resent to the student.');
+                showSuccess('Email Sent', t('circulation.fines.receipt_resent'));
             } else {
                 showError(data.error || "Failed to send email");
             }
@@ -430,7 +445,7 @@ const FinesTab = ({ initialTab }) => {
                                     cursor: 'pointer'
                                 }}
                             >
-                                {tab === 'pending' ? <Clock size={14} /> : <FileText size={14} />} {tab === 'pending' ? 'Pending' : 'History'}
+                                {tab === 'pending' ? <Clock size={14} /> : <FileText size={14} />} {tab === 'pending' ? t('circulation.fines.tab_pending') : t('circulation.fines.tab_history')}
                             </button>
                         );
                     })}
@@ -440,7 +455,7 @@ const FinesTab = ({ initialTab }) => {
                 <div className="toolbar-search" style={{ flex: 1, margin: '0 8px' }}>
                     <Search size={20} />
                     <input
-                        placeholder="Search Student Name or Roll No..."
+                        placeholder={t('circulation.fines.search_placeholder')}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
@@ -455,14 +470,14 @@ const FinesTab = ({ initialTab }) => {
                                 value={dateFilter}
                                 onChange={(val) => setDateFilter(val)}
                                 options={[
-                                    { value: 'all', label: 'All Dates' },
-                                    { value: 'today', label: 'Today' },
-                                    { value: 'week', label: 'This Week' },
-                                    { value: 'month', label: 'This Month' },
-                                    { value: 'year', label: 'This Year' }
+                                    { value: 'all', label: t('circulation.fines.filter_date') },
+                                    { value: 'today', label: t('common.today') || 'Today' },
+                                    { value: 'week', label: t('common.this_week') || 'This Week' },
+                                    { value: 'month', label: t('common.this_month') || 'This Month' },
+                                    { value: 'year', label: t('common.this_year') || 'This Year' }
                                 ]}
                                 icon={Calendar}
-                                placeholder="Date"
+                                placeholder={t('circulation.fines.filter_date')}
                             />
                         </div>
 
@@ -471,11 +486,11 @@ const FinesTab = ({ initialTab }) => {
                                 value={deptFilter}
                                 onChange={(val) => setDeptFilter(val)}
                                 options={[
-                                    { value: 'all', label: 'All Departments' },
+                                    { value: 'all', label: t('circulation.fines.filter_dept') }, // 'All Departments'
                                     ...departments.map(d => ({ value: d.name, label: d.name }))
                                 ]}
                                 icon={User}
-                                placeholder="Department"
+                                placeholder={t('circulation.fines.filter_dept')}
                             />
                         </div>
 
@@ -484,19 +499,19 @@ const FinesTab = ({ initialTab }) => {
                                 value={statusFilter}
                                 onChange={(val) => setStatusFilter(val)}
                                 options={[
-                                    { value: 'all', label: 'All Status' },
-                                    { value: 'Paid', label: 'Paid' },
-                                    { value: 'Waived', label: 'Waived' }
+                                    { value: 'all', label: t('circulation.fines.filter_status') },
+                                    { value: 'Paid', label: t('common.paid') || 'Paid' },
+                                    { value: 'Waived', label: t('common.waived') || 'Waived' }
                                 ]}
                                 icon={Filter}
-                                placeholder="Status"
+                                placeholder={t('circulation.fines.filter_status')}
                             />
                         </div>
 
                         <button
                             onClick={() => setShowExportModal(true)}
                             className="toolbar-icon-btn flex-shrink-0"
-                            title="Export Data"
+                            title={t('circulation.fines.export_data')}
                         >
                             <Download size={20} style={{ minWidth: '20px', width: '20px', height: '20px' }} />
                         </button>
@@ -507,10 +522,10 @@ const FinesTab = ({ initialTab }) => {
                 <button
                     onClick={() => setShowVerifyModal(true)}
                     className="toolbar-primary-btn whitespace-nowrap"
-                    title="Verify Receipt"
+                    title={t('circulation.fines.verify_receipt')}
                     style={{ height: '40px', padding: '0 16px', fontSize: '0.85rem' }}
                 >
-                    <CheckCircle size={16} /> Verify
+                    <CheckCircle size={16} /> {t('circulation.fines.verify_receipt')}
                 </button>
             </div>
 
@@ -525,13 +540,13 @@ const FinesTab = ({ initialTab }) => {
                                     <IndianRupee size={20} className="text-emerald-400" />
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-400">Total Collected (Filtered)</div>
+                                    <div className="text-sm text-gray-400">{t('circulation.fines.total_collected')} (Filtered)</div>
                                     <div className="text-2xl font-bold text-white">₹{totalCollectedInHistory.toFixed(2)}</div>
                                 </div>
                             </div>
                             <div className="text-xs text-gray-400 text-right">
-                                Showing {filteredHistoryFines.length} records <br />
-                                (Paid + Waived)
+                                {t('circulation.fines.showing_records', { count: filteredHistoryFines.length })} <br />
+                                {t('circulation.fines.paid_waived')}
                             </div>
                         </div>
 
@@ -545,9 +560,18 @@ const FinesTab = ({ initialTab }) => {
                 ) : (
                     /* PENDING (Cards) View */
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                        {emailEvents && emailEvents.finePaymentReceipt === false && (
+                            <div style={{ gridColumn: '1/-1' }} className="mb-2 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm flex items-center gap-2">
+                                <AlertCircle size={18} />
+                                <span>
+                                    <strong>Warning:</strong> Email receipts are disabled in settings. Students will NOT receive payment confirmation emails.
+                                </span>
+                            </div>
+                        )}
+
                         {groupedPendingFines.length === 0 && !loading && (
                             <div style={{ gridColumn: '1/-1', textAlign: 'center', color: 'var(--text-secondary)', marginTop: '50px' }}>
-                                No pending fines.
+                                {t('circulation.fines.no_pending')}
                             </div>
                         )}
 
@@ -583,9 +607,18 @@ const FinesTab = ({ initialTab }) => {
                                                     width: '50px', height: '50px', borderRadius: '50%',
                                                     background: 'rgba(0,0,0,0.05)',
                                                     display: 'flex', justifyContent: 'center', alignItems: 'center',
-                                                    border: '1px solid var(--glass-border)'
+                                                    border: '1px solid var(--glass-border)',
+                                                    overflow: 'hidden'
                                                 }}>
-                                                    <User size={24} color="#2d3436" strokeWidth={2.5} />
+                                                    {group.student.profile_image ? (
+                                                        <img
+                                                            src={group.student.profile_image}
+                                                            alt={group.student.name}
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        />
+                                                    ) : (
+                                                        <User size={24} color="#2d3436" strokeWidth={2.5} />
+                                                    )}
                                                 </div>
                                                 <div>
                                                     <div className="font-bold text-lg text-white">{group.student.name}</div>
@@ -595,7 +628,7 @@ const FinesTab = ({ initialTab }) => {
 
                                             {/* Total Amount Badge */}
                                             <div className="text-right">
-                                                <div className="text-sm text-gray-400">Total Due</div>
+                                                <div className="text-sm text-gray-400">{t('circulation.fines.total_due')}</div>
                                                 <div className="text-xl font-bold text-red-300">₹{group.totalAmount.toFixed(2)}</div>
                                             </div>
                                         </div>
@@ -618,7 +651,7 @@ const FinesTab = ({ initialTab }) => {
                                             {group.totalAmount > 0 && (
                                                 <div className="flex justify-end mb-4">
                                                     <div className="flex items-center gap-2 text-lg font-bold text-white bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-                                                        <span>Total Fine:</span>
+                                                        <span>{t('circulation.fines.total_fine')}:</span>
                                                         <span className="text-red-300 flex items-center"><IndianRupee size={18} />{group.totalAmount}</span>
                                                     </div>
                                                 </div>
@@ -629,11 +662,20 @@ const FinesTab = ({ initialTab }) => {
                                                 {group.fines.map(fine => (
                                                     <div key={fine.id} className="p-4 rounded-xl border border-glass bg-white/5 relative group">
                                                         <div className="flex justify-between items-start mb-2">
-                                                            <div>
-                                                                <div className="font-semibold text-white">{fine.book_title || 'General Fine'}</div>
-                                                                {fine.accession_number && (
-                                                                    <div className="text-xs text-gray-400 font-mono mt-0.5">Acc: {fine.accession_number}</div>
+                                                            <div className="flex items-start gap-3 flex-1">
+                                                                {fine.cover_image ? (
+                                                                    <img src={fine.cover_image} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
+                                                                ) : (
+                                                                    <div className="w-6 h-8 rounded-sm bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
+                                                                        <BookOpen size={14} />
+                                                                    </div>
                                                                 )}
+                                                                <div>
+                                                                    <div className="font-semibold text-white">{fine.book_title || 'General Fine'}</div>
+                                                                    {fine.accession_number && (
+                                                                        <div className="text-xs text-gray-400 font-mono mt-0.5">Acc: {fine.accession_number}</div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                             <span className={`px-2 py-0.5 rounded text-xs border ${fine.status === 'Paid' ? 'border-green-500/30 text-green-400' : 'border-red-500/30 text-red-400'}`}>
                                                                 {fine.status}
@@ -656,15 +698,15 @@ const FinesTab = ({ initialTab }) => {
                                                                     <button
                                                                         onClick={() => handleCollect(group.student.id, [fine.id])}
                                                                         className="text-xs text-green-400 hover:text-green-300 px-2 py-1 rounded hover:bg-green-500/10 transition-colors flex items-center gap-1"
-                                                                        title="Collect This Fine"
+                                                                        title={t('circulation.fines.pay')}
                                                                     >
-                                                                        <CheckCircle size={12} /> Pay
+                                                                        <CheckCircle size={12} /> {t('circulation.fines.pay')}
                                                                     </button>
                                                                     <button
                                                                         onClick={() => openEditModal(fine)}
                                                                         className="text-xs text-blue-400 hover:text-blue-300 px-2 py-1 rounded hover:bg-blue-500/10 transition-colors flex items-center gap-1"
                                                                     >
-                                                                        <Edit size={12} /> Edit
+                                                                        <Edit size={12} /> {t('circulation.fines.edit')}
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -714,16 +756,34 @@ const FinesTab = ({ initialTab }) => {
                 message={statusModal.message}
             />
 
-            {showExportModal && (
-                <ExportModal
-                    onClose={() => setShowExportModal(false)}
-                    totalBooks={fines.filter(f => f.status !== 'Unpaid').length} // Total History Count
-                    selectedCount={0} // Selection not implemented for history yet
-                    filteredCount={filteredHistoryFines.length}
-                    onExport={handleSmartExport}
-                />
-            )}
-        </div>
+            {
+                showExportModal && (
+                    <ExportModal
+                        onClose={() => setShowExportModal(false)}
+                        totalBooks={fines.filter(f => f.status !== 'Unpaid').length} // Total History Count
+                        selectedCount={0} // Selection not implemented for history yet
+                        filteredCount={filteredHistoryFines.length}
+                        onExport={handleSmartExport}
+                        data={filteredHistoryFines.map(f => ({
+                            Date: formatDate(f.payment_date || f.updated_at),
+                            Student: f.student_name,
+                            RollNo: f.roll_number,
+                            Amount: f.status === 'Waived' ? 0 : f.amount,
+                            Status: f.status,
+                            Type: f.reason || f.remark || '-'
+                        }))}
+                        columns={[
+                            t('circulation.fines.history.date'),
+                            t('circulation.fines.history.student'),
+                            t('students.table.reg_no'),
+                            t('circulation.fines.history.amount'),
+                            t('circulation.fines.history.status'),
+                            t('circulation.fines.history.reason')
+                        ]}
+                    />
+                )
+            }
+        </div >
     );
 };
 

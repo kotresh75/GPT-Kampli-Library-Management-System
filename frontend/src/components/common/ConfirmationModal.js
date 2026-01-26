@@ -29,32 +29,54 @@ const ConfirmationModal = ({
                 boxShadow: '0 8px 32px rgba(0,0,0,0.3)', transform: 'scale(1)', transition: 'all 0.2s',
                 animation: 'scaleIn 0.2s ease-out'
             }}>
-                <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-full ${isDangerous ? 'bg-red-500/20' : 'bg-yellow-500/20'}`}>
-                            <AlertTriangle size={20} className={isDangerous ? 'text-red-400' : 'text-yellow-400'} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div style={{
+                            padding: '0.5rem', borderRadius: '50%',
+                            background: isDangerous ? 'rgba(239, 68, 68, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <AlertTriangle size={20} color={isDangerous ? '#F87171' : '#FACC15'} />
                         </div>
-                        <h3 className="text-xl font-bold text-white">{title}</h3>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>{title}</h3>
                     </div>
                     {!isLoading && (
-                        <button onClick={onClose} className="text-gray-400 hover:text-white transition">
+                        <button
+                            onClick={onClose}
+                            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
+                            onMouseEnter={e => e.target.style.color = 'var(--text-main)'}
+                            onMouseLeave={e => e.target.style.color = 'var(--text-secondary)'}
+                        >
                             <X size={20} />
                         </button>
                     )}
                 </div>
 
-                <p className="text-gray-300 mb-8 text-sm leading-relaxed">
+                <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '0.875rem', lineHeight: '1.625' }}>
                     {message}
                 </p>
 
-                <div className="flex gap-3 justify-end">
-                    <button
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="px-4 py-2 rounded-lg text-gray-300 hover:bg-white/5 transition text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {cancelText}
-                    </button>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
+                    {cancelText && (
+                        <button
+                            onClick={onClose}
+                            disabled={isLoading}
+                            style={{
+                                padding: '0.5rem 1rem',
+                                borderRadius: '8px',
+                                border: '1px solid var(--glass-border)',
+                                background: 'var(--glass-bg)', // Adapts to theme
+                                color: 'var(--text-secondary)',
+                                cursor: isLoading ? 'not-allowed' : 'pointer',
+                                fontSize: '0.875rem',
+                                transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={e => !isLoading && (e.target.style.background = 'var(--glass-border)')}
+                            onMouseLeave={e => !isLoading && (e.target.style.background = 'var(--glass-bg)')}
+                        >
+                            {cancelText}
+                        </button>
+                    )}
                     <button
                         onClick={() => {
                             onConfirm();
@@ -63,13 +85,36 @@ const ConfirmationModal = ({
                             }
                         }}
                         disabled={isLoading}
-                        className={`px-5 py-2 rounded-lg text-white text-sm font-bold shadow-lg transition-all hover:scale-105 flex items-center gap-2 ${isDangerous
-                            ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-500/20'
-                            : 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20'
-                            } ${isLoading ? 'opacity-80 cursor-wait' : ''}`}
+                        style={{
+                            padding: '0.5rem 1.25rem',
+                            borderRadius: '8px',
+                            border: 'none',
+                            background: isDangerous
+                                ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                                : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                            color: 'white',
+                            fontWeight: '600',
+                            fontSize: '0.875rem',
+                            cursor: isLoading ? 'wait' : 'pointer',
+                            boxShadow: isDangerous
+                                ? '0 4px 12px rgba(220, 38, 38, 0.3)'
+                                : '0 4px 12px rgba(59, 130, 246, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            transition: 'transform 0.1s'
+                        }}
+                        onMouseDown={e => !isLoading && (e.target.style.transform = 'scale(0.96)')}
+                        onMouseUp={e => !isLoading && (e.target.style.transform = 'scale(1)')}
+                        onMouseLeave={e => !isLoading && (e.target.style.transform = 'scale(1)')}
                     >
                         {isLoading && (
-                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <div className="animate-spin" style={{
+                                width: '16px', height: '16px',
+                                border: '2px solid rgba(255,255,255,0.3)',
+                                borderTopColor: 'white',
+                                borderRadius: '50%'
+                            }} />
                         )}
                         {isLoading ? 'Processing...' : confirmText}
                     </button>

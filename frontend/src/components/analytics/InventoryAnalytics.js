@@ -2,8 +2,10 @@ import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Package, Layers, DollarSign, Archive, AlertTriangle } from 'lucide-react';
 import StatsCard from '../dashboard/StatsCard';
+import { useLanguage } from '../../context/LanguageContext';
 
 const InventoryAnalytics = ({ stats }) => {
+    const { t } = useLanguage();
     const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
     // Custom Tooltip
@@ -16,10 +18,10 @@ const InventoryAnalytics = ({ stats }) => {
                         <span className="text-sm font-bold text-white">{payload[0].name}</span>
                     </div>
                     <div className="text-xl font-bold text-white mt-1 pl-4">
-                        {payload[0].value} <span className="text-xs text-gray-500 font-normal">books</span>
+                        {payload[0].value} <span className="text-xs text-gray-500 font-normal">{t('reports.analytics.inv.books')}</span>
                     </div>
                     <div className="text-xs text-gray-500 pl-4 mt-1">
-                        {((payload[0].percent || 0) * 100).toFixed(1)}% of total
+                        {((payload[0].percent || 0) * 100).toFixed(1)}% {t('reports.analytics.inv.of_total')}
                     </div>
                 </div>
             );
@@ -32,25 +34,25 @@ const InventoryAnalytics = ({ stats }) => {
             {/* Inventory Cards - Forced 2 Columns */}
             <div className="grid gap-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
                 <StatsCard
-                    title="Total Volumes"
+                    title={t('reports.analytics.inv.total_volumes')}
                     value={stats?.summary?.volumes || 0}
                     icon={Layers}
                     color="blue"
                     trend={null}
                 />
                 <StatsCard
-                    title="Unique Titles"
+                    title={t('reports.analytics.inv.unique_titles')}
                     value={stats?.summary?.titles || 0}
                     icon={Package}
                     color="purple"
                     trend={null}
                 />
                 <StatsCard
-                    title="Total Value"
+                    title={t('reports.analytics.inv.total_value')}
                     value={`₹${stats?.summary?.estimated_value?.toLocaleString() || '0'}`}
                     icon={DollarSign}
                     color="green"
-                    trend="Estimated cost"
+                    trend={t('reports.analytics.inv.estimated_cost')}
                 />
             </div>
 
@@ -62,7 +64,7 @@ const InventoryAnalytics = ({ stats }) => {
                 <div className="chart-widget p-8 border-none bg-gradient-to-br from-white/5 to-transparent flex flex-col justify-center">
                     <h3 className="text-lg font-bold text-white mb-8 flex items-center gap-2">
                         <AlertTriangle size={18} className="text-orange-400" />
-                        Asset Health & Status
+                        {t('reports.analytics.inv.asset_health')}
                     </h3>
 
                     <div className="space-y-6">
@@ -82,9 +84,9 @@ const InventoryAnalytics = ({ stats }) => {
                                         <div className="flex flex-col">
                                             <span className={`text-sm font-bold ${theme.text} mb-0.5`}>{item.status}</span>
                                             <span className="text-xs text-gray-500">
-                                                {item.status === 'Available' ? 'Ready for issue' :
-                                                    item.status === 'Issued' ? 'Currently with students' :
-                                                        item.status === 'Lost' ? 'Marked as lost' : 'Needs repair'}
+                                                {item.status === 'Available' ? t('reports.analytics.inv.ready_issue') :
+                                                    item.status === 'Issued' ? t('reports.analytics.inv.with_students') :
+                                                        item.status === 'Lost' ? t('reports.analytics.inv.marked_lost') : t('reports.analytics.inv.needs_repair')}
                                             </span>
                                         </div>
                                         <div className="text-right">

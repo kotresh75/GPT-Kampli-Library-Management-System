@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { v4: uuidv4 } = require('uuid');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
+const socketService = require('../services/socketService');
 const { getISTISOWithOffset } = require('../utils/dateUtils');
 
 // GET /api/admins
@@ -38,6 +39,7 @@ exports.createAdmin = (req, res) => {
             }
 
             auditService.log(req.user, 'CREATE', 'Admin Management', `Created new admin: ${name} (${email})`, { new_admin_id: id });
+            socketService.emit('admin_update', { type: 'CREATE', id });
             res.json({ message: "Admin created successfully", id });
         });
     });
@@ -52,7 +54,7 @@ exports.updateAdmin = (req, res) => {
     db.run(query, [name, phone, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: "Admin not found" });
-
+        socketService.emit('admin_update', { type: 'UPDATE', id });
         auditService.log(req.user, 'UPDATE', 'Admin Management', `Updated admin details: ${name}`, { target_id: id });
         res.json({ message: "Admin updated successfully" });
     });
@@ -80,6 +82,7 @@ exports.toggleStatus = (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             auditService.log(req.user, 'STATUS_CHANGE', 'Admin Management', `Changed status of ${row.email} to ${status}`, { target_id: id, new_status: status });
+            socketService.emit('admin_update', { type: 'UPDATE', id });
             res.json({ message: `Admin ${status}` });
         });
     });
@@ -104,6 +107,7 @@ exports.deleteAdmin = (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             auditService.log(req.user, 'DELETE', 'Admin Management', `Deleted admin: ${row.email}`, { target_id: id });
+            socketService.emit('admin_update', { type: 'DELETE', id });
             res.json({ message: "Admin deleted successfully" });
         });
     });
@@ -126,6 +130,7 @@ exports.resetPassword = (req, res) => {
             if (err) return res.status(500).json({ error: err.message });
 
             auditService.log(req.user, 'RESET_PASSWORD', 'Admin Management', `Reset password for admin ID: ${id}`, { target_id: id });
+            socketService.emit('admin_update', { type: 'UPDATE', id });
             res.json({ message: "Password reset to 'password123'" });
         });
     });
@@ -252,6 +257,7 @@ exports.broadcastMessage = async (req, res) => {
         // Log Audit
         auditService.log(req.user, 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipient_group} (${sentCount} recipients)`, { subject, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
 
+        socketService.emit('broadcast_update', {});
         res.json({ message: `Broadcast initiated to ${sentCount} recipients` });
 
     } catch (err) {

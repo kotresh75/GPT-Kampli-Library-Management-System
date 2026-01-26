@@ -3,12 +3,14 @@ import { ArrowLeftRight, BookOpen, RefreshCcw, IndianRupee } from 'lucide-react'
 import IssueTab from '../components/circulation/IssueTab';
 import ReturnTab from '../components/circulation/ReturnTab';
 import FinesTab from '../components/circulation/FinesTab';
+import { useLanguage } from '../context/LanguageContext';
 
 import { useLocation } from 'react-router-dom';
 
 const CirculationPage = () => {
     const location = useLocation();
     const [activeTab, setActiveTab] = useState('issue');
+    const { t } = useLanguage();
 
 
     // Handle Route Navigation State
@@ -44,7 +46,7 @@ const CirculationPage = () => {
             <div className="flex justify-between items-center mb-5">
                 <div>
                     <h1 className="page-title mb-1">
-                        <ArrowLeftRight size={24} className="text-info" /> Circulation Desk
+                        <ArrowLeftRight size={24} className="text-info" /> {t('circulation.title')}
                     </h1>
 
                 </div>
@@ -55,21 +57,21 @@ const CirculationPage = () => {
                         title="Shortcut: F1"
                         className={`btn rounded-full flex items-center gap-2 ${activeTab === 'issue' ? 'btn-primary' : 'btn-ghost'}`}
                     >
-                        <BookOpen size={18} /> Issue (F1)
+                        <BookOpen size={18} /> {t('circulation.tab_issue')}
                     </button>
                     <button
                         onClick={() => setActiveTab('return')}
                         title="Shortcut: F2"
                         className={`btn rounded-full flex items-center gap-2 ${activeTab === 'return' ? 'btn-primary' : 'btn-ghost'}`}
                     >
-                        <RefreshCcw size={18} /> Return (F2)
+                        <RefreshCcw size={18} /> {t('circulation.tab_return')}
                     </button>
                     <button
                         onClick={() => setActiveTab('fines')}
                         title="Shortcut: F3"
                         className={`btn rounded-full flex items-center gap-2 ${activeTab === 'fines' ? 'btn-primary' : 'btn-ghost'}`}
                     >
-                        <IndianRupee size={18} /> Fines (F3)
+                        <IndianRupee size={18} /> {t('circulation.tab_fines')}
                     </button>
                 </div>
             </div>

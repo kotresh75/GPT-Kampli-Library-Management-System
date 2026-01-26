@@ -3,6 +3,7 @@ import { X, Save, User, Lock, Check, Zap, Shield, AlertCircle, CheckCircle, Info
 import GlassSelect from '../common/GlassSelect';
 import ConfirmationModal from '../common/ConfirmationModal';
 import StatusModal from '../common/StatusModal';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const PERMISSIONS_LIST = [
@@ -34,6 +35,7 @@ const ROLE_PRESETS = {
 };
 
 const AddStaffModal = ({ staff, onClose, onSave }) => {
+    const { t } = useLanguage();
     const isEdit = !!staff;
     const [formData, setFormData] = useState({
         name: '',
@@ -141,10 +143,10 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                 onSave();
                 onClose();
             } else {
-                setError((data.error || "Operation failed") + " (ERR_STF_ADD)");
+                setError((data.error || t('staff.modal.err_failed') || "Operation failed") + " (ERR_STF_ADD)");
             }
         } catch (err) {
-            setError("Network Error - Please check if backend is running");
+            setError(t('staff.actions.network_err') || "Network Error");
         } finally {
             setLoading(false);
         }
@@ -169,15 +171,15 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                 setStatusModal({
                     show: true,
                     type: 'success',
-                    title: 'Password Reset',
-                    message: "Password has been reset to 'password123'"
+                    title: t('staff.modal.status_reset_title'),
+                    message: t('staff.modal.status_reset_msg')
                 });
             } else {
                 setStatusModal({
                     show: true,
                     type: 'error',
-                    title: 'Reset Failed',
-                    message: 'Failed to reset password. Please try again.'
+                    title: t('staff.modal.status_failed_title'),
+                    message: t('staff.modal.status_failed_msg')
                 });
             }
         } catch (e) {
@@ -200,7 +202,7 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <User size={18} color="white" />
                         </div>
-                        {isEdit ? 'Edit Staff' : 'Add New Staff'}
+                        {isEdit ? t('staff.modal.title_edit') : t('staff.modal.title_new')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -220,21 +222,21 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                         {/* Name & Email Row */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Full Name *</label>
+                                <label className="form-label">{t('staff.modal.full_name')} *</label>
                                 <input
                                     className="smart-input"
-                                    placeholder="Enter full name"
+                                    placeholder={t('staff.modal.full_name_placeholder')}
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     required
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Email Address *</label>
+                                <label className="form-label">{t('staff.modal.email')} *</label>
                                 <input
                                     type="email"
                                     className="smart-input"
-                                    placeholder="staff@library.com"
+                                    placeholder={t('staff.modal.email_placeholder')}
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     required
@@ -246,26 +248,26 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                         {/* Phone & Designation Row */}
                         <div className="form-row">
                             <div className="form-col form-group">
-                                <label className="form-label">Phone Number</label>
+                                <label className="form-label">{t('staff.modal.phone')}</label>
                                 <input
                                     className="smart-input"
-                                    placeholder="98765 43210"
+                                    placeholder={t('staff.modal.phone_placeholder')}
                                     value={formData.phone}
                                     onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                 />
                             </div>
                             <div className="form-col form-group">
-                                <label className="form-label">Designation *</label>
+                                <label className="form-label">{t('staff.modal.designation')} *</label>
                                 <GlassSelect
                                     options={[
-                                        { value: 'Librarian', label: 'Librarian' },
-                                        { value: 'Assistant Librarian', label: 'Assistant Librarian' },
-                                        { value: 'Counter Staff', label: 'Counter Staff' },
-                                        { value: 'Data Entry', label: 'Data Entry' }
+                                        { value: 'Librarian', label: t('staff.modal.roles.librarian') },
+                                        { value: 'Assistant Librarian', label: t('staff.modal.roles.asst_librarian') },
+                                        { value: 'Counter Staff', label: t('staff.modal.roles.counter') },
+                                        { value: 'Data Entry', label: t('staff.modal.roles.data_entry') }
                                     ]}
                                     value={formData.designation}
                                     onChange={handleDesignationChange}
-                                    placeholder="Select role..."
+                                    placeholder={t('staff.modal.select_role')}
                                 />
                             </div>
                         </div>
@@ -289,13 +291,13 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                                     <Zap size={20} color="var(--primary-color)" />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>Smart Preset Available</div>
+                                    <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '2px' }}>{t('staff.modal.preset_title')}</div>
                                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                         {ROLE_PRESETS[formData.designation].description}
                                     </div>
                                 </div>
                                 <button type="button" onClick={applyRolePreset} className="btn-submit" style={{ padding: '8px 16px', fontSize: '0.85rem' }}>
-                                    Apply
+                                    {t('staff.modal.apply_btn')}
                                 </button>
                             </div>
                         )}
@@ -305,10 +307,10 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                                 <label className="form-label" style={{ marginBottom: 0 }}>
                                     <Shield size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
-                                    Access Permissions *
+                                    {t('staff.modal.permissions')} *
                                 </label>
                                 <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                    {formData.access_permissions.length} of {PERMISSIONS_LIST.length} selected
+                                    {formData.access_permissions.length} of {PERMISSIONS_LIST.length} {t('staff.modal.permissions_selected')}
                                 </span>
                             </div>
 
@@ -365,13 +367,13 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                         <div className="smart-form-footer" style={{ margin: '0 -24px -24px -24px', padding: '20px 24px' }}>
                             {isEdit ? (
                                 <button type="button" onClick={handleResetPassword} className="btn-cancel" style={{ color: '#fc8181', borderColor: '#fc8181' }}>
-                                    <Lock size={14} style={{ marginRight: 6 }} /> Reset Password
+                                    <Lock size={14} style={{ marginRight: 6 }} /> {t('staff.modal.reset_pwd')}
                                 </button>
                             ) : <div></div>}
                             <div style={{ display: 'flex', gap: '16px' }}>
-                                <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                                <button type="button" onClick={onClose} className="btn-cancel">{t('staff.modal.cancel')}</button>
                                 <button type="submit" className="btn-submit" disabled={loading}>
-                                    {loading ? 'Saving...' : <><Save size={18} /> {isEdit ? 'Update Staff' : 'Save Staff'}</>}
+                                    {loading ? t('staff.modal.saving') : <><Save size={18} /> {isEdit ? t('staff.modal.update') : t('staff.modal.save')}</>}
                                 </button>
                             </div>
                         </div>
@@ -385,9 +387,9 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                 isOpen={confirmConfig.show}
                 onClose={() => setConfirmConfig({ ...confirmConfig, show: false })}
                 onConfirm={confirmConfig.action === 'reset_password' ? executeResetPassword : () => { }}
-                title="Reset Password?"
-                message="Are you sure you want to reset this staff member's password to 'password123'?"
-                confirmText="Reset Password"
+                title={t('staff.modal.confirm_reset_title')}
+                message={t('staff.modal.confirm_reset_msg')}
+                confirmText={t('staff.modal.reset_pwd')}
                 isDanger={true}
             />
 

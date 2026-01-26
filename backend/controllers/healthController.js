@@ -2,11 +2,36 @@ const db = require('../db');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
-
+const dns = require('dns');
 const osUtils = require('os-utils');
 
+// Helper: Get Disk Space (Node 18+)
+const getDiskUsage = (dirPath) => {
+    return new Promise((resolve) => {
+        try {
+            fs.statfs(dirPath, (err, stats) => {
+                if (err) {
+                    resolve(null);
+                } else {
+                    const total = stats.bsize * stats.blocks;
+                    const free = stats.bsize * stats.bfree;
+                    const used = total - free;
+                    resolve({
+                        total: total,
+                        free: free,
+                        used: used,
+                        usagePercent: ((used / total) * 100).toFixed(1)
+                    });
+                }
+            });
+        } catch (e) {
+            resolve(null);
+        }
+    });
+};
+
 exports.getSystemHealth = async (req, res) => {
-    // Wrap cpuUsage in a promise
+    // 1. CPU Usage
     const getCpuUsage = () => {
         return new Promise((resolve) => {
             osUtils.cpuUsage((val) => {
@@ -17,6 +42,13 @@ exports.getSystemHealth = async (req, res) => {
 
     const cpuLoad = await getCpuUsage();
 
+    // 2. Disk Usage (Check drive where App is installed)
+    const appDir = path.resolve(__dirname, '../../');
+    const diskStats = await getDiskUsage(appDir);
+
+    // 3. Process Memory
+    const processMem = process.memoryUsage();
+
     const health = {
         status: 'Online',
         timestamp: new Date(),
@@ -24,20 +56,27 @@ exports.getSystemHealth = async (req, res) => {
             uptime: os.uptime(),
             platform: os.platform(),
             arch: os.arch(),
-            cpuModel: os.cpus()[0].model,
+            cpuModel: os.cpus()[0]?.model || 'Unknown',
             cpuLoad: (cpuLoad * 100).toFixed(1),
             memory: {
                 total: os.totalmem(),
                 free: os.freemem(),
                 usage: ((1 - os.freemem() / os.totalmem()) * 100).toFixed(1)
-            }
+            },
+            disk: diskStats
+        },
+        process: {
+            uptime: process.uptime(),
+            memory: {
+                rss: processMem.rss, // Resident Set Size
+                heapTotal: processMem.heapTotal,
+                heapUsed: processMem.heapUsed
+            },
+            version: process.version
         },
         database: {
             status: 'Unknown',
             size: 'Unknown'
-        },
-        network: {
-            status: 'Online' // Basic assumption since we received the request
         }
     };
 
@@ -65,13 +104,23 @@ exports.getSystemHealth = async (req, res) => {
 };
 
 exports.performConnectivityCheck = async (req, res) => {
-    // Ping Google DNS (8.8.8.8) logic or similar could go here.
-    // Simulating for now.
-    setTimeout(() => {
-        res.json({
-            internet: true,
-            latency: Math.floor(Math.random() * 50) + 10 + 'ms',
-            gateway: 'Reachable'
-        });
-    }, 500);
+    const start = Date.now();
+
+    // Check Google DNS
+    dns.lookup('google.com', (err) => {
+        const latency = Date.now() - start;
+        if (err) {
+            res.json({
+                internet: false,
+                error: err.code,
+                latency: null
+            });
+        } else {
+            res.json({
+                internet: true,
+                latency: latency + 'ms',
+                gateway: 'Reachable'
+            });
+        }
+    });
 };

@@ -1,7 +1,9 @@
 import React from 'react';
 import { Clock, ShieldAlert, User, FileText, Settings, Database } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 
 const RecentAuditTable = ({ logs = [] }) => {
+    const { t } = useLanguage();
 
     const getIcon = (log) => {
         if (log.module === 'Security') return <ShieldAlert size={16} className="text-red-400" />;
@@ -13,9 +15,12 @@ const RecentAuditTable = ({ logs = [] }) => {
 
     const formatDate = (timestamp) => {
         if (!timestamp) return '-';
-        return new Date(timestamp).toLocaleString('en-IN', {
-            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-        });
+        const date = new Date(timestamp);
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        const t = date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return `${d}/${m}/${y} ${t}`;
     };
 
     return (
@@ -24,17 +29,17 @@ const RecentAuditTable = ({ logs = [] }) => {
                 <table className="w-full text-left">
                     <thead className="bg-white/5 text-gray-400 text-xs uppercase tracking-wider">
                         <tr>
-                            <th className="p-4 rounded-tl-lg">Action</th>
-                            <th className="p-4">Module</th>
-                            <th className="p-4">Description</th>
-                            <th className="p-4">Actor</th>
-                            <th className="p-4 rounded-tr-lg">Time</th>
+                            <th className="p-4 rounded-tl-lg">{t('audit.table.action')}</th>
+                            <th className="p-4">{t('audit.table.module')}</th>
+                            <th className="p-4">{t('audit.table.description')}</th>
+                            <th className="p-4">{t('audit.table.actor')}</th>
+                            <th className="p-4 rounded-tr-lg">{t('audit.table.timestamp')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                         {logs.length === 0 ? (
                             <tr>
-                                <td colSpan="5" className="p-8 text-center text-gray-500 italic">No recent activity found.</td>
+                                <td colSpan="5" className="p-8 text-center text-gray-500 italic">{t('audit.table.no_logs')}</td>
                             </tr>
                         ) : (
                             logs.map(log => (

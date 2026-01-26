@@ -5,6 +5,7 @@ import {
     MoreHorizontal, Eye
 } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
+import { useLanguage } from '../../context/LanguageContext';
 import GlassSelect from '../common/GlassSelect';
 import '../../styles/components/tables.css';
 
@@ -20,6 +21,7 @@ const SmartBookTable = ({
     onView
 }) => {
     // --- State ---
+    const { t } = useLanguage();
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const [sortConfig, setSortConfig] = useState({ key: 'createdAt', direction: 'desc' });
@@ -90,14 +92,14 @@ const SmartBookTable = ({
     const getAvailabilityBadge = (available, total) => {
         const percentage = total > 0 ? (available / total) * 100 : 0;
         let status = 'success';
-        let label = 'Available';
+        let label = t('books.table.status_available');
 
         if (percentage === 0) {
             status = 'out';
-            label = 'Out of Stock';
+            label = t('books.table.status_out');
         } else if (percentage < 30) {
             status = 'low';
-            label = 'Low Stock';
+            label = t('books.table.status_low');
         }
 
         return (
@@ -133,8 +135,8 @@ const SmartBookTable = ({
                 <div className="p-4 rounded-full bg-white/5 mb-4">
                     <Layers size={48} className="text-gray-500 opacity-50" />
                 </div>
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Books Found</h3>
-                <p className="text-[var(--text-secondary)]">Try adjusting your search or filters.</p>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('books.table.no_books')}</h3>
+                <p className="text-[var(--text-secondary)]">{t('books.table.no_books_hint')}</p>
             </div>
         );
     }
@@ -167,7 +169,7 @@ const SmartBookTable = ({
                                             }
                                         }}
                                         className="cursor-pointer"
-                                        title={selectedIds.size > 0 ? `${selectedIds.size} selected - Click to manage` : "Select Books"}
+                                        title={selectedIds.size > 0 ? t('books.table.selected_count', { count: selectedIds.size }) : t('books.table.select_tooltip')}
                                     />
                                 </div>
                                 {/* Selection Popup */}
@@ -210,7 +212,7 @@ const SmartBookTable = ({
                                                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
                                                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
                                             >
-                                                Select This Page <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({paginatedBooks.length})</span>
+                                                {t('books.table.select_page')} <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({paginatedBooks.length})</span>
                                             </button>
                                             <button
                                                 onClick={() => {
@@ -233,7 +235,7 @@ const SmartBookTable = ({
                                                 onMouseEnter={(e) => e.target.style.background = 'rgba(99, 179, 237, 0.1)'}
                                                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
                                             >
-                                                Select All Books <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({books.length})</span>
+                                                {t('books.table.select_all_global')} <span style={{ color: 'var(--text-secondary)', fontSize: '0.75rem' }}>({books.length})</span>
                                             </button>
                                             <div style={{ height: '1px', background: 'var(--glass-border)', margin: '4px 0' }} />
                                             <button
@@ -257,26 +259,27 @@ const SmartBookTable = ({
                                                 onMouseEnter={(e) => e.target.style.background = 'rgba(255,255,255,0.1)'}
                                                 onMouseLeave={(e) => e.target.style.background = 'transparent'}
                                             >
-                                                Deselect All
+                                                {t('books.table.deselect_all')}
                                             </button>
                                         </div>
                                     </>
                                 )}
+
                             </th>
-                            <th style={{ width: '80px' }}>Cover</th>
+                            <th style={{ width: '80px' }}>{t('books.table.cover')}</th>
                             <th className="sortable" onClick={() => handleSort('title')}>
-                                <div className="flex items-center gap-2">Title {getSortIcon('title')}</div>
+                                <div className="flex items-center gap-2">{t('books.table.title')} {getSortIcon('title')}</div>
                             </th>
                             <th className="sortable" onClick={() => handleSort('author')}>
-                                <div className="flex items-center gap-2">Author {getSortIcon('author')}</div>
+                                <div className="flex items-center gap-2">{t('books.table.author')} {getSortIcon('author')}</div>
                             </th>
                             <th className="sortable" onClick={() => handleSort('department')}>
-                                <div className="flex items-center gap-2">Department {getSortIcon('department')}</div>
+                                <div className="flex items-center gap-2">{t('books.table.dept')} {getSortIcon('department')}</div>
                             </th>
                             <th className="sortable" onClick={() => handleSort('availability')}>
-                                <div className="flex items-center gap-2">Availability {getSortIcon('availability')}</div>
+                                <div className="flex items-center gap-2">{t('books.table.availability')} {getSortIcon('availability')}</div>
                             </th>
-                            <th style={{ textAlign: 'right', minWidth: '160px' }}>Actions</th>
+                            <th style={{ textAlign: 'right', minWidth: '160px' }}>{t('books.table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -324,28 +327,28 @@ const SmartBookTable = ({
                                         <button
                                             onClick={() => onView && onView(book)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                                            title="View Details"
+                                            title={t('books.table.view')}
                                         >
                                             <Eye size={18} />
                                         </button>
                                         <button
                                             onClick={() => onEdit && onEdit(book)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-blue-500/20 text-blue-400 transition-colors"
-                                            title="Edit Book"
+                                            title={t('books.table.edit')}
                                         >
                                             <Edit size={18} />
                                         </button>
                                         <button
                                             onClick={() => onManage && onManage(book)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-purple-500/20 text-purple-400 transition-colors"
-                                            title="Manage Copies"
+                                            title={t('books.table.manage')}
                                         >
                                             <Layers size={18} />
                                         </button>
                                         <button
                                             onClick={() => onDelete && onDelete(book)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/20 text-red-400 transition-colors"
-                                            title="Delete Book"
+                                            title={t('books.table.delete')}
                                         >
                                             <Trash2 size={18} />
                                         </button>
@@ -358,69 +361,71 @@ const SmartBookTable = ({
             </div>
 
             {/* Pagination Controls */}
-            {totalPages > 1 && (
-                <div className="flex justify-between items-center px-4 py-2 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color-light)]">
-                    <div className="text-sm text-[var(--text-tertiary)]">
-                        Showing <span className="text-[var(--text-primary)] font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-[var(--text-primary)] font-bold">{Math.min(currentPage * itemsPerPage, books.length)}</span> of <span className="text-[var(--text-primary)] font-bold">{books.length}</span> results
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <div style={{ width: '130px' }}>
-                            <GlassSelect
-                                options={[
-                                    { value: 10, label: '10 per page' },
-                                    { value: 20, label: '20 per page' },
-                                    { value: 50, label: '50 per page' }
-                                ]}
-                                value={itemsPerPage}
-                                onChange={(val) => setItemsPerPage(val)}
-                                small={true}
-                                showSearch={false}
-                            />
+            {
+                totalPages > 1 && (
+                    <div className="flex justify-between items-center px-4 py-2 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color-light)]">
+                        <div className="text-sm text-[var(--text-tertiary)]">
+                            {t('books.table.showing')} <span className="text-[var(--text-primary)] font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> {t('books.table.to')} <span className="text-[var(--text-primary)] font-bold">{Math.min(currentPage * itemsPerPage, books.length)}</span> {t('books.table.of')} <span className="text-[var(--text-primary)] font-bold">{books.length}</span> {t('books.table.results')}
                         </div>
 
-                        <div className="h-4 w-px bg-[var(--border-color)] mx-2"></div>
+                        <div className="flex items-center gap-2">
+                            <div style={{ width: '130px' }}>
+                                <GlassSelect
+                                    options={[
+                                        { value: 10, label: `10 ${t('books.table.per_page')}` },
+                                        { value: 20, label: `20 ${t('books.table.per_page')}` },
+                                        { value: 50, label: `50 ${t('books.table.per_page')}` }
+                                    ]}
+                                    value={itemsPerPage}
+                                    onChange={(val) => setItemsPerPage(val)}
+                                    small={true}
+                                    showSearch={false}
+                                />
+                            </div>
 
-                        <div className="pagination">
-                            <button
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(1)}
-                                disabled={currentPage === 1}
-                            >
-                                <ChevronsLeft size={16} />
-                            </button>
-                            <button
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                <ChevronLeft size={16} />
-                            </button>
+                            <div className="h-4 w-px bg-[var(--border-color)] mx-2"></div>
 
-                            {/* Simple page indicator */}
-                            <span className="text-sm font-medium px-2 text-[var(--text-primary)]">
-                                Page {currentPage} of {totalPages}
-                            </span>
+                            <div className="pagination">
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronsLeft size={16} />
+                                </button>
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
 
-                            <button
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                <ChevronRight size={16} />
-                            </button>
-                            <button
-                                className="pagination-btn"
-                                onClick={() => setCurrentPage(totalPages)}
-                                disabled={currentPage === totalPages}
-                            >
-                                <ChevronsRight size={16} />
-                            </button>
+                                {/* Simple page indicator */}
+                                <span className="text-sm font-medium px-2 text-[var(--text-primary)]">
+                                    {t('books.table.page')} {currentPage} {t('books.table.of')} {totalPages}
+                                </span>
+
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <ChevronsRight size={16} />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

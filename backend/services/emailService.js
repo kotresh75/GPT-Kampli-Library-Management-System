@@ -19,6 +19,19 @@ const getEmailConfig = () => {
     });
 };
 
+const getEmailEvents = () => {
+    return new Promise((resolve) => {
+        db.get("SELECT value FROM system_settings WHERE key = 'email_events'", (err, row) => {
+            if (err || !row || !row.value) return resolve({});
+            try {
+                resolve(JSON.parse(row.value));
+            } catch (e) {
+                resolve({});
+            }
+        });
+    });
+};
+
 // Create Transporter
 const createTransporter = (config) => {
     if (config.provider === 'smtp') {
@@ -94,6 +107,18 @@ exports.sendTransactionReceipt = async (type, student, details) => {
         'RENEW': `🔄 Book Renewed: ${details.title}`
     };
 
+    const typeKeyMap = {
+        'ISSUE': 'issueReceipt',
+        'RETURN': 'returnReceipt',
+        'RENEW': 'renewalConfirmation'
+    };
+
+    const events = await getEmailEvents();
+    if (events && events[typeKeyMap[type]] === false) {
+        console.log(`[Email] ${type} receipt skipped (Disabled in settings)`);
+        return false;
+    }
+
     const subject = subjectMap[type] || 'Library Transaction';
 
     let bodyContent = '';
@@ -141,6 +166,12 @@ exports.sendTransactionReceipt = async (type, student, details) => {
 };
 
 exports.sendFineReceipt = async (student, receipt) => {
+    const events = await getEmailEvents();
+    if (events && events.finePaymentReceipt === false) {
+        console.log(`[Email] Fine receipt skipped (Disabled in settings)`);
+        return false;
+    }
+
     const subject = `💰 Payment Receipt: ₹${receipt.total}`;
 
     const itemsHtml = receipt.items.map(item => `
@@ -185,6 +216,12 @@ exports.sendFineReceipt = async (student, receipt) => {
 };
 
 exports.sendOverdueNotice = async (student, loans) => {
+    const events = await getEmailEvents();
+    if (events && events.overdueAlerts === false) {
+        console.log(`[Email] Overdue notice skipped (Disabled in settings)`);
+        return false;
+    }
+
     const subject = `⚠️ Overdue Alert: You have ${loans.length} overdue item(s)`;
 
     const itemsHtml = loans.map(loan => `
@@ -212,6 +249,12 @@ exports.sendOverdueNotice = async (student, loans) => {
 };
 
 exports.sendBroadcast = async (recipient, subject, message) => {
+    const events = await getEmailEvents();
+    if (events && events.broadcastMessages === false) {
+        console.log(`[Email] Broadcast skipped (Disabled in settings)`);
+        return false;
+    }
+
     // recipient: { name, email }
     const bodyContent = `
         <h2 style="color: #4b5563; margin-top: 0;">Notice from Library</h2>

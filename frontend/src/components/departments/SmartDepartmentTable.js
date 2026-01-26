@@ -5,6 +5,7 @@ import {
     BookOpen, Users
 } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/tables.css';
 
 const SmartDepartmentTable = ({
@@ -13,6 +14,7 @@ const SmartDepartmentTable = ({
     onEdit,
     onDelete,
 }) => {
+    const { t } = useLanguage();
     // --- State ---
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -82,8 +84,8 @@ const SmartDepartmentTable = ({
                 <div className="p-4 rounded-full bg-white/5 mb-4">
                     <Layers size={48} className="text-gray-500 opacity-50" />
                 </div>
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Departments Found</h3>
-                <p className="text-[var(--text-secondary)]">Try adjusting your search.</p>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('departments.table.no_depts')}</h3>
+                <p className="text-[var(--text-secondary)]">{t('departments.table.no_depts_hint')}</p>
             </div>
         );
     }
@@ -96,19 +98,19 @@ const SmartDepartmentTable = ({
                     <thead>
                         <tr>
                             <th className="sortable" style={{ width: '100px' }} onClick={() => handleSort('code')}>
-                                <div className="flex items-center gap-2">Code {getSortIcon('code')}</div>
+                                <div className="flex items-center gap-2">{t('departments.table.code')} {getSortIcon('code')}</div>
                             </th>
                             <th className="sortable" onClick={() => handleSort('name')}>
-                                <div className="flex items-center gap-2">Department Name {getSortIcon('name')}</div>
+                                <div className="flex items-center gap-2">{t('departments.table.name')} {getSortIcon('name')}</div>
                             </th>
                             <th className="sortable" style={{ width: '120px' }} onClick={() => handleSort('student_count')}>
-                                <div className="flex items-center gap-2">Students {getSortIcon('student_count')}</div>
+                                <div className="flex items-center gap-2">{t('departments.table.students')} {getSortIcon('student_count')}</div>
                             </th>
                             <th className="sortable" style={{ width: '120px' }} onClick={() => handleSort('book_count')}>
-                                <div className="flex items-center gap-2">Books {getSortIcon('book_count')}</div>
+                                <div className="flex items-center gap-2">{t('departments.table.books')} {getSortIcon('book_count')}</div>
                             </th>
-                            <th>Description</th>
-                            <th style={{ textAlign: 'right', minWidth: '100px' }}>Actions</th>
+                            <th>{t('departments.table.description')}</th>
+                            <th style={{ textAlign: 'right', minWidth: '100px' }}>{t('departments.table.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -165,16 +167,16 @@ const SmartDepartmentTable = ({
             {totalPages > 1 && (
                 <div className="flex justify-between items-center px-4 py-2 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color-light)]">
                     <div className="text-sm text-[var(--text-tertiary)]">
-                        Showing <span className="text-[var(--text-primary)] font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-[var(--text-primary)] font-bold">{Math.min(currentPage * itemsPerPage, departments.length)}</span> of <span className="text-[var(--text-primary)] font-bold">{departments.length}</span> departments
+                        {t('departments.table.showing')} <span className="text-[var(--text-primary)] font-bold">{(currentPage - 1) * itemsPerPage + 1}</span> {t('departments.table.to')} <span className="text-[var(--text-primary)] font-bold">{Math.min(currentPage * itemsPerPage, departments.length)}</span> {t('departments.table.of')} <span className="text-[var(--text-primary)] font-bold">{departments.length}</span> {t('departments.table.departments')}
                     </div>
 
                     <div className="flex items-center gap-2">
                         <div style={{ width: '130px' }}>
                             <GlassSelect
                                 options={[
-                                    { value: 10, label: '10 per page' },
-                                    { value: 20, label: '20 per page' },
-                                    { value: 50, label: '50 per page' }
+                                    { value: 10, label: `10 ${t('departments.table.per_page')}` },
+                                    { value: 20, label: `20 ${t('departments.table.per_page')}` },
+                                    { value: 50, label: `50 ${t('departments.table.per_page')}` }
                                 ]}
                                 value={itemsPerPage}
                                 onChange={(val) => setItemsPerPage(val)}
@@ -202,7 +204,7 @@ const SmartDepartmentTable = ({
                             </button>
 
                             <span className="text-sm font-medium px-2 text-[var(--text-primary)]">
-                                Page {currentPage} of {totalPages}
+                                {t('departments.table.page')} {currentPage} {t('departments.table.of')} {totalPages}
                             </span>
 
                             <button

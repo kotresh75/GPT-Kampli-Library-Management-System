@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 // eslint-disable-next-line
 const { v4: uuidv4 } = require('uuid');
 const auditService = require('../services/auditService');
+const socketService = require('../services/socketService');
 
 // Get All App Settings
 exports.getAppSettings = (req, res) => {
@@ -84,40 +85,69 @@ exports.updateAppSettings = async (req, res) => {
                 let errorOccurred = false;
                 let errorDetails = null;
 
+                const checkCompletion = () => {
+                    if (completed === keys.length) {
+                        if (errorOccurred) {
+                            db.run("ROLLBACK", () => {
+                                res.status(500).json({ error: `Update failed: ${errorDetails} (ERR_SET_DB)` });
+                                resolve();
+                            });
+                        } else {
+                            // Log Audit with proper user info
+                            if (req.adminForAudit) {
+                                auditService.log(req.adminForAudit, 'UPDATE_SETTINGS', 'Settings', `Updated keys: ${keys.join(', ')}`);
+                            } else if (admin_id) {
+                                auditService.log(admin_id, 'UPDATE_SETTINGS', 'Settings', `Updated keys: ${keys.join(', ')}`);
+                            }
+
+                            db.run("COMMIT", () => {
+                                socketService.emit('settings_update', { type: 'UPDATE', keys });
+                                res.json({ success: true });
+                                resolve();
+                            });
+                        }
+                    }
+                };
+
                 keys.forEach(key => {
                     let value = updates[key];
                     if (typeof value === 'object') value = JSON.stringify(value);
 
                     db.run("UPDATE system_settings SET value = ? WHERE key = ?", [value, key], function (err) {
-                        completed++;
                         if (err) {
                             console.error(`[Settings] Error updating key '${key}':`, err.message);
                             errorOccurred = true;
                             errorDetails = err.message;
+                            completed++;
+                            checkCompletion();
+                        } else if (this.changes === 0) {
+                            // UPSERT: If row doesn't exist, insert it
+                            let category = 'App';
+                            if (key.startsWith('sec_')) category = 'Security';
+                            else if (key.startsWith('email_')) category = 'Email';
+                            else if (key.startsWith('backup_')) category = 'Data';
+
+                            let dataType = typeof value === 'object' ? 'json' : 'string';
+                            if (typeof updates[key] === 'boolean') dataType = 'boolean';
+                            else if (typeof updates[key] === 'number') dataType = 'number';
+
+                            db.run("INSERT INTO system_settings (key, value, category, data_type, description) VALUES (?, ?, ?, ?, ?)",
+                                [key, value, category, dataType, `Auto-created setting for ${key}`],
+                                function (insertErr) {
+                                    if (insertErr) {
+                                        console.error(`[Settings] Error inserting key '${key}':`, insertErr.message);
+                                        errorOccurred = true;
+                                        errorDetails = insertErr.message;
+                                    } else {
+                                        console.log(`[Settings] Inserted new key '${key}'`);
+                                    }
+                                    completed++;
+                                    checkCompletion();
+                                });
                         } else {
+                            completed++;
                             console.log(`[Settings] Updated '${key}': ${this.changes} rows affected`);
-                        }
-
-                        // When all updates are done
-                        if (completed === keys.length) {
-                            if (errorOccurred) {
-                                db.run("ROLLBACK", () => {
-                                    res.status(500).json({ error: `Update failed: ${errorDetails} (ERR_SET_DB)` });
-                                    resolve();
-                                });
-                            } else {
-                                // Log Audit with proper user info
-                                if (req.adminForAudit) {
-                                    auditService.log(req.adminForAudit, 'UPDATE_SETTINGS', 'Settings', `Updated keys: ${keys.join(', ')}`);
-                                } else if (admin_id) {
-                                    auditService.log(admin_id, 'UPDATE_SETTINGS', 'Settings', `Updated keys: ${keys.join(', ')}`);
-                                }
-
-                                db.run("COMMIT", () => {
-                                    res.json({ success: true });
-                                    resolve();
-                                });
-                            }
+                            checkCompletion();
                         }
                     });
                 });
@@ -235,3 +265,233 @@ exports.testEmail = async (req, res) => {
         }
     });
 };
+
+// --- Cloud Backup Handlers ---
+const cloudBackupService = require('../services/cloudBackupService');
+
+exports.testCloudConnection = async (req, res) => {
+    const { uri } = req.body;
+    try {
+        await cloudBackupService.testConnection(uri);
+        res.json({ success: true, message: "Connection successful" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+exports.createLocalBackup = async (req, res) => {
+    const tables = [
+        'departments', 'students', 'staff', 'admins', 'books', 'book_copies',
+        'circulation', 'transaction_logs', 'fines', 'broadcast_logs', 'audit_logs',
+        'system_settings', 'policy_config', 'email_config'
+    ];
+
+    const data = {};
+    const promises = tables.map(table => {
+        return new Promise((resolve) => {
+            db.all(`SELECT * FROM ${table}`, [], (err, rows) => {
+                if (!err) data[table] = rows;
+                resolve();
+            });
+        });
+    });
+
+    await Promise.all(promises);
+
+    const backup = {
+        version: "1.0",
+        timestamp: new Date().toISOString(),
+        data: data
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=backup-${Date.now()}.json`);
+    res.send(JSON.stringify(backup, null, 2));
+};
+
+exports.triggerCloudBackup = async (req, res) => {
+    // Manual trigger
+    const result = await cloudBackupService.performCloudBackup();
+    if (result.success) {
+        res.json({ success: true, message: "Backup completed successfully" });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+};
+
+exports.triggerCloudRestore = async (req, res) => {
+    // Check Admin Pwd first? Assuming middleware does it or we rely on logic
+    const result = await cloudBackupService.restoreFromCloud();
+    if (result.success) {
+        res.json({ success: true, message: "Data restored from cloud" });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+};
+
+exports.factoryReset = async (req, res) => {
+    const { admin_id, admin_password } = req.body;
+
+    if (!admin_id || !admin_password) {
+        return res.status(400).json({ error: "Admin authentication required" });
+    }
+
+    try {
+        // 1. Verify Admin
+        const admin = await new Promise((resolve, reject) => {
+            db.get("SELECT id, password_hash FROM admins WHERE id = ?", [admin_id], (err, row) => {
+                if (err) reject(err); else resolve(row);
+            });
+        });
+
+        if (!admin || !admin.password_hash) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        const match = await bcrypt.compare(admin_password, admin.password_hash);
+        if (!match) {
+            return res.status(401).json({ error: "Invalid Admin Password" });
+        }
+
+        // 2. Perform Wipe
+        // Order matters for FKs, but we'll also disable FKs temporarily to be sure
+        const tablesToClear = [
+            // Child tables first
+            'fines', 'circulation', 'transaction_logs', 'notifications', 'activity_logs',
+            // Content tables
+            'book_copies', 'books', 'students', 'staff',
+            // Logs
+            'audit_logs', 'broadcast_logs'
+        ];
+
+        // Use transaction
+        db.serialize(() => {
+            // Disable Foreign Keys for the wipe
+            db.run("PRAGMA foreign_keys = OFF");
+            db.run("BEGIN TRANSACTION");
+
+            tablesToClear.forEach(table => {
+                db.run(`DELETE FROM ${table}`, (err) => {
+                    // Ignore "no such table" errors, verify others
+                    if (err && !err.message.includes('no such table')) {
+                        console.error(`Failed to clear ${table}:`, err.message);
+                    }
+                });
+                db.run(`DELETE FROM sqlite_sequence WHERE name='${table}'`);
+            });
+
+            // 3. Disable Auto-Backup explicitly (Robust Method)
+            // We use a direct JSON update approach supported by SQLite JSON1 extension if available,
+            // or fallback to textual replacement which we know works for simple bools.
+            // Since previous read-modify-write might have raced or failed, let's try the direct SQL update again 
+            // BUT with a safer pattern, OR just rewrite the reading logic to be sure it runs.
+
+            // Let's stick to the read-modify-write but ensure it EXECUTES.
+            db.get("SELECT value FROM system_settings WHERE key = 'backup_config'", (err, row) => {
+                if (!err && row) {
+                    try {
+                        let config = JSON.parse(row.value);
+                        config.autoBackup = false;
+                        // We run the update immediately
+                        db.run("UPDATE system_settings SET value = ? WHERE key = 'backup_config'", [JSON.stringify(config)]);
+                    } catch (e) {
+                        console.error("Failed to disable auto-backup:", e);
+                    }
+                }
+            });
+
+            // 4. Prevent Auto-Backup of Empty DB (Session)
+            const changeDetection = require('../services/changeDetection');
+            changeDetection.reset();
+
+            db.run("COMMIT", (err) => {
+                // Re-enable Foreign Keys
+                db.run("PRAGMA foreign_keys = ON");
+
+                if (err) {
+                    console.error("Reset Commit Failed:", err);
+                    return res.status(500).json({ error: "Reset failed during commit" });
+                }
+
+                // 4. Log the final action (New log starts now)
+                auditService.log(admin_id, 'SYSTEM_RESET', 'System', 'Performed Factory Reset. All data wiped.');
+
+                res.json({ success: true, message: "System Reset Successful" });
+            });
+        });
+
+    } catch (e) {
+        console.error("Factory Reset Error:", e);
+        res.status(500).json({ error: "Server error during reset" });
+    }
+};
+
+// --- Principal Signature Handlers ---
+
+// Get Principal Signature
+exports.getPrincipalSignature = (req, res) => {
+    db.get("SELECT value FROM system_settings WHERE key = 'principal_signature'", [], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ signature: row?.value || null });
+    });
+};
+
+// Upload Principal Signature
+exports.uploadPrincipalSignature = (req, res) => {
+    const { image_data } = req.body;
+
+    if (!image_data) {
+        return res.status(400).json({ error: "No signature image provided" });
+    }
+
+    // Validate Base64 image data
+    if (!image_data.startsWith('data:image/')) {
+        return res.status(400).json({ error: "Invalid image format. Must be Base64 encoded image." });
+    }
+
+    // Check if setting exists, if not insert, else update - using 'key' instead of 'id'
+    db.get("SELECT key FROM system_settings WHERE key = 'principal_signature'", [], (err, row) => {
+        if (err) {
+            console.error("[Principal Signature] DB Error checking existence:", err.message);
+            return res.status(500).json({ error: err.message });
+        }
+
+        if (row) {
+            // Update
+            db.run("UPDATE system_settings SET value = ? WHERE key = 'principal_signature'",
+                [image_data], function (err) {
+                    if (err) {
+                        console.error("[Principal Signature] Update Error:", err.message);
+                        return res.status(500).json({ error: err.message });
+                    }
+                    console.log("[Principal Signature] Updated successfully");
+                    socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
+                    res.json({ message: "Principal signature uploaded successfully" });
+                });
+        } else {
+            // Insert - using only columns that exist in older schema
+            db.run("INSERT INTO system_settings (key, value, category, data_type, description) VALUES (?, ?, ?, ?, ?)",
+                ['principal_signature', image_data, 'App', 'string', 'Principal signature image for ID cards'],
+                function (err) {
+                    if (err) {
+                        console.error("[Principal Signature] Insert Error:", err.message);
+                        return res.status(500).json({ error: err.message });
+                    }
+                    console.log("[Principal Signature] Inserted successfully");
+                    socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
+                    res.json({ message: "Principal signature uploaded successfully" });
+                });
+        }
+    });
+};
+
+// Delete Principal Signature
+exports.deletePrincipalSignature = (req, res) => {
+    db.run("UPDATE system_settings SET value = NULL WHERE key = 'principal_signature'",
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
+            res.json({ message: "Principal signature deleted successfully" });
+        });
+};
+

@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreditCard, User, BookOpen, AlertCircle, CheckCircle, XCircle, Loader, Trash2, ScanLine, ArrowRight } from 'lucide-react';
 import GlassAutocomplete from '../common/GlassAutocomplete';
 import ConfirmationModal from '../common/ConfirmationModal';
 import StatusModal from '../common/StatusModal';
+import IDCardTemplate from '../students/IDCardTemplate';
+import { useLanguage } from '../../context/LanguageContext';
 
 const IssueTab = () => {
+    const { t } = useLanguage();
     // Left Panel State
     const [identifier, setIdentifier] = useState('');
     const [student, setStudent] = useState(null);
@@ -19,12 +22,61 @@ const IssueTab = () => {
     const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
     const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => { } });
     const [inlineMessage, setInlineMessage] = useState(null);
+    const [showIdCardModal, setShowIdCardModal] = useState(false);
+    const [emailEvents, setEmailEvents] = useState(null);
 
-    const showError = (msg) => setStatusModal({ isOpen: true, type: 'error', title: 'Error', message: msg });
-    const showSuccess = (msg) => setStatusModal({ isOpen: true, type: 'success', title: 'Success', message: msg });
+    // Fetch Email Event Settings
+    useEffect(() => {
+        fetch('http://localhost:3001/api/settings/app')
+            .then(res => res.json())
+            .then(data => {
+                if (data.email_events) setEmailEvents(data.email_events);
+            })
+            .catch(err => console.error("Failed to fetch settings:", err));
+    }, []);
+
+    const showError = (msg) => setStatusModal({ isOpen: true, type: 'error', title: t('common.error'), message: msg });
+    const showSuccess = (msg) => setStatusModal({ isOpen: true, type: 'success', title: t('common.success'), message: msg });
 
     // Focus Management
     const [activeField, setActiveField] = useState('student'); // 'student' | 'book'
+
+    // Signature state for ID Card
+    const [signatures, setSignatures] = useState({ hod: null, principal: null });
+
+    // Fetch signatures when student changes
+    useEffect(() => {
+        const fetchSignatures = async () => {
+            if (!student) {
+                setSignatures({ hod: null, principal: null });
+                return;
+            }
+            try {
+                // Fetch Principal Signature
+                const principalRes = await fetch('http://localhost:3001/api/settings/principal-signature');
+                const principalData = await principalRes.json();
+
+                // Fetch Department for HOD signature
+                let hodSignature = null;
+                if (student.dept_id) {
+                    const deptRes = await fetch(`http://localhost:3001/api/departments/${student.dept_id}`);
+                    if (deptRes.ok) {
+                        const deptData = await deptRes.json();
+                        hodSignature = deptData.hod_signature;
+                    }
+                }
+
+                setSignatures({
+                    hod: hodSignature,
+                    principal: principalData.signature
+                });
+            } catch (e) {
+                console.error("Failed to fetch signatures", e);
+            }
+        };
+
+        fetchSignatures();
+    }, [student]);
 
     // --- Student Logic ---
 
@@ -57,11 +109,12 @@ const IssueTab = () => {
                 if (data.valid) {
                     setStudent(data.student);
                     setActiveField('book'); // Move focus
+                    setShowIdCardModal(true); // Show ID card popup
                 } else {
                     setStudent(data.student);
                     setStudent(data.student);
                     setAlerts(data.alerts || []);
-                    showError("Student blocked from borrowing. See alerts.");
+                    showError(t('circulation.issue.student_blocked'));
                 }
             } else {
                 showError(data.error || "Student validation failed");
@@ -111,13 +164,18 @@ const IssueTab = () => {
             if (res.ok && data.resolved) {
                 const acc = data.value;
 
-                if (cart.includes(acc)) {
+                if (cart.some(item => item.accession === acc)) {
                     showError(`Item ${acc} already in cart`);
                     setBookInput('');
                     return;
                 }
 
-                setCart([...cart, acc]);
+                setCart([...cart, {
+                    accession: acc,
+                    title: data.title,
+                    cover_image: data.cover_image,
+                    author: data.author
+                }]);
                 if (data.type === 'ISBN_RESOLVED') {
                     setInlineMessage({ type: 'success', text: `Resolved ISBN to copy: ${acc}` });
                     setTimeout(() => setInlineMessage(null), 3000);
@@ -133,7 +191,7 @@ const IssueTab = () => {
 
     // Remove from Cart
     const removeFromCart = (acc) => {
-        setCart(cart.filter(item => item !== acc));
+        setCart(cart.filter(item => item.accession !== acc));
     };
 
     // --- Issue Logic ---
@@ -150,7 +208,7 @@ const IssueTab = () => {
                 },
                 body: JSON.stringify({
                     student_id: student.id,
-                    copy_accession_numbers: cart
+                    copy_accession_numbers: cart.map(i => i.accession)
                 })
             });
             const data = await res.json();
@@ -160,9 +218,9 @@ const IssueTab = () => {
                 if (failures.length > 0) {
                     showError(`Some items failed: ${failures.map(f => `${f.accession} (${f.reason})`).join(', ')}`);
                     const successfulAccs = data.results.filter(r => r.status === 'Success').map(r => r.accession);
-                    setCart(cart.filter(acc => !successfulAccs.includes(acc)));
+                    setCart(cart.filter(item => !successfulAccs.includes(item.accession)));
                 } else {
-                    showSuccess(`Issued ${cart.length} books successfully.`);
+                    showSuccess(t('circulation.issue.success_msg').replace('{count}', cart.length));
                     setCart([]);
                     setStudent(null);
                     setIdentifier('');
@@ -195,11 +253,11 @@ const IssueTab = () => {
         if (cart.length > 0) {
             setConfirmModal({
                 isOpen: true,
-                title: "Clear Current Session?",
-                message: "Changing the student now will remove all scanned items from the cart. Are you sure you want to proceed?",
+                title: t('circulation.issue.clear_session_title'),
+                message: t('circulation.issue.clear_session_msg'),
                 isDanger: true,
-                confirmText: "Yes, Clear Session",
-                cancelText: "Cancel",
+                confirmText: t('common.confirm'),
+                cancelText: t('common.cancel'),
                 onConfirm: resetState
             });
         } else {
@@ -220,15 +278,15 @@ const IssueTab = () => {
                             <User size={24} className="text-blue-400" />
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Identify Borrower</h3>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Scan student ID card or search by name</p>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t('circulation.issue.identify_borrower')}</h3>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('circulation.issue.identify_desc')}</p>
                         </div>
                     </div>
 
                     {!student ? (
                         <div style={{ maxWidth: '500px' }}>
                             <GlassAutocomplete
-                                placeholder="Scan Register No..."
+                                placeholder={t('circulation.issue.scan_placeholder')}
                                 value={identifier}
                                 onChange={setIdentifier}
                                 onSearch={searchStudents}
@@ -256,6 +314,18 @@ const IssueTab = () => {
                             alignItems: 'center'
                         }}>
                             <div className="flex items-center gap-3 overflow-hidden">
+                                {student.profile_image ? (
+                                    <img
+                                        src={student.profile_image}
+                                        alt="Profile"
+                                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                                        className="border border-white/10"
+                                    />
+                                ) : ( // Fallback to Initial if no image
+                                    <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30 text-indigo-300 font-bold">
+                                        {student.full_name?.charAt(0)}
+                                    </div>
+                                )}
                                 <h2 className="text-sm font-bold text-white whitespace-nowrap">{student.full_name}</h2>
                                 <span className="text-gray-500">•</span>
                                 <span className="bg-white/10 px-2 py-0.5 rounded text-white/80 font-mono text-xs whitespace-nowrap">{student.register_number}</span>
@@ -269,7 +339,7 @@ const IssueTab = () => {
                                 onClick={handleClearStudent}
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-300 transition-colors border border-white/5"
                             >
-                                <XCircle size={16} /> Change
+                                <XCircle size={16} /> {t('common.cancel')}
                             </button>
                         </div>
                     )}
@@ -285,14 +355,14 @@ const IssueTab = () => {
                             <BookOpen size={24} className="text-pink-400" />
                         </div>
                         <div>
-                            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>Scan Books</h3>
-                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Scan barcode or enter accession number</p>
+                            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{t('circulation.issue.scan_books')}</h3>
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{t('circulation.issue.scan_books_desc')}</p>
                         </div>
                     </div>
 
                     <div style={{ maxWidth: '600px' }}>
                         <GlassAutocomplete
-                            placeholder="Scan Book Barcode..."
+                            placeholder={t('circulation.issue.scan_book_placeholder')}
                             value={bookInput}
                             onChange={setBookInput}
                             onSearch={searchBooks}
@@ -324,7 +394,7 @@ const IssueTab = () => {
                         {alerts.length > 0 && (
                             <div className="bg-orange-500/10 border border-orange-500/30 text-orange-400 px-4 py-3 rounded-xl mt-4">
                                 <div className="flex items-center gap-2 font-bold mb-2">
-                                    <AlertCircle size={18} /> Account Alerts
+                                    <AlertCircle size={18} /> {t('common.warning')}
                                 </div>
                                 <ul className="list-disc pl-5 space-y-1 text-sm">
                                     {alerts.map((msg, i) => <li key={i}>{msg}</li>)}
@@ -340,7 +410,7 @@ const IssueTab = () => {
             <div className="glass-panel" style={{ flex: '3', display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden' }}>
                 <div className="p-5 border-b border-white/10 bg-white/5">
                     <h3 className="font-bold text-lg flex items-center gap-2">
-                        <CreditCard size={20} className="text-purple-400" /> Checkout Cart
+                        <CreditCard size={20} className="text-purple-400" /> {t('circulation.issue.cart_title')}
                     </h3>
                 </div>
 
@@ -348,19 +418,26 @@ const IssueTab = () => {
                     {cart.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-gray-500 opacity-60">
                             <BookOpen size={48} className="mb-3" />
-                            <p>Cart is empty</p>
+                            <p>{t('circulation.issue.cart_empty')}</p>
                         </div>
                     ) : (
-                        cart.map((acc, idx) => (
+                        cart.map((item, idx) => (
                             <div key={idx} className="group flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/20 transition-all">
                                 <div className="flex items-center gap-3 overflow-hidden">
-                                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
-                                        <BookOpen size={16} />
+                                    {item.cover_image ? (
+                                        <img src={item.cover_image} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
+                                    ) : (
+                                        <div className="w-6 h-8 rounded-sm bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                            <BookOpen size={14} />
+                                        </div>
+                                    )}
+                                    <div className="overflow-hidden">
+                                        <div className="font-semibold text-sm truncate text-white">{item.title}</div>
+                                        <div className="font-mono text-xs text-gray-500">{item.accession}</div>
                                     </div>
-                                    <span className="font-mono text-sm font-semibold truncate">{acc}</span>
                                 </div>
                                 <button
-                                    onClick={() => removeFromCart(acc)}
+                                    onClick={() => removeFromCart(item.accession)}
                                     className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-red-500/20 text-gray-500 hover:text-red-400 transition-colors"
                                 >
                                     <Trash2 size={16} />
@@ -371,8 +448,16 @@ const IssueTab = () => {
                 </div>
 
                 <div className="p-5 border-t border-white/10 bg-white/5">
+                    {emailEvents && emailEvents.issueReceipt === false && (
+                        <div className="mb-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs flex items-start gap-2">
+                            <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                            <span>
+                                <strong>Warning:</strong> Email receipts are disabled. Students will NOT receive an email.
+                            </span>
+                        </div>
+                    )}
                     <div className="flex justify-between mb-4 text-sm text-gray-400">
-                        <span>Total Items</span>
+                        <span>{t('circulation.issue.total_items')}</span>
                         <span className="text-white font-bold">{cart.length}</span>
                     </div>
                     <button
@@ -381,7 +466,7 @@ const IssueTab = () => {
                         disabled={!student || alerts.length > 0 || cart.length === 0}
                         onClick={handleConfirmIssue}
                     >
-                        Complete Issue <ArrowRight size={18} />
+                        {t('circulation.issue.complete_issue')} <ArrowRight size={18} />
                     </button>
                 </div>
             </div>
@@ -404,6 +489,69 @@ const IssueTab = () => {
                 title={statusModal.title}
                 message={statusModal.message}
             />
+
+            {/* --- ID CARD POPUP MODAL --- */}
+            {showIdCardModal && student && (
+                <div
+                    className="modal-overlay"
+                    style={{
+                        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
+                        display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100
+                    }}
+                    onClick={() => setShowIdCardModal(false)}
+                >
+                    <div
+                        className="glass-panel bounce-in"
+                        style={{
+                            padding: '0',
+                            overflow: 'hidden',
+                            background: 'var(--bg-color)',
+                            border: '1px solid var(--glass-border)',
+                            width: '320px'
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div style={{
+                            padding: '12px 16px',
+                            borderBottom: '1px solid var(--glass-border)',
+                            background: 'linear-gradient(to right, rgba(34, 197, 94, 0.1), rgba(59, 130, 246, 0.1))',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                                <CheckCircle size={20} className="text-green-400" />
+                                <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: 0, color: 'var(--text-primary)' }}>{t('circulation.issue.student_found')}</h2>
+                            </div>
+                            <p style={{ fontSize: '0.8rem', opacity: 0.7, margin: '2px 0 0 0' }}>
+                                {student.full_name} • {student.register_number}
+                            </p>
+                        </div>
+
+                        {/* ID Card Display - Scaled Down */}
+                        <div style={{ padding: '15px', display: 'flex', justifyContent: 'center', background: 'rgba(0,0,0,0.2)', height: '450px', alignItems: 'center', overflow: 'hidden' }}>
+                            <div style={{ transform: 'scale(0.7)', transformOrigin: 'center' }}>
+                                <IDCardTemplate
+                                    student={student}
+                                    hodSignature={signatures.hod}
+                                    principalSignature={signatures.principal}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--glass-border)', textAlign: 'center' }}>
+                            <button
+                                onClick={() => setShowIdCardModal(false)}
+                                className="btn btn-primary"
+                                style={{ padding: '10px 30px' }}
+                            >
+                                Continue to Scan Books
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -12,8 +12,12 @@ router.post('/bulk-demote', studentController.bulkDemote);
 router.post('/export', studentController.exportStudents);
 router.post('/promote', studentController.promoteStudents);
 router.post('/promotion-scan', studentController.scanForPromotion);
+router.post('/photo/upload', studentController.uploadPhoto);
 router.get('/defaulters', studentController.getDefaulters);
 router.put('/:id', studentController.updateStudent);
 router.delete('/:id', studentController.deleteStudent);
+
+router.post('/photo/bulk-delete', studentController.bulkDeletePhotos);
+router.get('/photo/stats', studentController.getPhotoStats);
 
 module.exports = router;

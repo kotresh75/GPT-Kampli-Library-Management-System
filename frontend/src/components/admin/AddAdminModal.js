@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { X, Save, User, Mail, Phone, Shield, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 
 const AddAdminModal = ({ admin, onClose, onSave }) => {
+    const { t } = useLanguage();
     const isEdit = !!admin;
     const [formData, setFormData] = useState({
         name: '',
@@ -52,10 +54,10 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
                 onSave();
                 onClose();
             } else {
-                setError(data.error || "Operation failed");
+                setError(data.error || t('admin.modal.err_failed'));
             }
         } catch (err) {
-            setError("Network Error");
+            setError(t('admin.actions.network_err'));
         } finally {
             setLoading(false);
         }
@@ -73,7 +75,7 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
                         <div style={{ width: 32, height: 32, background: 'var(--primary-color)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Shield size={18} color="white" />
                         </div>
-                        {isEdit ? 'Edit Admin' : 'New Admin'}
+                        {isEdit ? t('admin.modal.title_edit') : t('admin.modal.title_new')}
                     </h2>
                     <button className="smart-form-close" onClick={onClose}>
                         <X size={20} />
@@ -87,39 +89,39 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
                     <form id="admin-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
 
                         <div className="form-group">
-                            <label className="form-label"><User size={14} className="inline mr-1" /> Full Name</label>
+                            <label className="form-label"><User size={14} className="inline mr-1" /> {t('admin.modal.full_name')}</label>
                             <input
                                 className="smart-input"
                                 value={formData.name}
                                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="e.g. System Administrator"
+                                placeholder={t('admin.modal.full_name_placeholder')}
                                 required
                                 autoFocus
                             />
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label"><Mail size={14} className="inline mr-1" /> Email Address</label>
+                            <label className="form-label"><Mail size={14} className="inline mr-1" /> {t('admin.modal.email')}</label>
                             <input
                                 type="email"
                                 className="smart-input"
                                 value={formData.email}
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="e.g. admin@library.com"
+                                placeholder={t('admin.modal.email_placeholder')}
                                 required
                                 disabled={isEdit}
-                                title={isEdit ? "Email cannot be changed" : ""}
+                                title={isEdit ? t('admin.modal.email_hint') : ""}
                             />
-                            {isEdit && <span className="text-xs text-white/40 mt-1 block pl-1">Email cannot be changed after creation.</span>}
+                            {isEdit && <span className="text-xs text-white/40 mt-1 block pl-1">{t('admin.modal.email_hint')}</span>}
                         </div>
 
                         <div className="form-group">
-                            <label className="form-label"><Phone size={14} className="inline mr-1" /> Phone Number</label>
+                            <label className="form-label"><Phone size={14} className="inline mr-1" /> {t('admin.modal.phone')}</label>
                             <input
                                 className="smart-input"
                                 value={formData.phone}
                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                placeholder="Optional"
+                                placeholder={t('admin.modal.phone_placeholder')}
                             />
                         </div>
 
@@ -128,9 +130,9 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
 
                 {/* Footer */}
                 <div className="smart-form-footer">
-                    <button type="button" onClick={onClose} className="btn-cancel">Cancel</button>
+                    <button type="button" onClick={onClose} className="btn-cancel">{t('admin.modal.cancel')}</button>
                     <button type="submit" form="admin-form" className="btn-submit" disabled={loading}>
-                        {loading ? 'Saving...' : <><Save size={18} /> {isEdit ? 'Update' : 'Create Admin'}</>}
+                        {loading ? t('admin.modal.saving') : <><Save size={18} /> {isEdit ? t('admin.modal.update') : t('admin.modal.create')}</>}
                     </button>
                 </div>
 

@@ -2,8 +2,10 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { DollarSign, Wallet, CreditCard, Activity, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import StatsCard from '../dashboard/StatsCard';
+import { useLanguage } from '../../context/LanguageContext';
 
 const FinancialAnalytics = ({ stats }) => {
+    const { t } = useLanguage();
     // Helper for recovery rate
     const collected = stats?.summary?.collected || 0;
     const pending = stats?.summary?.pending || 0;
@@ -18,7 +20,7 @@ const FinancialAnalytics = ({ stats }) => {
                     <p className="text-gray-400 text-xs mb-2 font-mono">{label}</p>
                     <div className="flex items-center gap-3">
                         <span className="text-2xl font-bold text-emerald-400">₹{payload[0].value}</span>
-                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">RECEIVED</span>
+                        <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">{t('reports.analytics.fin.received')}</span>
                     </div>
                 </div>
             );
@@ -31,25 +33,25 @@ const FinancialAnalytics = ({ stats }) => {
             {/* Money Cards - Forced 2 Columns */}
             <div className="grid gap-6" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' }}>
                 <StatsCard
-                    title="Fines Collected"
+                    title={t('reports.analytics.fin.collected')}
                     value={`₹${collected.toFixed(2)}`}
                     icon={Wallet}
                     color="emerald"
                     trend={null}
                 />
                 <StatsCard
-                    title="Pending Dues"
+                    title={t('reports.analytics.fin.pending')}
                     value={`₹${pending.toFixed(2)}`}
                     icon={AlertCircle}
                     color="red"
-                    trend={totalPotential > 0 ? `${((pending / totalPotential) * 100).toFixed(0)}% unrecovered` : null}
+                    trend={totalPotential > 0 ? `${((pending / totalPotential) * 100).toFixed(0)}% ${t('reports.analytics.fin.unrecovered')}` : null}
                 />
                 <StatsCard
-                    title="Waived Amounts"
+                    title={t('reports.analytics.fin.waived')}
                     value={`₹${stats?.summary?.waived?.toFixed(2) || '0.00'}`}
                     icon={Activity}
                     color="blue"
-                    trend="Authorized waivers"
+                    trend={t('reports.analytics.fin.authorized')}
                 />
             </div>
 
@@ -61,7 +63,7 @@ const FinancialAnalytics = ({ stats }) => {
                 <div className="chart-widget p-6 border-none bg-white/5 flex flex-col justify-center">
                     <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                         <CreditCard size={18} className="text-blue-400" />
-                        Recovery Rate
+                        {t('reports.analytics.fin.recovery_rate')}
                     </h3>
 
                     <div className="flex-1 flex flex-col justify-center items-center relative">
@@ -81,17 +83,17 @@ const FinancialAnalytics = ({ stats }) => {
                             </svg>
                             <div className="absolute inset-0 flex flex-col items-center justify-center">
                                 <span className="text-3xl font-bold text-white">{recoveryRate}%</span>
-                                <span className="text-xs text-gray-500 uppercase tracking-widest mt-1">Recovered</span>
+                                <span className="text-xs text-gray-500 uppercase tracking-widest mt-1">{t('reports.analytics.fin.recovered')}</span>
                             </div>
                         </div>
 
                         <div className="w-full mt-8 space-y-3">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">Total Fines Generated</span>
+                                <span className="text-gray-400">{t('reports.analytics.fin.total_generated')}</span>
                                 <span className="text-white font-mono">₹{totalPotential.toFixed(0)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-400">Collected Amount</span>
+                                <span className="text-gray-400">{t('reports.analytics.fin.collected_amount')}</span>
                                 <span className="text-emerald-400 font-mono">₹{collected.toFixed(0)}</span>
                             </div>
                         </div>

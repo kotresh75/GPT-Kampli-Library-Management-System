@@ -39,7 +39,7 @@ const parseDateValue = (val) => {
         const d = String(dateObj.getDate()).padStart(2, '0');
         const m = String(dateObj.getMonth() + 1).padStart(2, '0');
         const y = dateObj.getFullYear();
-        return `${d}-${m}-${y}`; // Return strictly DD-MM-YYYY
+        return `${y}-${m}-${d}`; // Return strictly YYYY-MM-DD for DB/Input compatibility
     }
 
     return val; // Return original if unknown format

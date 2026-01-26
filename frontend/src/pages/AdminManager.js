@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Shield, Plus, Lock } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/LanguageContext';
 import AdminCard from '../components/admin/AdminCard';
 import AddAdminModal from '../components/admin/AddAdminModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const AdminManager = () => {
+    const { t } = useLanguage();
     const [admins, setAdmins] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -34,6 +37,17 @@ const AdminManager = () => {
     useEffect(() => {
         fetchAdmins();
     }, []);
+
+    const socket = useSocket();
+    useEffect(() => {
+        if (!socket) return;
+        const handleUpdate = () => {
+            console.log("Admin Update: Refreshing");
+            fetchAdmins();
+        };
+        socket.on('admin_update', handleUpdate);
+        return () => socket.off('admin_update', handleUpdate);
+    }, [socket]);
 
     // Filter Logic
     const filteredAdmins = admins.filter(admin =>
@@ -98,15 +112,15 @@ const AdminManager = () => {
             if (res.ok) {
                 fetchAdmins();
                 if (action === 'reset_password') {
-                    alert(`Password for ${data.name} has been reset to default 'password123'.`);
+                    alert(t('admin.actions.success_reset', { name: data.name }));
                 }
             } else {
                 const err = await res.json();
-                alert(`Action failed: ${err.error} (ERR_ADM_ACT)`);
+                alert(t('admin.actions.failed', { error: err.error }));
             }
         } catch (error) {
             console.error(error);
-            alert("Network Error (ERR_NET_ADM)");
+            alert(t('admin.actions.network_err'));
         }
     };
 
@@ -114,20 +128,20 @@ const AdminManager = () => {
     const getConfirmProps = () => {
         const { action, data } = confirmConfig;
         if (action === 'delete') return {
-            title: "Delete Admin?",
-            message: `Are you sure you want to delete ${data.name}? This cannot be undone.`,
-            confirmText: "Delete", isDanger: true
+            title: t('admin.actions.delete_title'),
+            message: t('admin.actions.delete_msg', { name: data.name }),
+            confirmText: t('admin.actions.delete_btn'), isDanger: true
         };
         if (action === 'toggle_status') return {
-            title: `${data.action === 'enable' ? 'Enable' : 'Disable'} Admin?`,
-            message: `Are you sure you want to ${data.action} ${data.name}?`,
-            confirmText: data.action === 'enable' ? 'Enable' : 'Disable',
+            title: data.action === 'enable' ? t('admin.actions.enable_title') : t('admin.actions.disable_title'),
+            message: data.action === 'enable' ? t('admin.actions.enable_msg', { name: data.name }) : t('admin.actions.disable_msg', { name: data.name }),
+            confirmText: data.action === 'enable' ? t('admin.actions.enable_btn') : t('admin.actions.disable_btn'),
             isDanger: data.action === 'disable'
         };
         if (action === 'reset_password') return {
-            title: "Reset Password?",
-            message: `Reset password for ${data.name}? It will be set to 'password123'.`,
-            confirmText: "Reset Password", isDanger: true
+            title: t('admin.actions.reset_title'),
+            message: t('admin.actions.reset_msg', { name: data.name }),
+            confirmText: t('admin.actions.reset_btn'), isDanger: true
         };
         return {};
     };
@@ -137,9 +151,9 @@ const AdminManager = () => {
             {/* Header & Toolbar */}
             <div className="mb-6">
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 12, marginBottom: '5px' }}>
-                    <Shield size={28} className="text-yellow-400" /> Admin Management
+                    <Shield size={28} className="text-yellow-400" /> {t('admin.title')}
                 </h1>
-                <p className="text-white/60">Manage system administrators and their access.</p>
+                <p className="text-white/60">{t('admin.subtitle')}</p>
             </div>
 
             <div className="flex flex-col gap-4 mb-6">
@@ -148,7 +162,7 @@ const AdminManager = () => {
                         <Search size={20} />
                         <input
                             type="text"
-                            placeholder="Search Admins..."
+                            placeholder={t('admin.search_placeholder')}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
@@ -157,7 +171,7 @@ const AdminManager = () => {
                     <div className="h-8 w-px bg-white/10 mx-2"></div>
 
                     <button className="toolbar-primary-btn whitespace-nowrap" onClick={() => { setEditingAdmin(null); setShowAddModal(true); }}>
-                        <Plus size={20} /> Create New Admin
+                        <Plus size={20} /> {t('admin.create_new')}
                     </button>
                 </div>
             </div>
@@ -166,9 +180,9 @@ const AdminManager = () => {
             <div style={{ flex: 1, padding: '20px', overflowY: 'auto' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                     {loading ? (
-                        <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
+                        <p style={{ color: 'var(--text-secondary)' }}>{t('admin.loading')}</p>
                     ) : filteredAdmins.length === 0 ? (
-                        <p style={{ color: 'var(--text-secondary)' }}>No admins found.</p>
+                        <p style={{ color: 'var(--text-secondary)' }}>{t('admin.no_admins')}</p>
                     ) : (
                         filteredAdmins.map(admin => (
                             <AdminCard

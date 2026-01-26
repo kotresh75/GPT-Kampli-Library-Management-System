@@ -4,6 +4,7 @@ import {
     ArrowUpDown, ArrowUp, ArrowDown, Activity, AlertTriangle, Layers
 } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/tables.css';
 
 const SmartAuditTable = ({
@@ -13,6 +14,7 @@ const SmartAuditTable = ({
     onSort,
     pagination // { currentPage, totalPages, itemsPerPage, onPageChange, onItemsPerPageChange, totalItems }
 }) => {
+    const { t } = useLanguage();
 
     // --- Formatters ---
     const getActionColor = (action) => {
@@ -57,8 +59,8 @@ const SmartAuditTable = ({
                 <div className="p-4 rounded-full bg-white/5 mb-4">
                     <Layers size={48} className="text-gray-500 opacity-50" />
                 </div>
-                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">No Logs Found</h3>
-                <p className="text-[var(--text-secondary)]">Try adjusting your filters.</p>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{t('audit.table.no_logs')}</h3>
+                <p className="text-[var(--text-secondary)]">{t('history.table.no_transactions_desc')}</p>
             </div>
         );
     }
@@ -70,21 +72,21 @@ const SmartAuditTable = ({
                     <thead>
                         <tr>
                             <th className="sortable" onClick={() => onSort('timestamp')} style={{ minWidth: '160px' }}>
-                                <div className="flex items-center gap-2">Timestamp {getSortIcon('timestamp')}</div>
+                                <div className="flex items-center gap-2">{t('audit.table.timestamp')} {getSortIcon('timestamp')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('actor_name')}>
-                                <div className="flex items-center gap-2">Actor {getSortIcon('actor_name')}</div>
+                                <div className="flex items-center gap-2">{t('audit.table.actor')} {getSortIcon('actor_name')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('actor_role')}>
-                                <div className="flex items-center gap-2">Role {getSortIcon('actor_role')}</div>
+                                <div className="flex items-center gap-2">{t('audit.table.role')} {getSortIcon('actor_role')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('action_type')}>
-                                <div className="flex items-center gap-2">Action {getSortIcon('action_type')}</div>
+                                <div className="flex items-center gap-2">{t('audit.table.action')} {getSortIcon('action_type')}</div>
                             </th>
                             <th className="sortable" onClick={() => onSort('module')}>
-                                <div className="flex items-center gap-2">Module {getSortIcon('module')}</div>
+                                <div className="flex items-center gap-2">{t('audit.table.module')} {getSortIcon('module')}</div>
                             </th>
-                            <th>Description</th>
+                            <th>{t('audit.table.description')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -126,7 +128,7 @@ const SmartAuditTable = ({
             {pagination.totalPages > 1 && (
                 <div className="flex justify-between items-center px-4 py-2 bg-[var(--surface-secondary)] rounded-xl border border-[var(--border-color-light)] mt-2">
                     <div className="text-sm text-[var(--text-tertiary)]">
-                        Showing page <span className="text-[var(--text-primary)] font-bold">{pagination.currentPage}</span> of <span className="text-[var(--text-primary)] font-bold">{pagination.totalPages}</span>
+                        {t('audit.table.showing')} <span className="text-[var(--text-primary)] font-bold">{pagination.currentPage}</span> {t('audit.table.of')} <span className="text-[var(--text-primary)] font-bold">{pagination.totalPages}</span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -135,9 +137,9 @@ const SmartAuditTable = ({
                                 <div style={{ width: '130px' }}>
                                     <GlassSelect
                                         options={[
-                                            { value: 20, label: '20 per page' },
-                                            { value: 50, label: '50 per page' },
-                                            { value: 100, label: '100 per page' }
+                                            { value: 20, label: `20 ${t('audit.table.per_page')}` },
+                                            { value: 50, label: `50 ${t('audit.table.per_page')}` },
+                                            { value: 100, label: `100 ${t('audit.table.per_page')}` }
                                         ]}
                                         value={pagination.itemsPerPage}
                                         onChange={(val) => pagination.onItemsPerPageChange(val)}

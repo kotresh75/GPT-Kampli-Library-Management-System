@@ -12,7 +12,18 @@ const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Ver
         e.preventDefault();
         setLoading(true);
         setError('');
-        onSuccess(password);
+
+        try {
+            await onSuccess(password);
+            // If we get here, success. 
+            // If parent closes modal, we unmount.
+            // If parent keeps modal open, we might want to stop loading?
+            // Usually parent should close modal on success.
+        } catch (err) {
+            console.error("Password verification failed:", err);
+            setError(err.message || 'Verification failed. Please check your password.');
+            setLoading(false);
+        }
     };
 
     return (
@@ -42,7 +53,7 @@ const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Ver
                                 type="password"
                                 className="glass-input w-full"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e) => { setPassword(e.target.value); setError(''); }}
                                 autoFocus
                                 required
                             />
@@ -58,7 +69,12 @@ const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Ver
                             <button type="button" className="btn btn-ghost" onClick={onClose}>
                                 Cancel
                             </button>
-                            <button type="submit" className="btn-primary primary-glass-btn" disabled={loading || !password}>
+                            <button
+                                type="submit"
+                                className="btn-primary primary-glass-btn"
+                                disabled={loading || !password}
+                                style={{ opacity: loading ? 0.7 : 1 }}
+                            >
                                 {loading ? 'Verifying...' : 'Confirm'}
                             </button>
                         </div>

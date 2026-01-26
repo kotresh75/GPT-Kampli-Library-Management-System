@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const emailService = require('../services/emailService');
 const { getISTDate, getSQLiteISTTimestamp, getISTISOWithOffset } = require('../utils/dateUtils');
 const auditService = require('../services/auditService');
+const socketService = require('../services/socketService'); // Socket
 
 // --- Helper: Get Settings ---
 const getSetting = (key, defaultVal) => {
@@ -82,7 +83,7 @@ exports.validateBorrower = async (req, res) => {
             const dueDate = new Date(loan.due_date);
             if (now > dueDate) {
                 const diffTime = Math.abs(now - dueDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 // Grace Period Removed: Fine applies to all overdue days immediately
                 estimatedOverdueFines += (diffDays * dailyFineRate);
             }
@@ -247,6 +248,10 @@ exports.issueBook = async (req, res) => {
             }
         });
 
+        // Socket Emit
+        socketService.emit('circulation_update', { type: 'ISSUE', student_id, txn_id: sessionTxnId });
+        socketService.emit('book_update', { type: 'STATUS_CHANGE' });
+
         res.json({ session_txn_id: sessionTxnId, results });
 
     } catch (err) {
@@ -262,7 +267,7 @@ exports.getStudentActiveLoans = (req, res) => {
     // Added renewal_count subquery to support frontend UI
     const query = `
         SELECT c.id as transaction_id, c.issue_date, c.due_date, 
-               bc.accession_number, b.title, b.author, b.isbn as book_isbn,
+               bc.accession_number, b.title, b.author, b.isbn as book_isbn, b.cover_image,
                (julianday('now') - julianday(c.due_date)) as overdue_days,
                (SELECT COUNT(*) FROM transaction_logs 
                 WHERE student_id = c.student_id AND copy_id = c.copy_id 
@@ -311,7 +316,7 @@ exports.returnBook = async (req, res) => {
         const now = getISTDate();
         const dueDate = new Date(loan.due_date); // stored ISO string
         const diffTime = Math.abs(now - dueDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         const isOverdue = now > dueDate;
 
         // Fetch Policies for Fine Calculation
@@ -463,6 +468,10 @@ exports.returnBook = async (req, res) => {
             }
         });
 
+        // Socket Emit
+        socketService.emit('circulation_update', { type: 'RETURN', student_id: loan.student_id });
+        socketService.emit('book_update', { type: 'STATUS_CHANGE' });
+
         res.json({ message: "Returned successfully", fine_generated: fineAmount > 0, fine_amount: fineAmount });
 
     } catch (err) {
@@ -602,6 +611,9 @@ exports.renewBook = async (req, res) => {
                 });
             }
         });
+
+        // Socket Emit
+        socketService.emit('circulation_update', { type: 'RENEW', student_id: loan.student_id });
 
         res.json({
             message: "Book renewed successfully",
@@ -762,7 +774,7 @@ exports.searchStudents = (req, res) => {
     if (!q) return res.json([]);
 
     db.all(
-        `SELECT s.id, s.full_name, s.register_number, d.name as department_name, d.code as department_code, s.semester 
+        `SELECT s.id, s.full_name, s.register_number, s.profile_image, d.name as department_name, d.code as department_code, s.semester 
          FROM students s
          LEFT JOIN departments d ON s.dept_id = d.id
          WHERE (s.full_name LIKE ? OR s.register_number LIKE ?) AND s.status = 'Active' 
@@ -809,16 +821,22 @@ exports.resolveScan = (req, res) => {
             if (copy.status !== 'Available') {
                 return res.status(400).json({ error: `Copy ${normalizedCode} is ${copy.status}` });
             }
-            return res.json({
-                resolved: true,
-                type: 'ACCESSITEM',
-                value: copy.accession_number,
-                title: "Copy found (Resolving title frontend-side...)"
+            // Fetch book details for UI
+            db.get(`SELECT title, cover_image, author FROM books WHERE isbn = ?`, [copy.book_isbn], (err, book) => {
+                return res.json({
+                    resolved: true,
+                    type: 'ACCESSITEM',
+                    value: copy.accession_number,
+                    title: book ? book.title : "Copy found",
+                    cover_image: book ? book.cover_image : null,
+                    author: book ? book.author : null
+                });
             });
+            return;
         }
 
         // 2. Check if it's an ISBN
-        db.get(`SELECT isbn, title FROM books WHERE isbn = ?`, [normalizedCode], (err, book) => {
+        db.get(`SELECT isbn, title, cover_image, author FROM books WHERE isbn = ?`, [normalizedCode], (err, book) => {
             if (err) return res.status(500).json({ error: err.message });
 
             if (book) {
@@ -834,7 +852,9 @@ exports.resolveScan = (req, res) => {
                         resolved: true,
                         type: 'ISBN_RESOLVED',
                         value: availableCopy.accession_number,
-                        title: book.title
+                        title: book.title,
+                        cover_image: book.cover_image,
+                        author: book.author
                     });
                 });
             } else {
@@ -924,7 +944,7 @@ exports.getIssuedStudents = (req, res) => {
 
     let query = `
         SELECT 
-            s.id, s.full_name, s.register_number, s.semester,
+            s.id, s.full_name, s.register_number, s.semester, s.profile_image,
             d.name as department_name, d.code as department_code,
             COUNT(c.id) as books_issued,
             SUM(CASE WHEN julianday('now') > julianday(c.due_date) THEN 1 ELSE 0 END) as overdue_count,

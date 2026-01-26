@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import {
-    Shield, Download, Search, Calendar, User,
-    Activity, AlertTriangle, Layers
+    Shield, Download, Search, Filter, Calendar, User,
+    Activity, AlertTriangle, Layers, ChevronDown, ChevronUp, Eye
 } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
+import { useLanguage } from '../context/LanguageContext';
 import StatsCard from '../components/dashboard/StatsCard';
 import SmartAuditTable from '../components/dashboard/SmartAuditTable';
 import GlassSelect from '../components/common/GlassSelect';
 import SmartExportModal from '../components/common/SmartExportModal';
 
 const AuditPage = () => {
+    const { t } = useLanguage();
     const [logs, setLogs] = useState([]);
     const [stats, setStats] = useState({ today: 0, security: 0, admin_today: 0, total_logs: 0 });
     const [filteredTotal, setFilteredTotal] = useState(0);
@@ -31,11 +34,13 @@ const AuditPage = () => {
         order: 'desc'
     });
 
-    const fetchLogs = async () => {
+    const socket = useSocket();
+
+    const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const headers = { Authorization: `Bearer ${token}` };
+            const headers = { Authorization: `Bearer ${token} ` };
 
             const params = new URLSearchParams({
                 page,
@@ -49,11 +54,11 @@ const AuditPage = () => {
             setError(null);
         } catch (error) {
             console.error("Error fetching logs:", error);
-            setError(error.response?.data?.message || "Failed to load audit logs. Please check your connection or permissions.");
+            setError(error.response?.data?.message || t('audit.err_fetch'));
         } finally {
             setLoading(false);
         }
-    };
+    }, [page, limit, filters]);
 
     const fetchStats = async () => {
         try {
@@ -138,16 +143,16 @@ const AuditPage = () => {
             {/* Header & Toolbar */}
             <div className="mb-6">
                 <h1 style={{ fontSize: '1.8rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 12, marginBottom: '5px' }}>
-                    <Shield size={28} className="text-emerald-400" /> Audit & Compliance
+                    <Shield size={28} className="text-emerald-400" /> {t('audit.title')}
                 </h1>
-                <p className="text-white/60">Track system activity, security, and compliance logs.</p>
+                <p className="text-white/60">{t('audit.subtitle')}</p>
             </div>
 
             {/* Stats Row */}
             <div className="dashboard-kpi-grid mb-6">
-                <StatsCard title="Logs Today" value={stats.today} icon={Activity} color="blue" />
-                <StatsCard title="Security Alerts" value={stats.security} icon={AlertTriangle} color="red" />
-                <StatsCard title="Admin Actions" value={stats.admin_today} icon={User} color="orange" />
+                <StatsCard title={t('audit.stats.today')} value={stats.today} icon={Activity} color="blue" />
+                <StatsCard title={t('audit.stats.security')} value={stats.security} icon={AlertTriangle} color="red" />
+                <StatsCard title={t('audit.stats.admin')} value={stats.admin_today} icon={User} color="orange" />
             </div>
 
             {/* Filters */}
@@ -161,7 +166,7 @@ const AuditPage = () => {
                             name="search"
                             value={filters.search}
                             onChange={handleFilterChange}
-                            placeholder="Search Logs..."
+                            placeholder={t('audit.search_placeholder')}
                         />
                     </div>
 
@@ -193,14 +198,14 @@ const AuditPage = () => {
                             value={filters.module}
                             onChange={(val) => handleFilterChange({ target: { name: 'module', value: val } })}
                             options={[
-                                { value: '', label: 'All Modules' },
-                                { value: 'Auth', label: 'Auth' },
-                                { value: 'Books', label: 'Books' },
-                                { value: 'Students', label: 'Students' },
-                                { value: 'Circulation', label: 'Circulation' },
-                                { value: 'Fines', label: 'Fines' },
-                                { value: 'Settings', label: 'Settings' },
-                                { value: 'Security', label: 'Security' }
+                                { value: '', label: t('audit.filters.all_modules') },
+                                { value: 'Auth', label: t('audit.filters.modules.auth') },
+                                { value: 'Books', label: t('audit.filters.modules.books') },
+                                { value: 'Students', label: t('audit.filters.modules.students') },
+                                { value: 'Circulation', label: t('audit.filters.modules.circulation') },
+                                { value: 'Fines', label: t('audit.filters.modules.fines') },
+                                { value: 'Settings', label: t('audit.filters.modules.settings') },
+                                { value: 'Security', label: t('audit.filters.modules.security') }
                             ]}
                             icon={Layers}
                             small
@@ -212,13 +217,13 @@ const AuditPage = () => {
                             value={filters.action_type}
                             onChange={(val) => handleFilterChange({ target: { name: 'action_type', value: val } })}
                             options={[
-                                { value: '', label: 'All Actions' },
-                                { value: 'CREATE', label: 'Create' },
-                                { value: 'UPDATE', label: 'Update' },
-                                { value: 'DELETE', label: 'Delete' },
-                                { value: 'LOGIN', label: 'Login' },
-                                { value: 'ISSUE', label: 'Issue' },
-                                { value: 'RETURN', label: 'Return' }
+                                { value: '', label: t('audit.filters.all_actions') },
+                                { value: 'CREATE', label: t('audit.filters.actions.create') },
+                                { value: 'UPDATE', label: t('audit.filters.actions.update') },
+                                { value: 'DELETE', label: t('audit.filters.actions.delete') },
+                                { value: 'LOGIN', label: t('audit.filters.actions.login') },
+                                { value: 'ISSUE', label: t('audit.filters.actions.issue') },
+                                { value: 'RETURN', label: t('audit.filters.actions.return') }
                             ]}
                             icon={Activity}
                             small
@@ -230,10 +235,10 @@ const AuditPage = () => {
                             value={filters.role}
                             onChange={(val) => handleFilterChange({ target: { name: 'role', value: val } })}
                             options={[
-                                { value: '', label: 'All Roles' },
-                                { value: 'Admin', label: 'Admin' },
-                                { value: 'Staff', label: 'Staff' },
-                                { value: 'System', label: 'System' }
+                                { value: '', label: t('audit.filters.all_roles') },
+                                { value: 'Admin', label: t('audit.filters.roles.admin') },
+                                { value: 'Staff', label: t('audit.filters.roles.staff') },
+                                { value: 'System', label: t('audit.filters.roles.system') }
                             ]}
                             icon={User}
                             small
@@ -242,7 +247,7 @@ const AuditPage = () => {
 
                     <div className="flex-1"></div>
 
-                    <button className="toolbar-icon-btn" onClick={handleExportClick} title="Export CSV">
+                    <button className="toolbar-icon-btn" onClick={handleExportClick} title={t('audit.export_btn')}>
                         <Download size={20} />
                     </button>
                 </div>
@@ -273,10 +278,42 @@ const AuditPage = () => {
                 <SmartExportModal
                     onClose={() => setShowExportModal(false)}
                     onExport={handleSmartExport}
-                    totalCount={stats.total_logs || 0} // Ideally fetch total count from backend stats or pagination
-                    filteredCount={filteredTotal} // Approx, or pagination.totalItems if we had it
+                    totalCount={stats.total_logs || 0}
+                    filteredCount={filteredTotal}
                     selectedCount={0}
                     entityName="Logs"
+                    data={logs.map(log => ({
+                        TIMESTAMP: new Date(log.timestamp).toLocaleString(),
+                        ACTOR: log.actor_name || log.user_id || 'System',
+                        ROLE: log.actor_role || 'System',
+                        ACTION: log.action_type,
+                        MODULE: log.module,
+                        DESCRIPTION: log.description || log.details || '-'
+                    }))}
+                    columns={['TIMESTAMP', 'ACTOR', 'ROLE', 'ACTION', 'MODULE', 'DESCRIPTION']}
+                    onFetchAll={async () => {
+                        try {
+                            const token = localStorage.getItem('auth_token');
+                            const headers = { Authorization: `Bearer ${token}` };
+                            const params = new URLSearchParams({
+                                ...filters,
+                                limit: 10000 // Fetch all
+                            });
+                            const res = await axios.get(`http://localhost:3001/api/audit?${params}`, { headers });
+                            const allLogs = res.data.data;
+                            return allLogs.map(log => ({
+                                TIMESTAMP: new Date(log.timestamp).toLocaleString(),
+                                ACTOR: log.actor_name || log.user_id || 'System',
+                                ROLE: log.actor_role || 'System',
+                                ACTION: log.action_type,
+                                MODULE: log.module,
+                                DESCRIPTION: log.description || log.details || '-'
+                            }));
+                        } catch (e) {
+                            console.error("Fetch all failed", e);
+                            return [];
+                        }
+                    }}
                 />
             )}
         </div>

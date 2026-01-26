@@ -1,6 +1,7 @@
 const db = require('../db');
 const auditService = require('../services/auditService');
-const bcrypt = require('bcrypt'); // Accessing admin password needs validation
+const bcrypt = require('bcrypt');
+const socketService = require('../services/socketService');
 
 // Get All Policies
 exports.getPolicies = (req, res) => {
@@ -110,6 +111,7 @@ exports.updatePolicies = async (req, res) => {
                     });
 
                     db.run("COMMIT", () => {
+                        socketService.emit('policy_update', { version: newVer });
                         res.json({ success: true, version: newVer });
                     });
                 });

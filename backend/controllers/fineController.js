@@ -3,6 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const emailService = require('../services/emailService');
 const { getISTDate, getSQLiteISTTimestamp } = require('../utils/dateUtils');
 const auditService = require('../services/auditService');
+const socketService = require('../services/socketService');
 
 // Get All Fines (or filtered)
 exports.getAllFines = (req, res) => {
@@ -13,8 +14,11 @@ exports.getAllFines = (req, res) => {
         SELECT f.*, f.remark as reason, 
                COALESCE(f.student_name, s.full_name) as student_name, 
                COALESCE(f.student_reg_no, s.register_number) as roll_number,
+               s.profile_image, 
                d.name as department_name, 
                COALESCE(t.book_title, b.title) as book_title,
+               COALESCE(t.book_isbn, b.isbn) as book_isbn,
+               b.cover_image,
                COALESCE(bc.accession_number, json_extract(t.details, '$.accession')) as accession_number,
                json_extract(t.details, '$.due_date') as due_date,
                json_extract(t.details, '$.issue_date') as issue_date,
@@ -49,8 +53,10 @@ exports.getAllFines = (req, res) => {
 exports.getStudentFines = (req, res) => {
     const { studentId } = req.params;
     const sql = `
-        SELECT f.*, f.remark as reason, s.full_name as student_name, s.register_number as roll_number, 
+        SELECT f.*, f.remark as reason, s.full_name as student_name, s.register_number as roll_number, s.profile_image, 
                COALESCE(t.book_title, b.title) as book_title,
+               COALESCE(t.book_isbn, b.isbn) as book_isbn,
+               b.cover_image,
                COALESCE(bc.accession_number, json_extract(t.details, '$.accession')) as accession_number,
                json_extract(t.details, '$.due_date') as due_date,
                json_extract(t.details, '$.issue_date') as issue_date,
@@ -192,6 +198,7 @@ exports.collectFine = (req, res) => {
                             }
                         });
                     }
+                    socketService.emit('fine_update', { type: 'COLLECT' });
                     res.json({ success: true, receiptId });
                 });
 
