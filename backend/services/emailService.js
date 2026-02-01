@@ -53,6 +53,20 @@ const createTransporter = (config) => {
 // Generic Send Function
 const sendEmail = async ({ to, subject, html, text }) => {
     try {
+        // Connectivity Check
+        const dns = require('dns').promises;
+        try {
+            await dns.lookup('google.com');
+        } catch (e) {
+            console.log(`[Email] Queued/Skipped (Offline): ${subject}`);
+            const socketService = require('./socketService');
+            socketService.emit('notification', {
+                type: 'warning',
+                message: `Offline: Email to ${to} could not be sent.`
+            });
+            return false;
+        }
+
         const config = await getEmailConfig();
         if (!config) {
             console.log(`[Email] Skipped: Service disabled or unconfigured. Subject: ${subject}`);
@@ -77,6 +91,11 @@ const sendEmail = async ({ to, subject, html, text }) => {
         return true;
     } catch (error) {
         console.error(`[Email] Failed to send to ${to}:`, error.message);
+        const socketService = require('./socketService');
+        socketService.emit('notification', {
+            type: 'error',
+            message: `Email Warning: ${error.message}`
+        });
         return false;
     }
 };

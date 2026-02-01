@@ -342,7 +342,7 @@ const CatalogPage = () => {
                 <SmartBulkImportModal
                     isOpen={showImportModal}
                     onClose={() => setShowImportModal(false)}
-                    title={t('catalog.import_csv')}
+                    title="Smart Import Books (CSV/Excel)"
                     duplicateKey="isbn"
                     columns={[
                         { key: 'isbn', label: 'ISBN', required: true, width: '140px', aliases: ['id', 'code'] },
@@ -371,6 +371,9 @@ const CatalogPage = () => {
                             errors.push('Title exists in Library');
                         }
                         if (row.quantity && parseInt(row.quantity) < 1) errors.push('Invalid Qty');
+                        // Strict Department Validation
+                        const isValidDept = row.category && departments.some(d => d.name === row.category);
+                        if (!isValidDept) errors.push('Department Required');
                         return errors;
                     }}
                     transformData={(row) => {
@@ -397,6 +400,11 @@ const CatalogPage = () => {
                             style={{ fontSize: '0.85rem', padding: '6px 12px', height: 'auto', minWidth: '130px' }}
                             disabled={!!autoFillProgress}
                             onClick={async () => {
+                                if (!navigator.onLine) {
+                                    setSuccessModal({ isOpen: true, title: 'Offline', message: "You are offline. Connect to the internet to continue." });
+                                    return;
+                                }
+
                                 const rowsToFetch = data.filter(row => row.isbn && !String(row.isbn).startsWith('AG-'));
                                 if (rowsToFetch.length === 0) {
                                     setSuccessModal({ isOpen: true, title: t('common.warning'), message: "No valid ISBNs to fetch (AG- prefixes are skipped)." });

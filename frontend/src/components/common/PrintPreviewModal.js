@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Printer, Settings, Maximize2 } from 'lucide-react';
 import { printDocument } from '../../utils/SmartPrinterHandler';
 
-const PrintPreviewModal = ({ isOpen, onClose, title, contentHtml, paperSize, onSettingsChange }) => {
+const PrintPreviewModal = ({ isOpen, onClose, title, contentHtml, paperSize, onSettingsChange, settings }) => {
     const iframeRef = useRef(null);
     const [currentSize, setCurrentSize] = useState(paperSize || 'A4');
 
@@ -19,12 +19,18 @@ const PrintPreviewModal = ({ isOpen, onClose, title, contentHtml, paperSize, onS
         if (paperSize) setCurrentSize(paperSize);
     }, [paperSize]);
 
-    const handlePrint = () => {
-        // Trigger print on the iframe
-        if (iframeRef.current) {
-            iframeRef.current.contentWindow.focus();
-            iframeRef.current.contentWindow.print();
-        }
+    const handlePrint = async () => {
+        // Use Smart Printer Handler to respect Silent / System settings
+        // We need to pass the current settings to it.
+        // If settings prop is null, it defaults to system print.
+        const printConfig = {
+            html: contentHtml,
+            paperSize: currentSize
+        };
+
+        // If we want to print what's IN the iframe, we could use that, but contentHtml is the source.
+        // Using contentHtml is safer for the silent print handler which expects a string.
+        await printDocument(printConfig, settings);
     };
 
     if (!isOpen) return null;

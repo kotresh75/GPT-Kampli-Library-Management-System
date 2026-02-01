@@ -1,0 +1,39 @@
+graph LR
+    Admin((Admin))
+    Staff((Staff))
+    
+    subgraph Core["Core Functions"]
+        Login[Login]
+        Students[Student Mgmt]
+        Books[Book Catalog]
+        Copies[Book Copies]
+        Scanner[Barcode Scanner]
+    end
+    
+    subgraph Circ["Circulation"]
+        Issue[Issue]
+        Return[Return]
+        Renew[Renew]
+        Fines[Fines]
+    end
+    
+    subgraph Admin_Only["Admin Only"]
+        Staff_Mgmt[Staff Mgmt]
+        Settings[Settings]
+        Policy[Policy]
+        Audit[Audit Logs]
+        Backup[Backup]
+    end
+    
+    subgraph Reports["Reports"]
+        Reports_Gen[Generate Reports]
+    end
+    
+    Admin --> Core
+    Admin --> Circ
+    Admin --> Admin_Only
+    Admin --> Reports
+    
+    Staff --> Core
+    Staff --> Circ
+    Staff --> Reports

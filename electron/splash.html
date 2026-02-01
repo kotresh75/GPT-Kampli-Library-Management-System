@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPTK Library System</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .container {
+            text-align: center;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 30px;
+            filter: drop-shadow(0 0 20px rgba(56, 189, 248, 0.3));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #f1f5f9;
+        }
+
+        .status-text {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 30px;
+            min-height: 20px;
+        }
+
+        .loader-container {
+            position: relative;
+            width: 200px;
+            height: 4px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .loader-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            border-radius: 4px;
+            animation: loading 2s infinite ease-in-out;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        @keyframes loading {
+            0% {
+                left: -50%;
+                width: 50%;
+            }
+
+            50% {
+                left: 25%;
+                width: 75%;
+            }
+
+            100% {
+                left: 100%;
+                width: 50%;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Mode specific styles */
+        body.shutdown-mode .loader-bar {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        /* Done State */
+        .done-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .btn-confirm {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .btn-confirm:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-large {
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .success {
+            color: #4ade80;
+        }
+
+        .error {
+            color: #f87171;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Logo set via JS to ensure path correctness -->
+        <img src="" alt="Logo" class="logo" id="app-logo">
+
+        <!-- Success/Error Icon Placeholder -->
+        <div id="result-icon" class="icon-large" style="display: none;"></div>
+
+        <h1 id="title">Library System</h1>
+        <div class="status-text" id="status">Initializing...</div>
+
+        <div class="loader-container" id="loader">
+            <div class="loader-bar"></div>
+        </div>
+
+        <div class="done-container" id="done-actions">
+            <button class="btn-confirm" onclick="handleConfirm()">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        const path = require('path');
+
+        // Dynamically set logo path to avoid relative path issues
+        const logoPath = path.join(__dirname, '../assets/icons/College_icon.ico');
+        // Use file:// protocol to ensure spaces in path don't break the image load
+        document.getElementById('app-logo').src = `file://${logoPath.replace(/\\/g, '/')}`;
+
+        // Listen for status updates
+        ipcRenderer.on('update-status', (event, text) => {
+            document.getElementById('status').innerText = text;
+        });
+
+        // Listen for Backup Result
+        ipcRenderer.on('backup-result', (event, result) => {
+            // Hide Loader & Logo
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('app-logo').style.display = 'none';
+
+            // Show Status Icon
+            const resultIcon = document.getElementById('result-icon');
+            resultIcon.style.display = 'block';
+
+            if (result.success) {
+                resultIcon.innerHTML = '✅';
+                resultIcon.className = 'icon-large success';
+                document.getElementById('title').innerText = 'Backup Successful';
+            } else {
+                resultIcon.innerHTML = '❌';
+                resultIcon.className = 'icon-large error';
+                document.getElementById('title').innerText = 'Backup Failed';
+            }
+
+            document.getElementById('status').innerText = result.message || (result.success ? "Data secured." : "Error saving data.");
+
+            // Show Button
+            document.getElementById('done-actions').style.display = 'block';
+        });
+
+        function handleConfirm() {
+            ipcRenderer.send('splash-done'); // Tell main process to quit
+        }
+
+        // Check for shutdown mode via URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode');
+
+        if (mode === 'shutdown') {
+            document.body.classList.add('shutdown-mode');
+            document.getElementById('title').innerText = 'Closing Application';
+            document.getElementById('status').innerText = 'Backing up data...';
+        }
+    </script>
+</body>
+
+</html>

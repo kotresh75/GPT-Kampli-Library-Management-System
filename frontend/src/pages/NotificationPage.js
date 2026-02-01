@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Send, Trash2, Users, FileText, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
 
 import GlassSelect from '../components/common/GlassSelect';
 import StatusModal from '../components/common/StatusModal';
-import StudentSearchSelect from '../components/common/StudentSearchSelect';
+// import StudentSearchSelect from '../components/common/StudentSearchSelect'; // Removed
+import GlassAutocomplete from '../components/common/GlassAutocomplete';
 import GlassEditor from '../components/common/GlassEditor';
+import { Send, Trash2, Users, FileText, CheckCircle, AlertCircle, Clock, X } from 'lucide-react';
 
 const NotificationPage = () => {
     const { t } = useLanguage();
@@ -44,6 +45,8 @@ const NotificationPage = () => {
     // History State
     const [history, setHistory] = useState([]);
     const [historySort, setHistorySort] = useState('desc'); // 'desc' (Recent) or 'asc' (Oldest)
+    const [visibleCount, setVisibleCount] = useState(8);
+    const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
 
     // Fetch History Helper
     const fetchHistory = async () => {
@@ -137,14 +140,52 @@ const NotificationPage = () => {
         }
     };
 
+    // Offline State
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    useEffect(() => {
+        const handleStatusChange = () => setIsOnline(navigator.onLine);
+        window.addEventListener('online', handleStatusChange);
+        window.addEventListener('offline', handleStatusChange);
+        return () => {
+            window.removeEventListener('online', handleStatusChange);
+            window.removeEventListener('offline', handleStatusChange);
+        };
+    }, []);
+
+    // Load More Handler
+    const handleLoadMore = () => {
+        setVisibleCount(prev => prev + 8);
+    };
+
     return (
         <div className="dashboard-content">
             <h1 className="page-title">{t('broadcast.title')}</h1>
 
-            <div style={{ display: 'flex', gap: '20px', flexDirection: 'row', flexWrap: 'wrap' }}>
+            {!isOnline && (
+                <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    color: '#EF4444',
+                    fontSize: '0.9rem'
+                }}>
+                    <AlertCircle size={20} />
+                    <div>
+                        <strong>Offline:</strong> Internet connection is required to send emails.
+                    </div>
+                </div>
+            )}
+
+            {/* Main Content Area - Fixed Height to prevent expansion */}
+            <div style={{ display: 'flex', gap: '20px', flexDirection: 'row', flexWrap: 'wrap', height: 'calc(100vh - 140px)', minHeight: '600px' }}>
 
                 {/* --- COMPOSER PANEL (LEFT - 60%) --- */}
-                <div className="glass-panel" style={{ flex: '3', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="glass-panel" style={{ flex: '3', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', overflow: 'hidden' }}>
                     <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', marginBottom: '10px' }}>
                         <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Send size={20} /> {t('broadcast.compose.title')}
@@ -170,7 +211,7 @@ const NotificationPage = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1 }}>
+                    <form onSubmit={handleSend} style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
 
                         {/* Targeting Section */}
                         <div className="form-group">
@@ -190,12 +231,58 @@ const NotificationPage = () => {
 
 
                         {recipientType === 'student' && (
-                            <div className="glass-card bounce-in" style={{ padding: '15px', background: 'rgba(100,100,255,0.05)' }}>
-                                <label style={{ fontSize: '0.9rem', marginBottom: '8px', display: 'block' }}>{t('broadcast.compose.search_student')}:</label>
-                                <StudentSearchSelect
-                                    selectedStudents={targetStudents}
-                                    onSelect={setTargetStudents}
+                            <div className="glass-card bounce-in" style={{ padding: '15px', background: 'rgba(100,100,255,0.05)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                <label style={{ fontSize: '0.9rem', marginBottom: '4px', display: 'block' }}>{t('broadcast.compose.search_student')}:</label>
+
+                                {/* Selected Students Chips */}
+                                {targetStudents.length > 0 && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '5px' }}>
+                                        {targetStudents.map(s => (
+                                            <div key={s.id} style={{
+                                                background: 'rgba(72, 187, 120, 0.2)',
+                                                border: '1px solid rgba(72, 187, 120, 0.3)',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                display: 'flex', alignItems: 'center', gap: '8px',
+                                                fontSize: '0.85rem'
+                                            }}>
+                                                <Users size={14} />
+                                                <span>{s.full_name} ({s.register_number})</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTargetStudents(prev => prev.filter(p => p.id !== s.id))}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', padding: 0, color: 'inherit', opacity: 0.7 }}
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <GlassAutocomplete
                                     placeholder={t('broadcast.compose.enter_student')}
+                                    onSearch={async (query) => {
+                                        const token = localStorage.getItem('auth_token');
+                                        const res = await fetch(`http://localhost:3001/api/circulation/search/students?q=${query}`, {
+                                            headers: { 'Authorization': `Bearer ${token}` }
+                                        });
+                                        // Issue Tab's search endpoint returns array directly
+                                        return await res.json();
+                                    }}
+                                    onSelect={(student) => {
+                                        if (!targetStudents.some(s => s.id === student.id)) {
+                                            setTargetStudents(prev => [...prev, student]);
+                                        }
+                                    }}
+                                    renderItem={(s) => (
+                                        <div className="py-1">
+                                            <div className="font-bold text-white">{s.full_name}</div>
+                                            <div className="text-xs text-gray-400">{s.register_number} • {s.department_name}</div>
+                                        </div>
+                                    )}
+                                    icon={Users}
+                                    value=""
                                 />
                             </div>
                         )}
@@ -232,7 +319,7 @@ const NotificationPage = () => {
                         <div style={{ display: 'flex', gap: '15px', marginTop: 'auto' }}>
                             <button
                                 type="submit"
-                                disabled={loading || !isBroadcastEnabled}
+                                disabled={loading || !isBroadcastEnabled || !isOnline}
                                 className="primary-glass-btn"
                                 style={{
                                     flex: 1,
@@ -240,9 +327,9 @@ const NotificationPage = () => {
                                     justifyContent: 'center',
                                     alignItems: 'center',
                                     gap: '10px',
-                                    opacity: (loading || !isBroadcastEnabled) ? 0.6 : 1,
-                                    cursor: (loading || !isBroadcastEnabled) ? 'not-allowed' : 'pointer',
-                                    filter: !isBroadcastEnabled ? 'grayscale(1)' : 'none'
+                                    opacity: (loading || !isBroadcastEnabled || !isOnline) ? 0.6 : 1,
+                                    cursor: (loading || !isBroadcastEnabled || !isOnline) ? 'not-allowed' : 'pointer',
+                                    filter: (!isBroadcastEnabled || !isOnline) ? 'grayscale(1)' : 'none'
                                 }}
                             >
                                 {loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" /> : <Send size={18} />}
@@ -256,7 +343,7 @@ const NotificationPage = () => {
                 </div>
 
                 {/* --- HISTORY PANEL (RIGHT - 40%) --- */}
-                <div className="glass-panel" style={{ flex: '2', minWidth: '300px', display: 'flex', flexDirection: 'column' }}>
+                <div className="glass-panel" style={{ flex: '2', minWidth: '300px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                     <div style={{ borderBottom: '1px solid var(--glass-border)', paddingBottom: '10px', marginBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Clock size={20} /> {t('broadcast.history.title')}
@@ -274,8 +361,21 @@ const NotificationPage = () => {
                     </div>
 
                     <div style={{ flex: 1, overflowY: 'auto' }}>
-                        {history.map(item => (
-                            <div key={item.id} className="glass-card" style={{ padding: '15px', marginBottom: '15px', borderLeft: item.status === 'sent' ? '4px solid #48bb78' : '4px solid #f56565' }}>
+                        {history.slice(0, visibleCount).map(item => (
+                            <div
+                                key={item.id}
+                                className="glass-card"
+                                style={{
+                                    padding: '15px',
+                                    marginBottom: '15px',
+                                    borderLeft: item.status === 'sent' ? '4px solid #48bb78' : '4px solid #f56565',
+                                    cursor: 'pointer',
+                                    transition: 'transform 0.2s, box-shadow 0.2s'
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                                onClick={() => setSelectedHistoryItem(item)}
+                            >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
                                     <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>{item.date}</span>
                                     {item.status === 'sent' ? <CheckCircle size={16} color="#48bb78" /> : <AlertCircle size={16} color="#f56565" />}
@@ -286,6 +386,25 @@ const NotificationPage = () => {
                                 </div>
                             </div>
                         ))}
+
+                        {visibleCount < history.length && (
+                            <button
+                                onClick={handleLoadMore}
+                                className="secondary-glass-btn"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    marginTop: '10px',
+                                    cursor: 'pointer',
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: '1px solid var(--glass-border)',
+                                    borderRadius: '8px',
+                                    color: 'var(--text-main)'
+                                }}
+                            >
+                                Load More
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -298,6 +417,84 @@ const NotificationPage = () => {
                 message={statusModal.message}
                 autoClose={statusModal.type === 'success' ? 3000 : 0}
             />
+
+            {/* Detail View Modal */}
+            {selectedHistoryItem && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100vw',
+                    height: '100vh',
+                    background: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(5px)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '20px'
+                }} onClick={() => setSelectedHistoryItem(null)}>
+                    <div
+                        className="glass-panel"
+                        style={{
+                            width: '90%',
+                            maxWidth: '600px',
+                            maxHeight: '85vh',
+                            overflowY: 'auto',
+                            position: 'relative',
+                            animation: 'scaleIn 0.3s ease'
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button
+                            onClick={() => setSelectedHistoryItem(null)}
+                            style={{
+                                position: 'absolute',
+                                top: '20px',
+                                right: '20px',
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--text-secondary)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <Trash2 style={{ opacity: 0 }} size={0} /> {/* Spacer hack or just use X */}
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+
+                        <h2 style={{ paddingRight: '40px', marginBottom: '5px' }}>{selectedHistoryItem.subject}</h2>
+
+                        <div style={{ display: 'flex', gap: '15px', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '20px', flexWrap: 'wrap' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <Clock size={14} /> {selectedHistoryItem.date}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                <Users size={14} /> {selectedHistoryItem.target}
+                            </span>
+                            <span style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                color: selectedHistoryItem.status === 'sent' ? '#48bb78' : '#f56565'
+                            }}>
+                                {selectedHistoryItem.status === 'sent' ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
+                                {selectedHistoryItem.status === 'sent' ? 'Sent' : 'Failed'}
+                            </span>
+                        </div>
+
+                        <div style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            border: '1px solid var(--glass-border)',
+                            lineHeight: '1.6',
+                            color: 'var(--text-main)'
+                        }}>
+                            <div dangerouslySetInnerHTML={{ __html: selectedHistoryItem.message || selectedHistoryItem.body || `<div style="text-align:center; color: var(--text-secondary); padding: 20px;"><i>Content not available for this message.</i></div>` }} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

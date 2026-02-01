@@ -1,5 +1,5 @@
 const db = require('../db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 // eslint-disable-next-line
 const { v4: uuidv4 } = require('uuid');
 const auditService = require('../services/auditService');
@@ -320,12 +320,39 @@ exports.triggerCloudBackup = async (req, res) => {
 };
 
 exports.triggerCloudRestore = async (req, res) => {
-    // Check Admin Pwd first? Assuming middleware does it or we rely on logic
-    const result = await cloudBackupService.restoreFromCloud();
-    if (result.success) {
-        res.json({ success: true, message: "Data restored from cloud" });
-    } else {
-        res.status(500).json({ error: result.error });
+    const { admin_id, admin_password } = req.body;
+
+    if (!admin_id || !admin_password) {
+        return res.status(400).json({ error: "Admin authentication required" });
+    }
+
+    try {
+        // Verify Admin
+        const admin = await new Promise((resolve, reject) => {
+            db.get("SELECT id, password_hash FROM admins WHERE id = ?", [admin_id], (err, row) => {
+                if (err) reject(err); else resolve(row);
+            });
+        });
+
+        if (!admin || !admin.password_hash) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        const match = await bcrypt.compare(admin_password, admin.password_hash);
+        if (!match) {
+            return res.status(401).json({ error: "Invalid Admin Password" });
+        }
+
+        // Proceed with Restore
+        const result = await cloudBackupService.restoreFromCloud();
+        if (result.success) {
+            res.json({ success: true, message: "Data restored from cloud" });
+        } else {
+            res.status(500).json({ error: result.error });
+        }
+    } catch (e) {
+        console.error("Cloud Restore Auth Error:", e);
+        res.status(500).json({ error: "Server error during verification" });
     }
 };
 
@@ -377,7 +404,13 @@ exports.factoryReset = async (req, res) => {
                         console.error(`Failed to clear ${table}:`, err.message);
                     }
                 });
-                db.run(`DELETE FROM sqlite_sequence WHERE name='${table}'`);
+                db.run(`DELETE FROM sqlite_sequence WHERE name='${table}'`, (err) => {
+                    // Start fresh if sqlite_sequence doesn't exist (it is created automatically when needed)
+                    // We ignore 'no such table' errors here.
+                    if (err && !err.message.includes('no such table')) {
+                        console.warn(`[Reset] Note: Could not reset sequence for ${table}:`, err.message);
+                    }
+                });
             });
 
             // 3. Disable Auto-Backup explicitly (Robust Method)

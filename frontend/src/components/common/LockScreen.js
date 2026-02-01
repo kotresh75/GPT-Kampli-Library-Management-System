@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { useSession } from '../../context/SessionContext';
+import TitleBar from '../layout/TitleBar';
 import '../../styles/components/modals.css'; // Reusing modal styles for input/buttons
 
 const LockScreen = () => {
@@ -58,6 +59,17 @@ const LockScreen = () => {
             flexDirection: 'column',
             color: 'white'
         }}>
+            {/* Title Bar for Lock Screen */}
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                zIndex: 100000 // Ensure it's above the backdrop content
+            }}>
+                <TitleBar />
+            </div>
+
             <div className="animate-bounce-in" style={{ width: '100%', maxWidth: '360px', textAlign: 'center' }}>
 
                 {/* User Avatar / Icon */}

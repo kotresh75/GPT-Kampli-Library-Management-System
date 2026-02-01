@@ -1,5 +1,5 @@
 const db = require('../db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const auditService = require('../services/auditService');
 const socketService = require('../services/socketService');
@@ -168,8 +168,7 @@ exports.deleteStaff = (req, res) => {
             db.run("UPDATE transaction_logs SET performed_by = NULL WHERE performed_by = ?", [id]);
             // Set collected_by to NULL in fines
             db.run("UPDATE fines SET collected_by = NULL WHERE collected_by = ?", [id]);
-            // Set issued_by to NULL in legacy transactions table (Fixes SQLITE_CONSTRAINT error)
-            db.run("UPDATE transactions SET issued_by = NULL WHERE issued_by = ?", [id]);
+
 
             // Now permanently delete the staff
             db.run("DELETE FROM staff WHERE id = ?", [id], function (err) {

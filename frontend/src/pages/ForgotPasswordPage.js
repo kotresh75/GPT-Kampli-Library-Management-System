@@ -100,7 +100,7 @@ const ForgotPasswordPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4 relative overflow-hidden">
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4 relative overflow-y-auto">
             {/* Background blobs */}
             <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-accent/20 rounded-full blur-[100px] animate-pulse-slow"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] animate-pulse-slow delay-1000"></div>

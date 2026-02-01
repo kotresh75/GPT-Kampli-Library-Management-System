@@ -1,6 +1,6 @@
 const db = require('../db');
 const auditService = require('../services/auditService');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const socketService = require('../services/socketService');
 
 // Get All Policies

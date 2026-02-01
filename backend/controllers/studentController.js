@@ -87,7 +87,7 @@ exports.getDefaulters = (req, res) => {
                COUNT(DISTINCT f.id) as pending_fines
         FROM students s
         LEFT JOIN departments d ON s.dept_id = d.id
-        LEFT JOIN transactions t ON s.id = t.student_id AND t.status = 'Issued'
+        LEFT JOIN circulation t ON s.id = t.student_id AND t.status = 'Issued'
         LEFT JOIN fines f ON s.id = f.student_id AND f.status = 'Unpaid'
         WHERE s.status = 'Active'
         GROUP BY s.id
@@ -378,7 +378,7 @@ exports.scanForPromotion = (req, res) => {
                COUNT(DISTINCT f.id) as pending_fines
         FROM students s
         LEFT JOIN departments d ON s.dept_id = d.id
-        LEFT JOIN transactions t ON s.id = t.student_id AND t.status IN ('Issued', 'Overdue')
+        LEFT JOIN circulation t ON s.id = t.student_id AND t.status IN ('Issued', 'Overdue')
         LEFT JOIN fines f ON s.id = f.student_id AND f.status = 'Unpaid'
         WHERE s.status = 'Active'
         GROUP BY s.id

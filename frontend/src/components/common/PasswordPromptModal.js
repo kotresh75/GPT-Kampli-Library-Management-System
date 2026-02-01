@@ -6,6 +6,15 @@ const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Ver
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
+    // Reset state when modal opens
+    React.useEffect(() => {
+        if (isOpen) {
+            setPassword('');
+            setError('');
+            setLoading(false);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e) => {

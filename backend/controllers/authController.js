@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const db = require('../db');
 const auditService = require('../services/auditService');
 const { getISTISOWithOffset } = require('../utils/dateUtils');
@@ -143,6 +143,22 @@ exports.requestPasswordReset = (req, res) => {
                     if (err) return res.status(500).json({ message: 'Failed to generate OTP' });
 
                     // Send Email using already fetched config
+                    // Connectivity Check
+                    const dns = require('dns').promises;
+                    let isOnline = true;
+                    try {
+                        await dns.lookup('google.com');
+                    } catch (e) {
+                        isOnline = false;
+                    }
+
+                    if (!isOnline) {
+                        return res.status(503).json({
+                            message: 'System is offline. Cannot send OTP.',
+                            error_code: 'ERR_NETWORK_OFFLINE'
+                        });
+                    }
+
                     try {
                         let emailSent = false;
                         if (config.provider === 'smtp') {

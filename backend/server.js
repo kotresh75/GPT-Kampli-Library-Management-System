@@ -67,18 +67,24 @@ server.listen(PORT, () => {
 
 // Graceful Shutdown
 // Graceful Shutdown
-async function shutdown() {
-    console.log("Stopping backend Server...");
+// Graceful Shutdown & Backup Logic
+async function performShutdownSequence() {
+    console.log("[Backend] Starting shutdown sequence...");
 
     // Check for "on_close" backup
     const cloudBackupService = require('./services/cloudBackupService');
 
+    // Define backupStatus here so it is accessible in db.close callback
+    let backupStatus = { performed: false, success: false, message: '' };
+
     try {
+        // 1. Check Settings for Backup on Close
         const shouldBackup = await new Promise((resolve) => {
             db.get("SELECT value FROM system_settings WHERE key = 'backup_config'", (err, row) => {
                 if (!err && row) {
                     try {
                         const config = JSON.parse(row.value);
+                        // Check if enabled AND freq is 'on_close' AND we have connection URI
                         if (config.autoBackup && config.frequency === 'on_close' && config.connectionUri) {
                             resolve(true);
                         } else {
@@ -91,37 +97,61 @@ async function shutdown() {
             });
         });
 
+        // 2. Perform Backup if needed
         if (shouldBackup) {
+            // We can also check changeDetection.isDirty() if we want optimization,
+            // but user explicitly asked for "backup when app closed", implying a forceful backup check is good.
+            // Let's stick to dirty check to save bandwidth if nothing changed.
             if (changeDetection.isDirty()) {
-                console.log('[Shutdown] "Every Time App Closes" backup active. performing backup...');
+                console.log('[Shutdown] "Backup on Close" active. Performing backup...');
                 const result = await cloudBackupService.performCloudBackup();
                 console.log('[Shutdown] Backup result:', result.success ? 'Success' : 'Failed');
+
+                backupStatus = {
+                    performed: true,
+                    success: result.success,
+                    message: result.error || (result.success ? "Backup completed successfully." : "Backup failed.")
+                };
             } else {
                 console.log('[Shutdown] Smart Backup: No changes detected. Skipping backup.');
             }
         }
     } catch (err) {
         console.error('[Shutdown] Backup error:', err);
+        // If an error occurred, force the UI to show it
+        backupStatus = {
+            performed: true,
+            success: false,
+            message: "Backup failed: " + (err.message || "Unknown error")
+        };
     }
 
+    // 3. Close DB
     db.close((err) => {
-        if (err) {
-            console.error('Error closing database:', err.message);
-        } else {
-            console.log('Database connection closed.');
-        }
-        process.exit(0);
+        if (err) console.error('Error closing database:', err.message);
+        else console.log('Database connection closed.');
+
+        // 4. Notify Main Process we are done
+        // Since we are in the same process as Main (require-d), we use process.emit
+        console.log("[Backend] Shutdown complete. Emitting completion signal.");
+        process.emit('backend-exit-completed', backupStatus);
     });
 }
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown); // Handle Ctrl+C locally too
+// Listen for signal from Main Process
+process.on('graceful-exit-request', () => {
+    console.log("[Backend] Received graceful exit request.");
+    performShutdownSequence();
+});
 
-// Handle IPC shutdown message from Electron (Windows friendly)
+// Keep generic listeners for dev/standalone safety
+process.on('SIGTERM', () => { process.emit('backend-exit-completed'); });
+process.on('SIGINT', () => { process.emit('backend-exit-completed'); });
+
+// Legacy IPC (can remove if we are sure 'graceful-exit-request' covers it)
 process.on('message', (msg) => {
     if (msg === 'shutdown') {
-        console.log("Received IPC shutdown signal from Electron");
-        shutdown();
+        performShutdownSequence();
     }
 });
 

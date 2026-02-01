@@ -87,64 +87,57 @@ exports.addBook = (req, res) => {
     // Generate ID for the book
     const bookId = generateId();
 
-    const insertBook = `
-        INSERT INTO books (id, isbn, title, author, publisher, dept_id, category, price, total_copies, cover_image_url, ebook_link)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    // Strategy: We try to save BOTH dept_id (as UUID) and category (as Name/Backup) if possible.
-    // If finalDeptId looks like a UUID (len > 30), treat as ID. Else treat as Category Name.
-    // Simplification for now: Store finalDeptId in dept_id column. 
-    // Wait, if frontend sends UUID, and we store in dept_id, we are good.
-    // If frontend sends "Science" (legacy), we store in dept_id (which is TEXT), but JOIN will fail on ID match.
-    // That's why we updated the JOIN above to be smart.
-    // ALSO: We should update the 'category' column with the name if available.
-
-    // For now, let's just insert strictly.
-    // NOTE: I am adding 'category' to INSERT to ensure legacy column is populated if needed, 
-    // assuming 'category' exists in schema. If not, it will fail.
-    // Checking schema in db.js... Schema HAS 'dept_id' but DOES NOT HAVE 'category' in the create table script!
-    // Wait, looking at Step 1127 db.js content:
-    // Line 95: CREATE TABLE IF NOT EXISTS books ... dept_id TEXT ...
-    // It does NOT have 'category' column in the CREATE statement!
-    // BUT the 'getBooks' query uses 'b.category'. This implies the column MIGHT exist if it was created earlier 
-    // or the CREATE statement I saw is for fresh installs.
-    // If 'category' column is missing, the code will crash.
-    // User's previous code was using 'category'. 
-    // Safe bet: The column likely exists in the SQLite file from previous migrations/versions.
-    // BUT to be safe given I saw the CREATE statement without it, I should stick to 'dept_id'.
-    // Use 'dept_id' for everything.
-
     const insertBookSafe = `
         INSERT INTO books (id, isbn, title, author, publisher, dept_id, price, total_copies, cover_image, ebook_link, shelf_location)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.run(insertBookSafe, [bookId, isbn, title, author, publisher, finalDeptId, price, quantity, cover_image, ebook_link, shelf_location || ''], function (err) {
-        if (err) {
-            if (err.message.includes('UNIQUE constraint')) {
-                return res.status(400).json({ error: "Book with this ISBN already exists" });
+    const proceedWithInsert = () => {
+        db.run(insertBookSafe, [bookId, isbn, title, author, publisher, finalDeptId, price, quantity, cover_image, ebook_link, shelf_location || ''], function (err) {
+            if (err) {
+                if (err.message.includes('UNIQUE constraint')) {
+                    return res.status(400).json({ error: "Book with this ISBN already exists" });
+                }
+                return res.status(500).json({ error: err.message });
             }
-            return res.status(500).json({ error: err.message });
-        }
 
-        // Auto-generate copies
-        // First, clean up any orphaned copies for this ISBN
-        db.run("DELETE FROM book_copies WHERE book_isbn = ?", [isbn], (err) => {
-            if (err) console.warn("Warning: Failed to clean orphans", err);
+            // Auto-generate copies
+            // First, clean up any orphaned copies for this ISBN
+            db.run("DELETE FROM book_copies WHERE book_isbn = ?", [isbn], (err) => {
+                if (err) console.warn("Warning: Failed to clean orphans", err);
 
-            const copyStmt = db.prepare("INSERT INTO book_copies (id, book_isbn, accession_number, status) VALUES (?, ?, ?, 'Available')");
-            for (let i = 1; i <= quantity; i++) {
-                const accessionNo = `${isbn}-${String(i).padStart(3, '0')}`;
-                copyStmt.run(generateId(), isbn, accessionNo);
-            }
-            copyStmt.finalize((err) => {
-                if (err) console.error("Failed to finalize copies:", err);
-                socketService.emit('book_update', { type: 'ADD', isbn });
-                res.status(201).json({ message: "Book added successfully with copies", isbn });
+                const copyStmt = db.prepare("INSERT INTO book_copies (id, book_isbn, accession_number, status) VALUES (?, ?, ?, 'Available')");
+                for (let i = 1; i <= quantity; i++) {
+                    const accessionNo = `${isbn}-${String(i).padStart(3, '0')}`;
+                    copyStmt.run(generateId(), isbn, accessionNo);
+                }
+                copyStmt.finalize((err) => {
+                    if (err) console.error("Failed to finalize copies:", err);
+                    socketService.emit('book_update', { type: 'ADD', isbn });
+                    res.status(201).json({ message: "Book added successfully with copies", isbn });
+                });
             });
         });
-    });
+    };
+
+    // Validation: If ISBN is Auto-Generated (starts with AG-), check for duplicate Title
+    // This prevents flooding the system with same book multiple times due to random ISBNs
+    if (isbn.startsWith('AG-')) {
+        db.get("SELECT 1 FROM books WHERE lower(title) = lower(?)", [title], (err, row) => {
+            if (err) {
+                console.error("Title duplication check failed:", err);
+                // We don't block on DB error for check, but safeguard? 
+                // Better to block to be safe.
+                return res.status(500).json({ error: "Validation Check Failed: " + err.message });
+            }
+            if (row) {
+                return res.status(400).json({ error: "Book with this title already exists (Auto-Generated ISBN restriction)." });
+            }
+            proceedWithInsert();
+        });
+    } else {
+        proceedWithInsert();
+    }
 };
 
 // Get details of a single book (and its copies)
@@ -378,6 +371,18 @@ exports.bulkUploadBooks = (req, res) => {
             if (exists) {
                 errors.push(`ISBN ${isbn} skipped (Already exists)`);
                 continue;
+            }
+
+            // AUTO-GEN VALIDATION: Check for duplicate title if ISBN is auto-generated
+            if (isbn.startsWith('AG-')) {
+                const titleExists = await new Promise((resolve) => {
+                    db.get("SELECT 1 FROM books WHERE lower(title) = lower(?)", [title], (err, row) => resolve(!!row));
+                });
+
+                if (titleExists) {
+                    errors.push(`ISBN ${isbn} skipped (Duplicate Title '${title}' - Auto-Gen Restriction)`);
+                    continue;
+                }
             }
 
             // Insert Book

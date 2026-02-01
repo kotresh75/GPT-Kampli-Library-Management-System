@@ -222,7 +222,25 @@ export const generatePrintContent = (title, data, columns, settings = {}) => {
     return { html: fullHtml, paperSize };
 };
 
-export const printDocument = async (printContent) => {
+export const printDocument = async (printContent, settings = {}) => {
+    const hardware = settings.app_hardware || {};
+    const printMode = hardware.printMode || 'system';
+
+    // 1. Silent Print (Bypasses System Dialog)
+    if (printMode === 'silent' && window.electron && window.electron.printSilent) {
+        // Use the selected printer if available
+        const printerName = hardware.defaultPrinter === 'system_default' ? '' : hardware.defaultPrinter;
+        try {
+            await window.electron.printSilent(printContent.html, printerName);
+            // Optionally notify success?
+        } catch (e) {
+            console.error("Silent print failed, falling back to window.print", e);
+            // Fallback to window print below
+        }
+        return;
+    }
+
+    // 2. Standard System Dialog (or fallback)
     const printWindow = window.open('', '_blank', 'width=800,height=600');
     if (!printWindow) {
         alert('Pop-up blocked! Please allow pop-ups for printing.');

@@ -81,26 +81,46 @@ exports.getSystemHealth = async (req, res) => {
     };
 
     // DB Check
-    const dbPath = path.resolve(__dirname, '../../DB/lms.sqlite');
-    try {
-        if (fs.existsSync(dbPath)) {
-            const stats = fs.statSync(dbPath);
-            health.database.size = (stats.size / 1024 / 1024).toFixed(2) + ' MB';
+    const dbPath = db.dbPath; // Use the exported path from db.js
+
+    // DEBUG: Add path to response to verify in UI
+    health.database.path = dbPath;
+
+    // STRATEGY CHANGE: Trust the connection, not the filesystem
+    // Windows/Electron permissions can sometimes hide files from fs.stat even if writable
+    db.get("SELECT 1", [], (err) => {
+        if (!err) {
+            // Success! We are connected.
             health.database.status = 'Connected';
 
-            // Perform simple query to confirm logic
-            db.get("SELECT 1", [], (err) => {
-                if (err) health.database.status = 'Error';
-                res.json(health);
-            });
+            // Try to get size, but don't fail if we can't
+            try {
+                if (fs.existsSync(dbPath)) {
+                    const stats = fs.statSync(dbPath);
+                    health.database.size = (stats.size / 1024 / 1024).toFixed(2) + ' MB';
+                } else {
+                    health.database.size = 'Connected';
+                }
+            } catch (e) {
+                health.database.size = 'Unknown';
+            }
+            res.json(health);
         } else {
-            health.database.status = 'File Missing';
+            // Query failed, now we debug why
+            health.database.status = 'Connection Failed';
+            health.database.error = err.message;
+
+            // Check filesystem as diagnosis
+            try {
+                if (!fs.existsSync(dbPath)) {
+                    health.database.status = 'File Missing on Disk';
+                }
+            } catch (fsErr) {
+                health.database.fsError = fsErr.message;
+            }
             res.json(health);
         }
-    } catch (e) {
-        health.database.status = 'Check Failed';
-        res.json(health);
-    }
+    });
 };
 
 exports.performConnectivityCheck = async (req, res) => {

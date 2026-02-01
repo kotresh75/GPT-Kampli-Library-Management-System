@@ -10,6 +10,8 @@
     height: 100vh;
     width: 100vw;
     background: var(--bg-color);
+    /* overflow: hidden; */
+    /* Removing overflow hidden to allow body scroll if needed, though dashboard typically locks it */
     overflow: hidden;
 }
 
@@ -398,15 +400,42 @@
     min-height: 100vh;
     position: relative;
     width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .landing-panel {
     max-width: 900px;
-    width: 90%;
+    width: 100%;
     text-align: center;
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+    margin: auto;
+    /* Ensures centering with scroll */
+}
+
+@media (max-width: 768px) {
+    .landing-panel {
+        padding: 20px !important;
+        /* Override glass-panel padding */
+        gap: var(--space-4);
+    }
+
+    .hero-title {
+        font-size: 2.5rem !important;
+    }
+
+    .hero-subtitle-gradient {
+        font-size: 1.5rem !important;
+    }
+
+    .landing-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
 }
 
 .landing-header {
@@ -501,6 +530,9 @@
     min-height: 100vh;
     animation: fadeIn 0.5s ease;
     position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 .login-card {
@@ -521,6 +553,17 @@
     display: flex;
     gap: var(--space-3);
     z-index: 20;
+}
+
+@media (max-width: 600px) {
+    .login-card {
+        padding: 20px;
+    }
+
+    .login-controls {
+        top: 10px;
+        right: 10px;
+    }
 }
 
 /* ===================

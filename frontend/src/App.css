@@ -1663,3 +1663,83 @@ textarea,
 .animate-scale-in {
     animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* --- Custom Title Bar --- */
+.custom-titlebar {
+    height: 32px;
+    background: var(--glass-bg);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    -webkit-app-region: drag; /* Allow dragging */
+    padding: 0 10px;
+    user-select: none;
+    backdrop-filter: blur(10px);
+    z-index: 5000;
+}
+
+.titlebar-drag-region {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.titlebar-icon img {
+    height: 16px;
+    width: 16px;
+    object-fit: contain;
+}
+
+.window-controls {
+    display: flex;
+    -webkit-app-region: no-drag; /* Buttons must be clickable */
+}
+
+.control-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 36px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+.close-btn:hover {
+    background: #e74c3c;
+    color: white;
+}
+
+/* --- App Container Adjustment --- */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Adjust Dashboard Layout to take remaining height */
+.dashboard-layout {
+    height: calc(100vh - 32px) !important;
+}
+
+/* --- Fixed Logo --- */
+.sidebar-logo {
+    height: 45px; /* Increased from 40px */
+    width: auto;
+    max-width: 100%;
+    object-fit: contain; /* Ensure full logo is visible */
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}

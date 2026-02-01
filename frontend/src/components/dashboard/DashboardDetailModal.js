@@ -129,7 +129,7 @@ const DashboardDetailModal = ({ type, onClose }) => {
                                             {type === 'overdue' && (
                                                 <>
                                                     <td className="p-4 text-red-300 font-medium">
-                                                        {new Date(item.due_date).toLocaleDateString()}
+                                                        {new Date(item.due_date).toLocaleDateString('en-GB')}
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="font-medium text-white">{item.student}</div>
@@ -143,7 +143,7 @@ const DashboardDetailModal = ({ type, onClose }) => {
                                             {type === 'lost_damaged' && (
                                                 <>
                                                     <td className="p-4 font-mono text-xs opacity-70">
-                                                        {new Date(item.date).toLocaleDateString()}
+                                                        {new Date(item.date).toLocaleDateString('en-GB')}
                                                     </td>
                                                     <td className="p-4">
                                                         <span className={`px-2 py-1 rounded text-xs font-bold ${item.status === 'Lost' ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'

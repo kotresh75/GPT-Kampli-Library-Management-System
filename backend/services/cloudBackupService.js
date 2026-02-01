@@ -52,7 +52,16 @@ exports.performCloudBackup = async () => {
             return { success: false, error: "No URI configured" };
         }
 
-        // 2. Connect to MongoDB
+        // 2. Connectivity Check (Simple DNS)
+        const dns = require('dns').promises;
+        try {
+            await dns.lookup('google.com');
+        } catch (e) {
+            console.log('[CloudBackup] Offline: Skipping backup.');
+            return { success: false, error: "System Offline", skipped: true };
+        }
+
+        // 3. Connect to MongoDB
         client = new MongoClient(config.connectionUri);
         await client.connect();
         const mongoDb = client.db(); // Uses DB from URI or default

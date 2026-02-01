@@ -1,5 +1,5 @@
 const db = require('../db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const emailService = require('../services/emailService');
 const auditService = require('../services/auditService');
@@ -255,7 +255,7 @@ exports.broadcastMessage = async (req, res) => {
         }
 
         // Log Audit
-        auditService.log(req.user, 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipient_group} (${sentCount} recipients)`, { subject, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
+        auditService.log(req.user, 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipient_group} (${sentCount} recipients)`, { subject, message, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
 
         socketService.emit('broadcast_update', {});
         res.json({ message: `Broadcast initiated to ${sentCount} recipients` });
@@ -336,7 +336,8 @@ exports.getBroadcastHistory = (req, res) => {
                 subject: meta.subject || 'Broadcast Message',
                 target: targetDisplay,
                 status: 'sent',
-                description: row.description
+                description: row.description,
+                message: meta.message || null
             };
         });
 

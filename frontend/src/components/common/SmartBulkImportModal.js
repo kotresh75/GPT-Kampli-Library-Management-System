@@ -147,12 +147,18 @@ const SmartBulkImportModal = ({
 
             // 1. Built-in required check based on columns prop
             columns.forEach(col => {
-                if (col.required) {
-                    const val = row[col.key];
-                    if (val === undefined || val === null || val === '') {
-                        rowErrors.push(`${col.label} required`);
+                const val = row[col.key];
+                // Check if required
+                if (col.required && (val === undefined || val === null || val === '')) {
+                    rowErrors.push(`${col.label} required`);
+                } else if (col.type === 'select' && col.options && val) {
+                    // Strict check: Value must be in options
+                    const isValidOption = col.options.some(opt => opt.value === val);
+                    if (!isValidOption) {
+                        rowErrors.push(`Invalid ${col.label}`);
                     }
                 }
+
 
                 // Type-based validation
                 if (col.type === 'number' && row[col.key]) {
@@ -277,6 +283,98 @@ const SmartBulkImportModal = ({
             seen.add(key);
             return true;
         }));
+    };
+
+    const handleFetchMetadata = async () => {
+        if (!navigator.onLine) {
+            setAlertData({
+                isOpen: true,
+                title: 'Offline',
+                message: "You are offline. Connect to the internet to continue."
+            });
+            return;
+        }
+
+        // Identify rows with ISBN but missing Title
+        const isbnCol = columns.find(c => c.key.toLowerCase().includes('isbn'));
+        const titleCol = columns.find(c => c.key.toLowerCase().includes('title'));
+        const authorCol = columns.find(c => c.key.toLowerCase().includes('author'));
+        const publisherCol = columns.find(c => c.key.toLowerCase().includes('publisher'));
+
+        if (!isbnCol || !titleCol) {
+            setAlertData({
+                isOpen: true,
+                title: 'Column Mismatch',
+                message: "Could not identify ISBN or Title columns to perform auto-fill."
+            });
+            return;
+        }
+
+        const rowsToUpdate = previewData.filter(row => {
+            const isbn = row[isbnCol.key];
+            const title = row[titleCol.key];
+            const author = authorCol ? row[authorCol.key] : 'found'; // if no col, treat as found
+            const publisher = publisherCol ? row[publisherCol.key] : 'found';
+
+            // Update if ISBN exists AND (Title missing OR Author missing OR Publisher missing)
+            const missingTitle = !title || title.trim() === '';
+            const missingAuthor = !author || author.trim() === '';
+            const missingPublisher = !publisher || publisher.trim() === '';
+
+            return isbn && (missingTitle || missingAuthor || missingPublisher);
+        });
+
+        if (rowsToUpdate.length === 0) {
+            setAlertData({
+                isOpen: true,
+                title: 'No Rows to Update',
+                message: "No rows found with valid ISBNs and missing titles."
+            });
+            return;
+        }
+
+        setLoading(true);
+        let updatedCount = 0;
+        const newPreviewData = [...previewData];
+
+        // Process in chunks or sequential
+        for (const row of rowsToUpdate) {
+            const isbn = String(row[isbnCol.key]).replace(/[^0-9X]/g, '');
+            if (isbn.length < 10) continue;
+
+            try {
+                const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.items && data.items.length > 0) {
+                        const info = data.items[0].volumeInfo;
+                        const targetIndex = newPreviewData.findIndex(r => r.id === row.id);
+
+                        if (targetIndex !== -1) {
+                            newPreviewData[targetIndex] = {
+                                ...newPreviewData[targetIndex],
+                                [titleCol.key]: info.title || newPreviewData[targetIndex][titleCol.key],
+                                [authorCol?.key]: (info.authors ? info.authors.join(', ') : '') || newPreviewData[targetIndex][authorCol?.key],
+                                [publisherCol?.key]: info.publisher || newPreviewData[targetIndex][publisherCol?.key]
+                            };
+                            updatedCount++;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Fetch failed for", isbn, e);
+            }
+            // Be polite to API
+            await new Promise(r => setTimeout(r, 250));
+        }
+
+        setPreviewData(newPreviewData);
+        setLoading(false);
+        setAlertData({
+            isOpen: true,
+            title: 'Metadata Fetched',
+            message: `Successfully updated ${updatedCount} records.`
+        });
     };
 
     // --- Parsing ---

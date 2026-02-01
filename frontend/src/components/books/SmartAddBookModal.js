@@ -62,6 +62,11 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
         if (!cleanIsbn || cleanIsbn.length < 10) return;
         if (cleanIsbn.startsWith('AG')) return;
 
+        if (!navigator.onLine) {
+            setError("You are offline. Connect to the internet to continue.");
+            return;
+        }
+
         setFetchLoading(true);
         setError('');
         setFetchSuccess('');
@@ -187,7 +192,8 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
                             </div>
                         </div>
                         {fetchSuccess && <div className="success-msg"><CheckCircle size={14} /> {fetchSuccess}</div>}
-                        {error && !formData.dept_id && <div className="validation-msg"><AlertCircle size={14} /> {error}</div>}
+                        {fetchSuccess && <div className="success-msg"><CheckCircle size={14} /> {fetchSuccess}</div>}
+                        {error && <div className="validation-msg"><AlertCircle size={14} /> {error}</div>}
                     </div>
 
                     <form id="add-book-form" onSubmit={handleSubmit} style={{ display: 'contents' }}>

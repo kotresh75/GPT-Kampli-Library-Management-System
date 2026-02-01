@@ -3,12 +3,32 @@ const path = require('path');
 const fs = require('fs');
 const { getISTISOWithOffset } = require('./utils/dateUtils');
 
-// Ensure DB directory exists
-const dbPath = path.resolve(__dirname, '../DB/lms.sqlite');
+// Production: Use AppData folder for writable database
+const isDev = process.env.NODE_ENV !== 'production' && !process.resourcesPath?.includes('app.asar');
+
+// Unified Path Logic: Prefer path injected from Electron
+const userDataPath = process.env.USER_DATA_PATH || (isDev
+    ? path.resolve(__dirname, '..')
+    : path.join(process.env.APPDATA || process.env.HOME, 'GPTK Library Manager'));
+
+const dbPath = path.join(userDataPath, 'DB', 'lms.sqlite');
+const uploadsPath = path.join(userDataPath, 'Uploads');
 const dbDir = path.dirname(dbPath);
+
+// Ensure directories exist
 if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
+if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+}
+
+console.log('Database path:', dbPath);
+console.log('Uploads path:', uploadsPath);
+
+// Export paths for other modules
+module.exports.uploadsPath = uploadsPath;
+module.exports.dbPath = dbPath;
 
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
@@ -40,6 +60,26 @@ const db = new sqlite3.Database(dbPath, (err) => {
                     // Ignore error if column already exists
                 });
 
+                // SCHEMA MIGRATION: Add dept_id to books if not exists (Critical Fix)
+                db.run("ALTER TABLE books ADD COLUMN dept_id TEXT REFERENCES departments(id)", (err) => {
+                    if (!err) console.log("Added dept_id column to books table");
+                });
+
+                // SCHEMA MIGRATION: Add cover_image_url to books if not exists
+                db.run("ALTER TABLE books ADD COLUMN cover_image_url TEXT", (err) => {
+                    if (!err) console.log("Added cover_image_url column to books table");
+                });
+
+                // SCHEMA MIGRATION: Add shelf_location to books if not exists
+                db.run("ALTER TABLE books ADD COLUMN shelf_location TEXT", (err) => {
+                    if (!err) console.log("Added shelf_location column to books table");
+                });
+
+                // SCHEMA MIGRATION: Add status to books if not exists
+                db.run("ALTER TABLE books ADD COLUMN status TEXT CHECK(status IN ('Active', 'Deleted', 'Archived')) DEFAULT 'Active'", (err) => {
+                    if (!err) console.log("Added status column to books table");
+                });
+
                 // SCHEMA MIGRATION: Add cover_image to books if not exists
                 db.run("ALTER TABLE books ADD COLUMN cover_image TEXT", (err) => {
                     // DATA MIGRATION: Copy old url to new column if successful or if column exists
@@ -53,9 +93,29 @@ const db = new sqlite3.Database(dbPath, (err) => {
                     if (!err) console.log("Added father_name column to students table");
                 });
 
+                // SCHEMA MIGRATION: Add book_isbn to book_copies if not exists
+                db.run("ALTER TABLE book_copies ADD COLUMN book_isbn TEXT REFERENCES books(isbn)", (err) => {
+                    if (!err) console.log("Added book_isbn column to book_copies table");
+                });
+
                 // SCHEMA MIGRATION: Add hod_signature to departments if not exists
                 db.run("ALTER TABLE departments ADD COLUMN hod_signature TEXT", (err) => {
                     if (!err) console.log("Added hod_signature column to departments table");
+                });
+
+                // SCHEMA MIGRATION: Add requires_restart to system_settings if not exists
+                db.run("ALTER TABLE system_settings ADD COLUMN requires_restart INTEGER DEFAULT 0", (err) => {
+                    if (!err) console.log("Added requires_restart column to system_settings table");
+                });
+
+                // SCHEMA MIGRATION: Add id to system_settings if not exists (Fix for legacy schema)
+                db.run("ALTER TABLE system_settings ADD COLUMN id TEXT", (err) => {
+                    // Start assuming UUIDs if we are adding this column now, or random IDs
+                    if (!err) {
+                        console.log("Added id column to system_settings table");
+                        // Backfill IDs
+                        db.run("UPDATE system_settings SET id = lower(hex(randomblob(16))) WHERE id IS NULL");
+                    }
                 });
             }
         });
@@ -71,6 +131,7 @@ function initializeTables() {
             name TEXT UNIQUE NOT NULL,
             code TEXT UNIQUE NOT NULL,
             description TEXT,
+            hod_signature TEXT,
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
             updated_at TEXT DEFAULT (datetime('now', '+05:30'))
         )`);
@@ -85,6 +146,7 @@ function initializeTables() {
             email TEXT NOT NULL,
             phone TEXT,
             dob TEXT NOT NULL,
+            father_name TEXT,
             address TEXT,
             profile_image TEXT,
             status TEXT CHECK(status IN ('Active', 'Blocked', 'Alumni', 'Graduated', 'Deleted')),
@@ -129,11 +191,15 @@ function initializeTables() {
             author TEXT NOT NULL,
             publisher TEXT,
             category TEXT,
+            dept_id TEXT,
             cover_image TEXT,
+            cover_image_url TEXT,
             price REAL,
             stock_total INTEGER DEFAULT 0,
             ebook_link TEXT,
             total_copies INTEGER DEFAULT 0,
+            shelf_location TEXT,
+            status TEXT CHECK(status IN ('Active', 'Deleted', 'Archived')) DEFAULT 'Active',
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
             updated_at TEXT DEFAULT (datetime('now', '+05:30')),
             FOREIGN KEY (dept_id) REFERENCES departments(id)
@@ -144,11 +210,13 @@ function initializeTables() {
             id TEXT PRIMARY KEY,
             accession_number TEXT UNIQUE,
             book_id TEXT,
+            book_isbn TEXT,
             status TEXT CHECK(status IN ('Available', 'Issued', 'Lost', 'Maintenance')),
             location TEXT,
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
             updated_at TEXT DEFAULT (datetime('now', '+05:30')),
-            FOREIGN KEY (book_id) REFERENCES books(id)
+            FOREIGN KEY (book_id) REFERENCES books(id),
+            FOREIGN KEY (book_isbn) REFERENCES books(isbn)
         )`);
 
         // 5.6 circulation (Active Loans)
@@ -280,6 +348,7 @@ function initializeTables() {
             description TEXT,
             data_type TEXT DEFAULT 'string',
             is_user_editable INTEGER DEFAULT 1,
+            requires_restart INTEGER DEFAULT 0,
             updated_by TEXT,
             updated_at TEXT DEFAULT (datetime('now', '+05:30'))
         )`);
@@ -303,6 +372,7 @@ function initializeTables() {
 
         // Seed Default Settings & Admin User
         seedSystemSettings();
+        ensureDefaultPolicies();
         seedAdminUser();
         seedSystemUser();
     });
@@ -312,7 +382,7 @@ function seedSystemUser() {
     db.get("SELECT count(*) as count FROM staff WHERE id = 'SYSTEM'", (err, row) => {
         if (!err && row && row.count === 0) {
             console.log("Seeding SYSTEM staff user...");
-            const bcrypt = require('bcrypt');
+            const bcrypt = require('bcryptjs');
             const password = 'admin123';
             const saltRounds = 10;
 
@@ -340,8 +410,8 @@ function seedAdminUser() {
         }
         if (row && row.count === 0) {
             console.log("Seeding initial admin user...");
-            const bcrypt = require('bcrypt');
-            const password = '12345678';
+            const bcrypt = require('bcryptjs');
+            const password = '123456';
             const saltRounds = 10;
 
             bcrypt.hash(password, saltRounds, (err, hash) => {
@@ -375,9 +445,39 @@ function seedSystemSettings() {
             insert.run(newId(), 'server.port', '3001', 'network', 'Port for the internal API server');
             insert.run(newId(), 'app.header_title', 'GPTK Library', 'ui', 'Title in App Header');
             insert.run(newId(), 'circ.fine_per_day', '1.00', 'circulation', 'Fine per overdue day');
-
             insert.finalize();
         }
+    });
+}
+
+function ensureDefaultPolicies() {
+    const defaultPolicies = [
+        {
+            key: 'policy_borrowing', value: JSON.stringify({
+                student: { maxBooks: 4, loanDays: 15, renewalDays: 15, maxRenewals: 1, blockFineThreshold: 100 },
+                staff: { maxBooks: 10, loanDays: 30, renewalDays: 30, maxRenewals: 2, blockFineThreshold: 500 }
+            }), category: 'Policy', description: 'Borrowing Rule Configuration', type: 'json'
+        },
+        { key: 'policy_financial', value: JSON.stringify({ dailyFineRate: 1.0, damagedFineAmount: 100, lostFineAmount: 500 }), category: 'Policy', description: 'Financial Configuration', type: 'json' },
+        { key: 'policy_calendar', value: JSON.stringify({ weekends: ['Sunday'], holidays: [] }), category: 'Policy', description: 'Holiday Configuration', type: 'json' },
+        { key: 'policy_version', value: '1.0', category: 'Policy', description: 'Current Policy Version', type: 'string' }
+    ];
+
+    const insert = db.prepare("INSERT INTO system_settings (id, key, value, category, description, data_type) VALUES (?, ?, ?, ?, ?, ?)");
+    const check = db.prepare("SELECT id FROM system_settings WHERE key = ?");
+
+    // Simple mock UUID
+    const newId = () => Math.random().toString(36).substr(2, 9);
+
+    db.serialize(() => {
+        defaultPolicies.forEach(policy => {
+            check.get(policy.key, (err, row) => {
+                if (!err && !row) {
+                    console.log(`[Seed] Adding missing policy: ${policy.key}`);
+                    insert.run(newId(), policy.key, policy.value, policy.category, policy.description, policy.type);
+                }
+            });
+        });
     });
 }
 

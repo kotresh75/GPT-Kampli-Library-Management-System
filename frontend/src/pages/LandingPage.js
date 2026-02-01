@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Type, LogIn, Globe } from 'lucide-react';
+import { Sun, Moon, Type, LogIn, Globe, Info } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
 import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
@@ -61,6 +61,11 @@ const LandingPage = () => {
                         <button className="icon-btn" onClick={cycleFontSize} title={t('landing.change_font_size') || "Change Font Size"}>
                             <Type size={18} />
                             <span className="lang-code">{SCALE_MAP[fontScale] || 'C'}</span>
+                        </button>
+
+                        {/* About Project Button */}
+                        <button className="icon-btn" onClick={() => navigate('/about')} title="About Project">
+                            <Info size={18} />
                         </button>
 
                         {/* Theme Toggle */}

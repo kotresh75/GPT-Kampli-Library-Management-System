@@ -40,3 +40,10 @@ Uploads/
 # Electron
 electron/dist/
 electron/build/
+
+# Build Artifacts
+Final_Fixed_Build_v2/
+
+# Windows System Files
+Thumbs.db
+Desktop.ini
