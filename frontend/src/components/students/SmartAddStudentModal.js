@@ -24,7 +24,7 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        fetch('http://localhost:3001/api/departments')
+        fetch('http://localhost:17221/api/departments')
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(err => console.error("Failed to fetch depts", err));
@@ -51,7 +51,7 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
         }
 
         try {
-            const res = await fetch('http://localhost:3001/api/students', {
+            const res = await fetch('http://localhost:17221/api/students', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

@@ -24,7 +24,7 @@ const DepartmentPage = () => {
     const fetchDepartments = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:3001/api/departments?search=${search}`);
+            const res = await fetch(`http://localhost:17221/api/departments?search=${search}`);
             const data = await res.json();
             if (Array.isArray(data)) setDepartments(data);
         } catch (error) {
@@ -58,7 +58,7 @@ const DepartmentPage = () => {
         if (!id) return;
 
         try {
-            const res = await fetch(`http://localhost:3001/api/departments/${id}`, { method: 'DELETE' });
+            const res = await fetch(`http://localhost:17221/api/departments/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchDepartments();
                 setStatusModal({ isOpen: true, type: 'success', title: t('departments.delete_success_title'), message: t('departments.delete_success_msg') });

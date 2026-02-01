@@ -29,7 +29,7 @@ const TransactionHistoryPage = () => {
 
     // Fetch Departments for Filter
     useEffect(() => {
-        fetch('http://localhost:3001/api/departments')
+        fetch('http://localhost:17221/api/departments')
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(err => console.error("Failed to fetch departments", err));
@@ -85,7 +85,7 @@ const TransactionHistoryPage = () => {
             }
 
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:3001/api/circulation/history?${params.toString()}`, {
+            const res = await fetch(`http://localhost:17221/api/circulation/history?${params.toString()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();

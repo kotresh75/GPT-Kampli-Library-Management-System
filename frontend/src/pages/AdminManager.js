@@ -22,7 +22,7 @@ const AdminManager = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3001/api/admins', {
+            const res = await fetch('http://localhost:17221/api/admins', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -89,7 +89,7 @@ const AdminManager = () => {
             const token = localStorage.getItem('auth_token');
             let res;
             if (action === 'toggle_status') {
-                res = await fetch(`http://localhost:3001/api/admins/${data.id}/status`, {
+                res = await fetch(`http://localhost:17221/api/admins/${data.id}/status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -98,12 +98,12 @@ const AdminManager = () => {
                     body: JSON.stringify({ status: data.newStatus })
                 });
             } else if (action === 'delete') {
-                res = await fetch(`http://localhost:3001/api/admins/${data.id}`, {
+                res = await fetch(`http://localhost:17221/api/admins/${data.id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else if (action === 'reset_password') {
-                res = await fetch(`http://localhost:3001/api/admins/${data.id}/reset-password`, {
+                res = await fetch(`http://localhost:17221/api/admins/${data.id}/reset-password`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

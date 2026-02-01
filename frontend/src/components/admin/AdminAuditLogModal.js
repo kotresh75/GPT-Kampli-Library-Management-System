@@ -10,7 +10,7 @@ const AdminAuditLogModal = ({ admin, onClose }) => {
     useEffect(() => {
         if (admin) {
             setLoading(true);
-            fetch(`http://localhost:3001/api/admins/${admin.id}/logs`)
+            fetch(`http://localhost:17221/api/admins/${admin.id}/logs`)
                 .then(res => res.json())
                 .then(data => setLogs(Array.isArray(data) ? data : []))
                 .catch(err => console.error(err))

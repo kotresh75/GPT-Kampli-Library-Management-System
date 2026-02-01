@@ -147,6 +147,16 @@ exports.issueBook = async (req, res) => {
             return res.status(400).json({ error: `Cannot issue. Limit exceeded (${activeLoans}/${maxLoans}).` });
         }
 
+        // Fetch Student Details ONCE (Name, RegNo, Dept, Email)
+        const studentDetails = await new Promise((resolve) => {
+            db.get(`SELECT s.full_name, s.register_number, s.dept_id, s.email, d.name as department_name 
+                    FROM students s 
+                    LEFT JOIN departments d ON s.dept_id = d.id 
+                    WHERE s.id = ?`, [student_id], (err, row) => resolve(row));
+        });
+
+        if (!studentDetails) return res.status(404).json({ error: "Student not found" });
+
         // Fix for FK Constraint: 'circulation' and 'transaction_logs' reference 'staff(id)'
         // Since FK constraint is removed, we can use any actor ID (Admin or Staff)
         const dbStaffId = req.user ? req.user.id : 'SYSTEM';
@@ -176,7 +186,6 @@ exports.issueBook = async (req, res) => {
             }
 
             // Calculate Due Date (Dynamic)
-            // Calculate Due Date (Dynamic)
             const issueDate = getISTDate();
             const dueDate = getISTDate();
             dueDate.setUTCDate(issueDate.getUTCDate() + loanDays);
@@ -193,15 +202,7 @@ exports.issueBook = async (req, res) => {
                 );
             });
 
-            // 2. Fetch Student Details for Snapshot
-            const studentDetails = await new Promise((resolve) => {
-                db.get("SELECT full_name, register_number, dept_id FROM students WHERE id = ?", [student_id], (err, row) => resolve(row));
-            });
-            const deptName = await new Promise((resolve) => {
-                if (!studentDetails || !studentDetails.dept_id) resolve('');
-                else db.get("SELECT name FROM departments WHERE id = ?", [studentDetails.dept_id], (err, row) => resolve(row ? row.name : ''));
-            });
-            // 3. Insert into Transaction Logs (HISTORY) - Action: ISSUE
+            // 2. Insert into Transaction Logs (HISTORY) - Action: ISSUE
             const istDate = getISTDate();
             const dateStr = istDate.toISOString().split('T')[0]; // YYYY-MM-DD
             const timeStr = istDate.toTimeString().split(' ')[0]; // HH:MM:SS
@@ -209,7 +210,7 @@ exports.issueBook = async (req, res) => {
             await new Promise((resolve, reject) => {
                 db.run(`INSERT INTO transaction_logs (id, session_txn_id, action_type, student_id, student_name, student_reg_no, student_dept, copy_id, book_title, book_isbn, performed_by, details, timestamp) 
                          VALUES (?, ?, 'ISSUE', ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', '+05:30'))`,
-                    [uuidv4(), sessionTxnId, student_id, studentDetails?.full_name, studentDetails?.register_number, deptName, copy.id, copy.title, copy.isbn || 'N/A', dbStaffId, JSON.stringify({
+                    [uuidv4(), sessionTxnId, student_id, studentDetails.full_name, studentDetails.register_number, studentDetails.department_name, copy.id, copy.title, copy.isbn || 'N/A', dbStaffId, JSON.stringify({
                         due_date: getISTISOWithOffset(dueDate),
                         loan_days: loanDays,
                         accession: accNum,
@@ -222,7 +223,7 @@ exports.issueBook = async (req, res) => {
                 );
             });
 
-            // 4. Update Copy Status
+            // 3. Update Copy Status
             await new Promise((resolve) => {
                 db.run(`UPDATE book_copies SET status = 'Issued', updated_at = datetime('now', '+05:30') WHERE id = ?`, [copy.id], () => resolve());
             });
@@ -231,22 +232,21 @@ exports.issueBook = async (req, res) => {
         }
 
         const auditUser = req.user ? { id: req.user.id, role: req.user.role } : 'SYSTEM';
-        auditService.log(auditUser, 'ISSUE', 'Circulation', `Issued ${results.filter(r => r.status === 'Success').length} books to students ${student_id}`, { session_id: sessionTxnId });
+        const successCount = results.filter(r => r.status === 'Success').length;
+        auditService.log(auditUser, 'ISSUE', 'Circulation', `Issued ${successCount} books to ${studentDetails.full_name} (${studentDetails.register_number})`, { session_id: sessionTxnId });
 
         // Send Email Receipt
-        db.get("SELECT full_name as name, email FROM students WHERE id = ?", [student_id], (err, student) => {
-            if (student && student.email) {
-                results.forEach(r => {
-                    if (r.status === 'Success') {
-                        emailService.sendTransactionReceipt('ISSUE', student, {
-                            title: r.title,
-                            accession: r.accession,
-                            due_date: r.due_date
-                        });
-                    }
-                });
-            }
-        });
+        if (studentDetails.email) {
+            results.forEach(r => {
+                if (r.status === 'Success') {
+                    emailService.sendTransactionReceipt('ISSUE', { full_name: studentDetails.full_name, email: studentDetails.email }, {
+                        title: r.title,
+                        accession: r.accession,
+                        due_date: r.due_date
+                    });
+                }
+            });
+        }
 
         // Socket Emit
         socketService.emit('circulation_update', { type: 'ISSUE', student_id, txn_id: sessionTxnId });
@@ -455,7 +455,7 @@ exports.returnBook = async (req, res) => {
         }
 
         const auditUser = req.user ? { id: req.user.id, role: req.user.role } : 'SYSTEM';
-        auditService.log(auditUser, 'RETURN', 'Circulation', `Returned loan ${transaction_id}. Condition: ${condition}`, { fine_amount: fineAmount });
+        auditService.log(auditUser, 'RETURN', 'Circulation', `Returned book '${loan.title}' from ${studentDetails.full_name} (${studentDetails.register_number}). Condition: ${condition}`, { fine_amount: fineAmount });
 
         // Send Email Receipt
         const studentQuery = "SELECT full_name as name, email FROM students WHERE id = ?";
@@ -596,7 +596,7 @@ exports.renewBook = async (req, res) => {
         const renewalsUsed = renewalCount + 1;
 
         const auditUser = req.user ? { id: req.user.id, role: req.user.role } : 'SYSTEM';
-        auditService.log(auditUser, 'RENEW', 'Circulation', `Renewed loan ${transaction_id}. New Due Date: ${newDueDateObj.toISOString()}`, {
+        auditService.log(auditUser, 'RENEW', 'Circulation', `Renewed book '${loan.title}' for ${studentDetails.full_name} (${studentDetails.register_number}). New Due Date: ${newDueDateObj.toISOString()}`, {
             old_due_date: loan.due_date,
             renewals_used: renewalsUsed
         });

@@ -16,13 +16,13 @@ const IDCardPreviewModal = ({ student, onClose }) => {
         const fetchSignatures = async () => {
             try {
                 // Fetch Principal Signature
-                const principalRes = await fetch('http://localhost:3001/api/settings/principal-signature');
+                const principalRes = await fetch('http://localhost:17221/api/settings/principal-signature');
                 const principalData = await principalRes.json();
 
                 // Fetch Department for HOD signature
                 let hodSignature = null;
                 if (student.dept_id) {
-                    const deptRes = await fetch(`http://localhost:3001/api/departments/${student.dept_id}`);
+                    const deptRes = await fetch(`http://localhost:17221/api/departments/${student.dept_id}`);
                     if (deptRes.ok) {
                         const deptData = await deptRes.json();
                         hodSignature = deptData.hod_signature;

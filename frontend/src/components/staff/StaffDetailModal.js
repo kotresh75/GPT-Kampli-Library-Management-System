@@ -8,7 +8,7 @@ const StaffDetailModal = ({ staff, onClose }) => {
     useEffect(() => {
         if (staff) {
             setLoading(true);
-            fetch(`http://localhost:3001/api/staff/${staff.id}/activity`)
+            fetch(`http://localhost:17221/api/staff/${staff.id}/activity`)
                 .then(res => res.json())
                 .then(data => setLogs(Array.isArray(data) ? data : []))
                 .catch(err => console.error(err))

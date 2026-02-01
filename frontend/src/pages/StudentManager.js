@@ -51,13 +51,13 @@ const StudentManager = () => {
 
     // Fetch Departments
     useEffect(() => {
-        fetch('http://localhost:3001/api/departments')
+        fetch('http://localhost:17221/api/departments')
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(err => console.error("Failed to fetch depts", err));
 
         // Fetch all students for validation (lightweight ID check if possible, or full list)
-        fetch('http://localhost:3001/api/students?limit=10000').then(res => res.json())
+        fetch('http://localhost:17221/api/students?limit=10000').then(res => res.json())
             .then(data => {
                 if (data.data && Array.isArray(data.data)) {
                     setExistingRegNos(new Set(data.data.map(s => s.register_number.toUpperCase())));
@@ -81,7 +81,7 @@ const StudentManager = () => {
                 limit
             }).toString();
 
-            const res = await axios.get(`http://localhost:3001/api/students?${query}`);
+            const res = await axios.get(`http://localhost:17221/api/students?${query}`);
             setStudents(res.data.data || []);
             setTotalPages(res.data.pagination?.totalPages || 1);
             setTotalStudentsCount(res.data.pagination?.total || 0);
@@ -160,7 +160,7 @@ const StudentManager = () => {
             const body = isBulk ? JSON.stringify({ ids }) : null;
 
             try {
-                const res = await fetch(`http://localhost:3001${endpoint}`, {
+                const res = await fetch(`http://localhost:17221${endpoint}`, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
                     body
@@ -192,7 +192,7 @@ const StudentManager = () => {
         } else if (action === 'promote' || action === 'demote') {
             const endpoint = action === 'promote' ? '/api/students/bulk-promote' : '/api/students/bulk-demote';
             try {
-                const res = await fetch(`http://localhost:3001${endpoint}`, {
+                const res = await fetch(`http://localhost:17221${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ids: data })
@@ -231,7 +231,7 @@ const StudentManager = () => {
 
     const handleBulkUpdate = async (updates) => {
         try {
-            const res = await fetch('http://localhost:3001/api/students/bulk-update', {
+            const res = await fetch('http://localhost:17221/api/students/bulk-update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids: Array.from(selectedStudents), updates })
@@ -263,7 +263,7 @@ const StudentManager = () => {
                 };
             });
 
-            const res = await fetch('http://localhost:3001/api/students/bulk-import', {
+            const res = await fetch('http://localhost:17221/api/students/bulk-import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(finalData)
@@ -290,7 +290,7 @@ const StudentManager = () => {
                 ids: Array.from(selectedStudents)
             };
 
-            const res = await fetch('http://localhost:3001/api/students/export', {
+            const res = await fetch('http://localhost:17221/api/students/export', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -377,7 +377,7 @@ const StudentManager = () => {
 
             const finalQuery = `limit=100000&${query}`;
 
-            const res = await fetch(`http://localhost:3001/api/students?${finalQuery}`);
+            const res = await fetch(`http://localhost:17221/api/students?${finalQuery}`);
             const data = await res.json();
 
             if (data.data && Array.isArray(data.data)) {
@@ -650,7 +650,7 @@ const StudentManager = () => {
                                 order: sortConfig.direction,
                                 limit: 10000 // Fetch all
                             }).toString();
-                            const res = await fetch(`http://localhost:3001/api/students?${query}`);
+                            const res = await fetch(`http://localhost:17221/api/students?${query}`);
                             const data = await res.json();
                             return (data.data || []).map(s => ({
                                 id: s.id, // Include ID for selection matching

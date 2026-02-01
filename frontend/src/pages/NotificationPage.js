@@ -23,7 +23,7 @@ const NotificationPage = () => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/settings/app');
+                const res = await fetch('http://localhost:17221/api/settings/app');
                 if (res.ok) {
                     const data = await res.json();
                     if (data.email_events && data.email_events.broadcastMessages === false) {
@@ -52,7 +52,7 @@ const NotificationPage = () => {
     const fetchHistory = async () => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:3001/api/admins/broadcast/history?order=${historySort}`, {
+            const res = await fetch(`http://localhost:17221/api/admins/broadcast/history?order=${historySort}`, {
                 headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
             if (res.ok) {
@@ -108,7 +108,7 @@ const NotificationPage = () => {
             const token = localStorage.getItem('auth_token');
             if (!token) throw new Error(t('broadcast.status.auth_err'));
 
-            const response = await fetch('http://localhost:3001/api/admins/broadcast', {
+            const response = await fetch('http://localhost:17221/api/admins/broadcast', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -264,7 +264,7 @@ const NotificationPage = () => {
                                     placeholder={t('broadcast.compose.enter_student')}
                                     onSearch={async (query) => {
                                         const token = localStorage.getItem('auth_token');
-                                        const res = await fetch(`http://localhost:3001/api/circulation/search/students?q=${query}`, {
+                                        const res = await fetch(`http://localhost:17221/api/circulation/search/students?q=${query}`, {
                                             headers: { 'Authorization': `Bearer ${token}` }
                                         });
                                         // Issue Tab's search endpoint returns array directly

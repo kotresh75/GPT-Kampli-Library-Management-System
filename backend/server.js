@@ -7,7 +7,7 @@ const socketService = require('./services/socketService'); // Import Socket Serv
 
 const app = express();
 const server = http.createServer(app); // Create HTTP Server
-const PORT = 3001; // Default port, eventually load from DB
+const PORT = 17221; // Default port, eventually load from DB
 
 // Init Cron Service
 require('./services/cronService').init();

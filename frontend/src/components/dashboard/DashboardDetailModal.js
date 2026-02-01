@@ -9,7 +9,7 @@ const DashboardDetailModal = ({ type, onClose }) => {
     useEffect(() => {
         if (!type) return;
 
-        let endpoint = `http://localhost:3001/api/dashboard/details?type=${type}`;
+        let endpoint = `http://localhost:17221/api/dashboard/details?type=${type}`;
         let modalTitle = '';
 
         switch (type) {

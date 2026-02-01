@@ -41,7 +41,7 @@ const FinesTab = ({ initialTab }) => {
 
     // Fetch Email Event Settings
     useEffect(() => {
-        fetch('http://localhost:3001/api/settings/app')
+        fetch('http://localhost:17221/api/settings/app')
             .then(res => res.json())
             .then(data => {
                 if (data.email_events) setEmailEvents(data.email_events);
@@ -57,8 +57,8 @@ const FinesTab = ({ initialTab }) => {
             // Ideally, history tab should fetch all past fines.
             const status = activeTab === 'pending' ? 'Unpaid' : '';
             const url = status
-                ? `http://localhost:3001/api/fines?status=${status}`
-                : `http://localhost:3001/api/fines`;
+                ? `http://localhost:17221/api/fines?status=${status}`
+                : `http://localhost:17221/api/fines`;
 
             const token = localStorage.getItem('auth_token');
             const res = await fetch(url, {
@@ -81,7 +81,7 @@ const FinesTab = ({ initialTab }) => {
     useEffect(() => {
         fetchFines();
         // Fetch Departments for filter
-        fetch('http://localhost:3001/api/departments')
+        fetch('http://localhost:17221/api/departments')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) setDepartments(data);
@@ -270,7 +270,7 @@ const FinesTab = ({ initialTab }) => {
 
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3001/api/fines/collect', {
+            const res = await fetch('http://localhost:17221/api/fines/collect', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -316,7 +316,7 @@ const FinesTab = ({ initialTab }) => {
     const handleUpdateFine = async (fineId, amount, reason) => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3001/api/fines/update', {
+            const res = await fetch('http://localhost:17221/api/fines/update', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -343,7 +343,7 @@ const FinesTab = ({ initialTab }) => {
     const handleWaiveFine = async (fineId, reason) => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3001/api/fines/waive', {
+            const res = await fetch('http://localhost:17221/api/fines/waive', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -404,7 +404,7 @@ const FinesTab = ({ initialTab }) => {
     const handleResendEmail = async (fine) => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:3001/api/fines/resend-receipt', {
+            const res = await fetch('http://localhost:17221/api/fines/resend-receipt', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

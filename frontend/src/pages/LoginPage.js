@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type, Globe } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type, Globe, ArrowLeft } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
 import { useLanguage } from '../context/LanguageContext';
 import logo from '../assets/logo.png';
@@ -59,7 +59,7 @@ const LoginPage = () => {
         setFieldError('');
 
         try {
-            const response = await axios.post('http://localhost:3001/api/auth/login', credentials);
+            const response = await axios.post('http://localhost:17221/api/auth/login', credentials);
 
             // Success
             const { token, user } = response.data;
@@ -99,6 +99,12 @@ const LoginPage = () => {
 
             {/* Top Right Controls */}
             <div className="login-controls">
+                {/* Back Button */}
+                <button className="icon-btn" onClick={() => navigate('/')} title={t('common.back') || "Go Back"}>
+                    <ArrowLeft size={18} />
+                    <span className="lang-code" style={{ fontSize: '0.9rem', marginLeft: '5px' }}>{t('common.back') || "Back"}</span>
+                </button>
+
                 {/* Language Toggle */}
                 <button className="icon-btn" onClick={toggleLanguage} title="Switch Language">
                     <Globe size={18} />

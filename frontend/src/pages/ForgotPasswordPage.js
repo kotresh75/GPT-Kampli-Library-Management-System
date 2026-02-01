@@ -24,7 +24,7 @@ const ForgotPasswordPage = () => {
         setError('');
         setMessage('');
         try {
-            const res = await fetch('http://localhost:3001/api/auth/forgot-password', {
+            const res = await fetch('http://localhost:17221/api/auth/forgot-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email })
@@ -52,7 +52,7 @@ const ForgotPasswordPage = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch('http://localhost:3001/api/auth/verify-otp', {
+            const res = await fetch('http://localhost:17221/api/auth/verify-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp })
@@ -80,7 +80,7 @@ const ForgotPasswordPage = () => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch('http://localhost:3001/api/auth/reset-password', {
+            const res = await fetch('http://localhost:17221/api/auth/reset-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, otp, newPassword })

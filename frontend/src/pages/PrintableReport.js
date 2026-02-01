@@ -30,9 +30,9 @@ const PrintableReport = () => {
                 // Let's assume we fetch sequentially for now to be safe
 
                 const [circRes, finRes, invRes] = await Promise.all([
-                    fetch(`http://localhost:3001/api/reports/circulation?period=${period}`),
-                    fetch(`http://localhost:3001/api/reports/financial?period=${period}`),
-                    fetch(`http://localhost:3001/api/reports/inventory?period=${period}`)
+                    fetch(`http://localhost:17221/api/reports/circulation?period=${period}`),
+                    fetch(`http://localhost:17221/api/reports/financial?period=${period}`),
+                    fetch(`http://localhost:17221/api/reports/inventory?period=${period}`)
                 ]);
 
                 const circData = await circRes.json();

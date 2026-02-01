@@ -14,7 +14,7 @@ export const SessionProvider = ({ children }) => {
     // Fetch settings on mount
     const refreshSessionSettings = useCallback(async () => {
         try {
-            const res = await axios.get('http://localhost:3001/api/settings/app');
+            const res = await axios.get('http://localhost:17221/api/settings/app');
             if (res.data?.app_security?.autoLockMinutes) {
                 setAutoLockMinutes(parseInt(res.data.app_security.autoLockMinutes));
             } else {
@@ -100,7 +100,7 @@ export const SessionProvider = ({ children }) => {
 
             // Verify password via login endpoint (or a specific verify endpoint if available)
             // Using login endpoint is safe as it verifies credentials
-            await axios.post('http://localhost:3001/api/auth/login', {
+            await axios.post('http://localhost:17221/api/auth/login', {
                 email: userInfo.email,
                 password: password
             });

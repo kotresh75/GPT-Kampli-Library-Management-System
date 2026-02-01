@@ -120,8 +120,8 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
         try {
             const token = localStorage.getItem('auth_token');
             const url = isEdit
-                ? `http://localhost:3001/api/staff/${staff.id}`
-                : `http://localhost:3001/api/staff`;
+                ? `http://localhost:17221/api/staff/${staff.id}`
+                : `http://localhost:17221/api/staff`;
 
             const method = isEdit ? 'PUT' : 'POST';
 
@@ -161,7 +161,7 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
         setConfirmConfig({ show: false, action: null });
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:3001/api/staff/${staff.id}/reset-password`, {
+            const res = await fetch(`http://localhost:17221/api/staff/${staff.id}/reset-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

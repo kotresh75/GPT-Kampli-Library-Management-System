@@ -165,7 +165,7 @@ The major functions of the system include:
 -   **Offline First**: Must function fully without an internet connection.
 -   **Hardware**: Minimum 4GB RAM.
 -   **Regulatory & Standards**: Data Privacy (GDPR principles), Financial Auditability.
--   **Technical Constraints**: Single Instance only, Port Availability (default 3001).
+-   **Technical Constraints**: Single Instance only, Port Availability (default 17221).
 
 ---
 

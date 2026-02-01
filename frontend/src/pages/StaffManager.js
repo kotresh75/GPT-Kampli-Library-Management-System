@@ -46,7 +46,7 @@ const StaffManager = () => {
                 status: filterStatus
             }).toString();
 
-            const res = await fetch(`http://localhost:3001/api/staff?${query}`, {
+            const res = await fetch(`http://localhost:17221/api/staff?${query}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -77,7 +77,7 @@ const StaffManager = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('auth_token');
-                const res = await fetch(`http://localhost:3001/api/staff/stats`, {
+                const res = await fetch(`http://localhost:17221/api/staff/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -134,7 +134,7 @@ const StaffManager = () => {
             const token = localStorage.getItem('auth_token');
             let res;
             if (action === 'toggle_status') {
-                res = await fetch(`http://localhost:3001/api/staff/${data.id}/status`, {
+                res = await fetch(`http://localhost:17221/api/staff/${data.id}/status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -143,7 +143,7 @@ const StaffManager = () => {
                     body: JSON.stringify({ status: data.newStatus })
                 });
             } else if (action === 'delete') {
-                res = await fetch(`http://localhost:3001/api/staff/${data.id}`, {
+                res = await fetch(`http://localhost:17221/api/staff/${data.id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });

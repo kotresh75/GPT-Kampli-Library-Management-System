@@ -8,9 +8,9 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         // Connect to backend
-        // Assuming backend is on port 3001
+        // Assuming backend is on port 17221
         // In production, this should be an env var
-        const newSocket = io('http://localhost:3001');
+        const newSocket = io('http://localhost:17221');
 
         newSocket.on('connect', () => {
             console.log('[Socket] Connected to backend');

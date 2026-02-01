@@ -1,7 +1,8 @@
-# GPTK Library Management System - User Manual
+# User Manual - GPTK Library Management System
 
-**Version:** 2.0  
-**Last Updated:** 28/01/2026
+**Version:** 1.0  
+**Last Updated:** February 2026  
+**Department:** Computer Science & Engineering, GPT Kampli
 
 ---
 
@@ -9,329 +10,248 @@
 
 1.  [Introduction](#1-introduction)
 2.  [Getting Started](#2-getting-started)
-    *   [Installation](#21-installation)
-    *   [First-Time Setup](#22-first-time-setup)
-3.  **Screen Reference Guide (Detailed)**
-    *   [3.1 Dashboard](#31-dashboard)
-    *   [3.2 Catalog Manager (Books)](#32-catalog-manager)
-    *   [3.3 Member Manager (Students)](#33-member-manager)
-    *   [3.4 Circulation Desk](#34-circulation-desk)
-    *   [3.5 Fine Management](#35-fine-management)
-    *   [3.6 Reports & Analytics](#36-reports--analytics)
-    *   [3.7 Broadcast / Notifications](#37-notifications)
-    *   [3.8 Settings](#38-settings)
-4.  [Core Workflows (How-To)](#4-core-workflows)
-5.  [Troubleshooting & FAQ](#5-troubleshooting)
+    *   [Launching the Application](#launching-the-application)
+    *   [Login Process](#login-process)
+    *   [Forgot Password](#forgot-password)
+3.  [The Dashboard](#3-the-dashboard)
+    *   [Home Overview](#home-overview)
+    *   [Navigation & Customization](#navigation--customization)
+4.  [Circulation Desk (Core Operations)](#4-circulation-desk-core-operations)
+    *   [Issuing Books (F1)](#issuing-books-f1)
+    *   [Returning Books (F2)](#returning-books-f2)
+    *   [Renewing Books (F3)](#renewing-books-f3)
+5.  [Book Catalog Management](#5-book-catalog-management)
+    *   [Adding New Books](#adding-new-books)
+    *   [Managing Copies](#managing-copies)
+    *   [Bulk Import](#bulk-import)
+6.  [Student (Member) Management](#6-student-member-management)
+    *   [Registering Students](#registering-students)
+    *   [Promoting Semesters](#promoting-semesters)
+7.  [Financial Management](#7-financial-management)
+    *   [Collecting Fines](#collecting-fines)
+8.  [Department Management](#8-department-management)
+9.  [Staff Management (Admin Only)](#9-staff-management-admin-only)
+10. [Reports & Analytics](#10-reports--analytics)
+11. [System Settings](#11-system-settings)
+12. [Public Pages](#12-public-pages)
+    *   [Landing Page](#landing-page)
+    *   [About Page](#about-page)
 
 ---
 
 ## 1. Introduction
 
-The **GPTK Library Management System** is a modern, high-performance desktop application designed for educational institutions. It streamlines library operations including book management, student records, circulation (issues/returns), fine collection, and reporting.
+The **GPTK Library Management System (LMS)** is a comprehensive desktop application designed to automate and streamline the operations of the Government Polytechnic Kampli library. It manages books, students, staff, and circulation (borrowing/returning) with a focus on speed and ease of use.
 
 **Key Features:**
-*   **Smart Circulation:** Barcode-based rapid issue/return.
-*   **Real-time Dashboard:** Live statistics and charts.
-*   **Data Safety:** Cloud backups and "Smart Save" technology.
-*   **Hardware Support:** Plug-and-play support for Barcode Scanners and Thermal Printers.
+*   **Offline-First**: Works without an internet connection (except for emails/cloud backup).
+*   **Barcode Support**: Optimized for fast scanning of Student IDs and Book ISBNs.
+*   **Automatic Fines**: Calculates overdue fines based on college policy.
+*   **Reports**: Generates detailed daily and monthly usage reports.
 
 ---
 
 ## 2. Getting Started
 
-### 2.1 Installation
-1.  **Locate the Installer**: Find `GPTK Library Manager Setup 1.0.0.exe` in your `Final_Fixed_Build` folder.
-2.  **Run Installer**: Double-click the `.exe`. The application will install silently and launch automatically.
-    *   *Note: No administrator privileges are usually required as it installs to AppData.*
-3.  **Desktop Shortcut**: A shortcut named **GPTK Library Manager** will be created on your desktop.
+### Launching the Application
+Double-click the **GPTK Library System** icon on your desktop. The application runs as a native window.
 
-### 2.2 First-Time Setup
-1.  **Launch the App**.
-2.  **Login**: Use the default Administrator credentials:
-    *   **Email**: `veerkotresh@gmail.com`
-    *   **Password**: `123456`
-    *   *> **Important:** Go to Settings > Security immediately to change this password.*
-3.  **Database Configuration**:
-    *   The app uses a local SQLite database (`lms.sqlite`) located in `%APPDATA%/GPTK Library Manager/DB/`.
-    *   No manual database setup is required.
+### Login Process
+1.  **Landing Page**: Click the "Login" button or the "Access Portal" button.
+2.  **Credentials**: Enter your registered **Email Address** and **Password**.
+3.  **Authentication**: Click "Login".
+    *   *Note*: If you enter the wrong password, the box will shake red.
+4.  **Success**: You will be redirected to the **Dashboard**.
 
----
-
-## 3. Screen Reference Guide
-*This section details every button, field, and indicator on every screen of the application.*
-
-### 3.1 Dashboard
-The **Dashboard** is the landing page providing a high-level overview.
-
-#### **A. KPI Cards (Top Row)**
-Interactive cards that show live data. Clicking a card navigates to the relevant detailed view.
-1.  **Total Books (Blue)**:
-    *   *Display*: Total number of unique book titles in the library.
-    *   *Action*: Clicks to **Catalog Manager**.
-2.  **Total Students (Purple)**:
-    *   *Display*: Total registered active students.
-    *   *Action*: Clicks to **Student Manager**.
-3.  **Issued Today (Green)**:
-    *   *Display*: Count of books issued since 12:00 AM today.
-    *   *Action*: Opens a modal list of today's transactions.
-4.  **Overdue Books (Orange)**:
-    *   *Display*: Count of books currently held past their due date.
-    *   *Action*: Opens a modal list of overdue items.
-5.  **Fines Collected (Emerald)**:
-    *   *Display*: Total valid cash fines collected (Lifetime).
-    *   *Action*: Clicks to **Fine History**.
-6.  **Lost/Damaged (Red)**:
-    *   *Display*: Books marked as 'Lost' or 'Damaged'.
-    *   *Action*: Opens a detailed list.
-
-#### **B. Charts (Middle Row)**
-1.  **Books by Department (Pie Chart)**: Visual breakdown of library inventory by department (e.g., CS, EC, MECH). Hover slices to see percentages.
-2.  **Active Students (Bar Chart)**: Student distribution across semesters or departments.
-3.  **Trending Books (Bar Chart)**: Top 5 most frequently issued books.
-
-#### **C. Recent Activity (Bottom)**
-*   **Audit Table**: Shows the last 5 system actions (e.g., "User veerkotresh added book X").
-*   **"View Audit" Link**: Navigates to the full **Audit Log** page.
+### Forgot Password
+If you cannot remember your password:
+1.  Click the **"Forgot password?"** link on the login screen.
+2.  **Step 1**: Enter your Email Address and click "Send OTP".
+3.  **Step 2**: Check your email for a 6-digit code. Enter it in the OTP field.
+4.  **Step 3**: Create a new password and confirm it.
 
 ---
 
-### 3.2 Catalog Manager
-**Route**: `/dashboard/books`  
-**Purpose**: Manage the book inventory.
+## 3. The Dashboard
 
-#### **A. Toolbar (Top)**
-*   **Search Bar**: Text input to search by Title, Author, or ISBN.
-*   **Department Filter**: Dropdown to show books only from a specific department (or 'All').
-*   **Sort Dropdown**:
-    *   `Recently Added`: Shows newest books first.
-    *   `Title (A-Z)`: Alphabetical order.
-    *   `Availability`: Most available copies first.
-*   **Delete Selected (Trash Icon)**: *Visible only when rows selected.* Permanently deletes selected books.
-*   **Export (Download Icon)**: Opens **Export Options** modal (PDF/Excel/CSV).
-*   **Import (Upload Icon)**: Opens **Smart Bulk Import** modal for CSV uploading.
-*   **Add Book button (Plus Icon)**: Opens the **Add New Book** form.
+### Home Overview
+Once logged in, you see the **Dashboard Home**. This gives you a real-time snapshot of the library:
+*   **KPI Cards**: Top row showing *Total Books*, *Total Students*, *Issued Today*, *Overdue*, and *Fines Collected*.
+    *   *Tip*: Click "Issued Today" to see a list of who borrowed books today.
+*   **Charts**:
+    *   **Department Distribution**: Pie chart showing books per department.
+    *   **Student Strength**: Bar chart of students per department.
+*   **Recent Activity**: A live feed of actions (Issues, Returns, Logins) happening in the system.
 
-#### **B. Book Table**
-Columns:
-*   **Checkbox**: Select row for bulk actions.
-*   **Book Info**: Shows Title (Bold) and Author (Subtext).
-*   **ISBN**: The unique barcode number strings.
-*   **Department**: The category/department the book belongs to.
-*   **Status**:
-    *   `Available` (Green badge): Copies > 0.
-    *   `Out of Stock` (Red badge): All copies issued.
-*   **Copies**: Shows `Available / Total` (e.g., 5/10).
-*   **Actions (Right-side)**:
-    *   `Edit` (Pencil): Modify book details.
-    *   `Manage Copies` (Layers): Add/Remove specific copy quantities.
-    *   `View` (Eye): Detailed read-only view.
-    *   `Delete` (Trash): Delete this specific book.
-
-#### **C. Modals**
-*   **Bulk Import**:
-    *   *Fields*: Drag & Drop area, Sample CSV download link.
-    *   *Auto-Fill*: `Auto-Fill` button fetches metadata from Google Books API if ISBNs are valid.
-*   **Export Modal**:
-    *   *Options*: Export "All Books", "Filtered Results", or "Selected Rows".
+### Navigation & Customization
+*   **Sidebar**: Used to navigate between modules (Books, Students, Circulation, etc.). It highlights your current page.
+*   **Top Bar**:
+    *   **Toggle Sidebar**: Collapse the menu to show only icons.
+    *   **Theme**: Switch between **Light** and **Dark** mode (Sun/Moon icon).
+    *   **Font Size**: Adjust text size (A- / A / A+) for better readability.
+    *   **Language**: Switch interface between **English** and **Kannada**.
+    *   **User Profile**: View your name or Logout.
 
 ---
 
-### 3.3 Member Manager
-**Route**: `/dashboard/members`  
-**Purpose**: Manage student/staff records.
+## 4. Circulation Desk (Core Operations)
 
-#### **A. Toolbar (Top)**
-*   **Search**: Search by Name or Register Number (USN).
-*   **Dept Filter**: Filter by Department.
-*   **Semester Filter**: Filter by Semester (1-8).
-*   **Sort**: Options for Name, RegNo, and Semester.
-*   **Import/Export Icons**: Same functionality as Catalog.
-*   **Add Student Button**: Opens registration form.
+This is the most used screen. Shortcut: Click **Circulation** in the sidebar.
 
-#### **B. Bulk Actions (Contextual)**
-*Arguments appear when students are selected*:
-*   **Promote Class (Arrow Up)**: Moves selected students to the next semester (e.g., Sem 1 -> 2).
-*   **Demote Class (Arrow Down)**: Moves selected students back one semester.
-*   **Bulk Edit**: Edit a shared field (e.g., Department) for all selected students.
+### Issuing Books (F1)
+*Press **F1** to open the Issue Tab.*
+1.  **Identify Student**: Scan the Student's ID Card or type their Register Number/Name.
+    *   The system checks if the student is Active and has no unpaid fines blocking them.
+2.  **Verify Profile**: Check the photo and department details displayed.
+3.  **Scan Books**:
+    *   Scan the barcode of the book(s) the student wants to borrow.
+    *   Books are added to a "Cart".
+4.  **Confirm Issue**: Click **"Issue Books"**.
+    *   The student receives an email receipt instantly.
 
-#### **C. Student Table**
-Columns:
-*   **Name/Father Name**: Primary identifiers.
-*   **Register No**: Unique University Seat Number.
-*   **Dept/Sem**: Academic details.
-*   **Status**:
-    *   `Active` (Green): Can borrow books.
-    *   `Blocked` (Red): Cannot borrow (due to fines/overdue).
-*   **Contact**: Phone number.
+### Returning Books (F2)
+*Press **F2** to open the Return Tab.*
+1.  **Scan Book**: Simply scan the barcode of the book being returned.
+2.  **Review Logic**:
+    *   **On Time**: The book is accepted, and loan is closed.
+    *   **Overdue**: The system calculates the fine (e.g., ₹1/day) and shows a prompt.
+    *   **Damage/Lost**: You can mark a book as Damaged or Lost, which adds a penalty fee.
+3.  **Payment**: If there is a fine, you can collect it immediately or add it to the student's "Dues".
 
----
-
-### 3.4 Circulation Desk
-**Route**: `/dashboard/circulation`  
-**Shortcuts**: `F1` (Issue), `F2` (Return), `F3` (Fines).
-
-#### **Tab 1: Issue Book (F1)**
-1.  **Student Identifier**:
-    *   Input field to type Name or Register Number.
-    *   *Validation*: Shows "Student Blocked" alert if fines exist.
-2.  **Book Scanner**:
-    *   Input field prioritized for Barcode Scanner.
-    *   *Action*: Scanning an ISBN adds it to the "Cart".
-3.  **Cart Table**: Lists books to be issued in this transaction.
-4.  **Confirm Issue Button**: Finalizes the transaction.
-
-#### **Tab 2: Return Book (F2)**
-1.  **Quick Scan Input**:
-    *   Single large input field.
-    *   *Action*: Scan a book barcode here. System auto-finds who has it and processes the return.
-    *   *Overdue Check*: If overdue, a **Fine Modal** immediately pops up requesting payment or adding to pending dues.
-
-#### **Tab 3: Fines (F3)**
-*   Displays a list of specific outstanding fines for the currently selected student.
+### Renewing Books (F3)
+*Press **F3** to open the Renew Tab.*
+1.  **Scan Book**: Scan the book barcode.
+2.  **Check Policy**: The system checks if the renewal limit (e.g., 2 times) is reached.
+3.  **Confirm**: Extends the due date by the policy default (e.g., 15 days).
 
 ---
 
-### 3.5 Fine Management
-**Route**: `/dashboard/fines`  
-**Purpose**: Manage monetary transactions and overdue penalties.
+## 5. Book Catalog Management
 
-#### **A. Tabs**
-*   **Pending Dues**: List of unpaid fines.
-*   **Fine History**: Log of all collected or waived fines.
+Go to **Books** in the sidebar.
 
-#### **B. Pending Dues View**
-*   **Search**: Find fines by Student Name.
-*   **Table Columns**: Student, Book/Reason, Due Date, Amount (Authoritative), Actions.
-*   **Action: Waive Off**:
-    *   Clicking this prompts for a **Reason** (mandatory).
-    *   Marks fine as 'Waived' and removes from pending total.
-*   **Floating Action Bar (Bottom Right)**:
-    *   Visible when rows are selected.
-    *   Shows **Total Amount** for selected rows.
-    *   **Collect Payment Button**: Marks selected fines as 'Paid' (Cash) and generates a Receipt.
+### Adding New Books
+1.  Click **"Add Book"**.
+2.  **ISBN**: Scan the ISBN barcode.
+    *   *Smart Feature*: The system tries to fetch book details (Title, Author, Cover) from the internet automatically.
+3.  **Details**: Fill in Title, Author, Publisher, Department, Price, and Shelf Location.
+4.  **Copies**: Enter the number of copies (e.g., 10). The system auto-generates Accession Numbers.
+5.  Click **"Add Book"**.
 
----
+### Managing Copies
+To handle specific physical copies (e.g., one copy is lost):
+1.  Find the book in the list.
+2.  Click the **Layers Icon** (Manage Copies).
+3.  You can change the status of individual barcodes to **Available**, **Lost**, **Damaged**, or **Maintenance**.
 
-### 3.6 Reports & Analytics
-**Route**: `/dashboard/reports`
-
-#### **A. Header Controls**
-*   **Period Selector**: Dropdown to choose data range:
-    *   `Last 7 Days`
-    *   `Last 30 Days` (Default)
-    *   `Last 90 Days`
-    *   `Last 1 Year`
-*   **Export/Print Button**: Generates a printer-friendly version of the current active report.
-
-#### **B. Report Tabs**
-1.  **Circulation Analytics**:
-    *   *Line Chart*: Daily Issue vs Return trends.
-    *   *Metrics*: Peak Issue Days, Return Efficiency %.
-2.  **Financial Analytics**:
-    *   *Bar Chart*: Fine collection trends.
-    *   *Table*: Breakdown of revenue by Department.
-3.  **Inventory Reports**:
-    *   *Tree Map/Grid*: Visual distribution of book categories.
-    *   *Valuation*: Estimated total cost of inventory.
+### Bulk Import
+To add hundreds of books at once:
+1.  Click **"Import"**.
+2.  Download the **Sample CSV Template**.
+3.  Fill your data in Excel/CSV and upload it.
+4.  The system validates the data and adds valid records.
 
 ---
 
-### 3.7 Notifications (Broadcast)
-**Route**: `/dashboard/notifications`  
-**Purpose**: Send email alerts to students.
+## 6. Student (Member) Management
 
-#### **A. Composer (Left Panel)**
-*   **Recipient Type**:
-    *   `Specific Student`: Unlocks a search bar to find a student.
-    *   `All Issued`: Sends to everyone holding a book.
-    *   `Overdue Holders`: Sends only to defaulters.
-*   **Subject**: Email subject line.
-*   **Message Body**: Rich text editor (Bold, Italic, Lists).
-*   **Warning Banner**: If email is disabled in Settings, a red banner appears here warnings that "Emails will not be sent".
+Go to **Members** in the sidebar.
 
-#### **B. History (Right Panel)**
-*   List of past broadcasts with Status indicators (Success/Failed) and Timestamps.
+### Registering Students
+1.  Click **"Add Student"**.
+2.  Enter **Register Number** (Unique Roll No), **Full Name**, **Department**, and **Semester**.
+3.  **Contact**: Email and Phone are required for notifications.
+4.  Click **"Register"**.
 
----
-
-### 3.8 Settings
-**Route**: `/settings`
-
-#### **Tab 1: Appearance**
-*   **Theme**: Light / Dark / System Default.
-*   **Language**: English / Kannada.
-*   **Font Scaling**: Slider (80% to 150%).
-*   **High Contrast**: Toggle for accessibility.
-
-#### **Tab 2: Security**
-*   **Change Password**: Fields for Current, New, and Confirm Password. Includes a strength meter.
-*   **Session Timeout**:
-    *   Select auto-lock duration (5, 10, 30 mins, or Custom).
-    *   Enter `0` or `Never` to disable auto-lock.
-
-#### **Tab 3: Hardware**
-*   **Scanner Config**:
-    *   `Mode`: Keyboard (HID) vs Serial.
-    *   `Prefix Strip`: Characters to ignore from scan (e.g., 'LIB-').
-    *   *Live Test Area*: Text box to test scanner input and see raw vs processed output.
-*   **Printer Config**:
-    *   `Default Printer`: Select system printer.
-    *   `Paper Size`: 58mm (Thermal) / 80mm / A4.
-    *   `Auto-Print`: Toggle automatic receipt printing on return/fine collection.
-
-#### **Tab 4: Data & Maintenance**
-*   **Cloud Database**: Input for MongoDB Connection URI.
-*   **Backup Controls**:
-    *   `Create Local Backup`: Downloads `.json` snapshot.
-    *   `Restore Local`: Upload `.json` to overwrite DB.
-    *   `Cloud Backup`: Pushes current DB to configuring Cloud URI.
-*   **Automation**: Checkbox for "Backup on Close".
-*   **Danger Zone**: **Factory Reset** (Wipes all data).
+### Promoting Semesters
+At the end of an academic year:
+1.  Select a Department and Current Semester filter (e.g., "Computer Science", "Sem 1").
+2.  Select All students.
+3.  Click **"Promote Selected"**.
+    *   System automatically moves them to the next semester (1 -> 2).
+    *   Final year students are moved to "Alumni".
 
 ---
 
-## 4. Core Workflows
+## 7. Financial Management
 
-### How to Add a New Book
-1.  Go to **Catalog Manager**.
-2.  Click the **+ Add Book** button.
-3.  **Manual Entry**:
-    *   Fill in Title, Author, ISBN, Publisher, etc.
-    *   *Note*: ISBN is mandatory.
-4.  **Auto-Fill (Recommended)**:
-    *   Type the ISBN.
-    *   Click the **Lightning Bolt Icon** next to the field.
-    *   System fetches details (Cover, Title, Author) from the internet.
-5.  Click **Save**.
+Go to **Fines** in the sidebar.
 
-### How to Issue a Book
-1.  Navigate to **Circulation** -> **Issue Tab** (or press `F1`).
-2.  **Select Student**: Type the student's name or RegNo in the top search box. Select them from the dropdown.
-3.  **Scan Book**: Focus the cursor on the "Book ISBN" field and scan the barcode.
-4.  The book appears in the cart below. Repeat for multiple books.
-5.  Click **Confirm Issue**.
+### Collecting Fines
+This screen lists all students with unpaid fines.
+1.  Search for a student.
+2.  View their **Pending Fines** table.
+3.  Select the fines they are paying.
+4.  Click **"Collect Payment"**.
+5.  Choose **Cash** (or UPI if applicable).
+6.  The system generates a **Digital Receipt**.
 
-### How to Return a Book
-1.  Navigate to **Circulation** -> **Return Tab** (or press `F2`).
-2.  **Scan**: Simply scan the book's barcode.
-3.  System automatically identifies the student and processes the return.
-4.  **Fine Alert**: If the book is overdue, a popup will ask to **Collect Fine** or **Add to Dues**.
+*Note: Admins can "Waive" fines if necessary, but a Reason is mandatory.*
 
 ---
 
-## 5. Troubleshooting
+## 8. Department Management
 
-**Q: "Student Blocked" message when issuing?**  
-A: The student likely has unpaid fines or overdue books. Check the **Fines** tab or asking them to return overdue items.
+Go to **Departments** in the sidebar.
+*   **Add Department**: Create new branches (e.g., "Civil Engineering").
+*   **Stats**: View how many books and students belong to each department.
+*   **HOD Signature**: Upload the digital signature of the HOD for automated certificates.
 
-**Q: Scanner is not working / inputs weird characters.**  
-A: Go to **Settings > Hardware**. Check the "Live Test" area. If characters are doubling, ensure your scanner is not sending an extra 'Enter' key, or adjust the `Prefix Strip` settings.
+---
 
-**Q: Cannot Connect to Cloud Backup.**  
-A: Go to **Settings > Data**. Ensure the `Connection URI` is correct and your internet connection is active. Use the "Test Connection" button to verify.
+## 9. Staff Management (Admin Only)
 
-**Q: Application is slow.**  
-A: Go to **Settings > Data** and click **Clear Cache**. This safely removes temporary files without deleting library data.
+Go to **Staff** in the sidebar.
+*   **Add Staff**: Create accounts for new librarians.
+    *   **Roles**: Assign specific permissions (e.g., "Circulation Only" or "Viewer Only").
+*   *Security*: You can **Disable** a staff account instantly if they leave the organization.
 
-**Q: Forgot Admin Password?**  
-A: You must contact the support team or use the database tool to manually reset the hash in `admin_users` table. There is no automatic "Forgot Password" link for security reasons.
+---
+
+## 10. Reports & Analytics
+
+Go to **Reports** in the sidebar.
+1.  **Select Report Type**:
+    *   **Circulation**: Issues/Returns trends.
+    *   **Financial**: Fine collections per day/month.
+    *   **Inventory**: Total asset value and distribution.
+2.  **Date Range**: Choosing "Today", "Last 30 Days", or a Custom Range.
+3.  **Generate**: View the data on screen.
+4.  **Export**: Click **"Download PDF"** or **"Export CSV"** for printing.
+
+---
+
+## 11. System Settings
+
+Go to **Settings** in the sidebar.
+*   **Appearance**: Default theme and language.
+*   **Hardware**:
+    *   **Printer**: Select your default receipt printer (Thermal/A4).
+    *   **Scanner**: Test your barcode scanner input.
+*   **Backup**:
+    *   **Cloud Sync**: Connect to MongoDB Atlas for secure cloud backups.
+    *   **Backup Now**: Manually trigger a local backup of the database.
+*   **Policies** (Admin):
+    *   Set **Fine per Day**.
+    *   Set **Max Loan Days** and **Borrowing Limit**.
+
+---
+
+## 12. Public Pages
+
+### Landing Page
+The start screen for everyone.
+*   **Stats**: Publicly displays total books and students.
+*   **Theme Toggle**: Users can switch view before logging in.
+*   **Info Button**: Top right corner 'i' icon opens the **About Page**.
+
+### About Page
+Verified project information.
+*   **Project Details**: Overview of GPTK LMS.
+*   **Team**: List of student developers and guide.
+*   **Features**: Summary of system capabilities.
+*   Accessed via the **'i' icon** on Landing Page or **"About Project"** in Settings.
+
+---
+
+**Support**: For technical issues, contact the System Administrator or the Computer Science Department.

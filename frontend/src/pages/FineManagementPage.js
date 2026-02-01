@@ -5,6 +5,7 @@ import GlassSelect from '../components/common/GlassSelect';
 import ReceiptPreviewModal from '../components/finance/ReceiptPreviewModal';
 import ConfirmationModal from '../components/common/ConfirmationModal'; // Assuming exists
 import { useSocket } from '../context/SocketContext';
+import '../styles/components/tables.css';
 
 const FineManagementPage = () => {
     const [activeTab, setActiveTab] = useState('pending');
@@ -30,8 +31,8 @@ const FineManagementPage = () => {
             // Mapping tabs to status: pending -> Unpaid, history -> Paid/Waived
             const status = activeTab === 'pending' ? 'Unpaid' : '';
             const url = status
-                ? `http://localhost:3001/api/fines?status=${status}`
-                : `http://localhost:3001/api/fines`; // History fetches all or just paid/waived
+                ? `http://localhost:17221/api/fines?status=${status}`
+                : `http://localhost:17221/api/fines`; // History fetches all or just paid/waived
 
             const res = await fetch(url);
             const data = await res.json();
@@ -78,7 +79,7 @@ const FineManagementPage = () => {
         // Group logic or simple single student validation could be here
         // For MVP, just send IDs.
         try {
-            const res = await fetch('http://localhost:3001/api/fines/collect', {
+            const res = await fetch('http://localhost:17221/api/fines/collect', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -119,7 +120,7 @@ const FineManagementPage = () => {
         if (!reason) return;
 
         try {
-            const res = await fetch('http://localhost:3001/api/fines/waive', {
+            const res = await fetch('http://localhost:17221/api/fines/waive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -185,89 +186,94 @@ const FineManagementPage = () => {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto glass-panel p-0">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-white/5 text-gray-300 sticky top-0 backdrop-blur-md">
-                        <tr>
-                            {activeTab === 'pending' && <th className="p-4 w-10">Select</th>}
-                            <th className="p-4">Student</th>
-                            <th className="p-4">Book / Reason</th>
-                            <th className="p-4">Due Date</th>
-                            <th className="p-4">Amount</th>
-                            <th className="p-4">Status</th>
-                            <th className="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-glass/20">
-                        {loading ? (
-                            <tr><td colSpan="7" className="p-8 text-center">Loading Data...</td></tr>
-                        ) : filteredFines.length === 0 ? (
-                            <tr><td colSpan="7" className="p-8 text-center text-gray-400">No records found.</td></tr>
-                        ) : (
-                            filteredFines.map(fine => (
-                                <tr key={fine.id} className="hover:bg-white/5 transition-colors">
-                                    {activeTab === 'pending' && (
-                                        <td className="p-4">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedFines.includes(fine.id)}
-                                                onChange={() => toggleSelect(fine.id)}
-                                                className="w-4 h-4 cursor-pointer"
-                                            />
-                                        </td>
-                                    )}
-                                    <td className="p-4">
-                                        <div className="font-medium">{fine.student_name}</div>
-                                        <div className="text-xs text-gray-400">{fine.roll_number}</div>
-                                    </td>
-                                    <td className="p-4">
-                                        <div className="text-sm">{fine.book_title || 'N/A'}</div>
-                                        <div className="text-xs text-amber-300">{fine.reason}</div>
-                                    </td>
-                                    <td className="p-4 text-sm text-gray-400">
-                                        {fine.due_date ? formatDate(fine.due_date) : '-'}
-                                    </td>
-                                    <td className="p-4 font-bold text-red-300">
-                                        ₹{fine.amount.toFixed(2)}
-                                    </td>
-                                    <td className="p-4">
-                                        <span className={`px-2 py-1 rounded text-xs ${fine.status === 'Paid' ? 'bg-green-500/20 text-green-300' : fine.status === 'Waived' ? 'bg-gray-500/20 text-gray-300' : 'bg-red-500/20 text-red-300'}`}>
-                                            {fine.status}
-                                        </span>
-                                        {fine.payment_date && <div className="text-xs text-gray-500 mt-1">{formatDate(fine.payment_date)}</div>}
-                                    </td>
-                                    <td className="p-4 text-right">
-                                        {activeTab === 'pending' ? (
-                                            <button
-                                                className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-300 px-3 py-1.5 rounded transition-colors"
-                                                onClick={() => handleWaive(fine.id)}
-                                            >
-                                                Waive Off
-                                            </button>
-                                        ) : (
-                                            <button
-                                                className="text-xs bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded transition-colors"
-                                                onClick={() => {
-                                                    setCurrentReceiptData({
-                                                        id: `REC-REF-${fine.id.slice(0, 5)}`,
-                                                        student_name: fine.student_name,
-                                                        roll_number: fine.roll_number,
-                                                        amount: fine.amount,
-                                                        reason: fine.reason,
-                                                        payment_method: fine.payment_method
-                                                    });
-                                                    setShowReceipt(true);
-                                                }}
-                                            >
-                                                View Receipt
-                                            </button>
+            <div className="flex-1 glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
+                <div className="table-container">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                {activeTab === 'pending' && <th style={{ width: '40px' }}>Select</th>}
+                                <th>Student</th>
+                                <th>Book / Reason</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th style={{ textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <tr><td colSpan="7" className="p-8 text-center">Loading Data...</td></tr>
+                            ) : filteredFines.length === 0 ? (
+                                <tr><td colSpan="7" className="p-8 text-center text-gray-400">No records found.</td></tr>
+                            ) : (
+                                filteredFines.map(fine => (
+                                    <tr key={fine.id} className="hover:bg-white/5 transition-colors">
+                                        {activeTab === 'pending' && (
+                                            <td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedFines.includes(fine.id)}
+                                                    onChange={() => toggleSelect(fine.id)}
+                                                    className="cursor-pointer"
+                                                />
+                                            </td>
                                         )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                                        <td>
+                                            <div className="font-medium text-[var(--text-primary)]">{fine.student_name}</div>
+                                            <div className="text-xs text-[var(--text-secondary)]">{fine.roll_number}</div>
+                                        </td>
+                                        <td>
+                                            <div className="text-sm text-[var(--text-primary)]">{fine.book_title || 'N/A'}</div>
+                                            <div className="text-xs text-amber-300">{fine.reason}</div>
+                                        </td>
+                                        <td className="text-sm text-[var(--text-secondary)]">
+                                            {fine.due_date ? formatDate(fine.due_date) : '-'}
+                                        </td>
+                                        <td className="font-bold text-red-300">
+                                            ₹{fine.amount.toFixed(2)}
+                                        </td>
+                                        <td>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${fine.status === 'Paid' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                                                fine.status === 'Waived' ? 'bg-gray-500/10 text-gray-400 border border-gray-500/20' :
+                                                    'bg-red-500/10 text-red-400 border border-red-500/20'
+                                                }`}>
+                                                {fine.status}
+                                            </span>
+                                            {fine.payment_date && <div className="text-xs text-gray-500 mt-1">{formatDate(fine.payment_date)}</div>}
+                                        </td>
+                                        <td style={{ textAlign: 'right' }}>
+                                            {activeTab === 'pending' ? (
+                                                <button
+                                                    className="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-300 px-3 py-1.5 rounded transition-colors border border-red-500/20"
+                                                    onClick={() => handleWaive(fine.id)}
+                                                >
+                                                    Waive Off
+                                                </button>
+                                            ) : (
+                                                <button
+                                                    className="text-xs bg-white/5 hover:bg-white/10 text-gray-300 px-3 py-1.5 rounded transition-colors border border-white/10"
+                                                    onClick={() => {
+                                                        setCurrentReceiptData({
+                                                            id: `REC-REF-${fine.id.slice(0, 5)}`,
+                                                            student_name: fine.student_name,
+                                                            roll_number: fine.roll_number,
+                                                            amount: fine.amount,
+                                                            reason: fine.reason,
+                                                            payment_method: fine.payment_method
+                                                        });
+                                                        setShowReceipt(true);
+                                                    }}
+                                                >
+                                                    View Receipt
+                                                </button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Bulk Actions for Pending Tab */}

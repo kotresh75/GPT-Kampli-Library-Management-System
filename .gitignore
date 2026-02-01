@@ -42,7 +42,7 @@ electron/dist/
 electron/build/
 
 # Build Artifacts
-Final_Fixed_Build_v2/
+Final_export/
 
 # Windows System Files
 Thumbs.db

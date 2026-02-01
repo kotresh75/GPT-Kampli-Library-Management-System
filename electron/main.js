@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -279,6 +279,11 @@ ipcMain.on('window-maximize', () => {
     }
 });
 ipcMain.on('window-close', () => { if (mainWindow) mainWindow.close(); });
+
+// External Link Handling
+ipcMain.on('open-external', (event, url) => {
+    shell.openExternal(url);
+});
 
 // Printer Handling
 ipcMain.handle('get-printers', async () => {

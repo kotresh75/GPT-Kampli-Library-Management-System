@@ -45,7 +45,7 @@ const SmartReportsPage = () => {
     const fetchReportData = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:3001/api/reports/${activeTab}?period=${period}`);
+            const res = await fetch(`http://localhost:17221/api/reports/${activeTab}?period=${period}`);
             const data = await res.json();
             setStats(data);
         } catch (err) {

@@ -35,8 +35,8 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
 
         try {
             const url = isEdit
-                ? `http://localhost:3001/api/admins/${admin.id}`
-                : `http://localhost:3001/api/admins`;
+                ? `http://localhost:17221/api/admins/${admin.id}`
+                : `http://localhost:17221/api/admins`;
             const method = isEdit ? 'PUT' : 'POST';
             const token = localStorage.getItem('auth_token');
 

@@ -10,7 +10,7 @@ const ReceiptPreviewModal = ({ isOpen, onClose, transaction }) => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('http://localhost:3001/api/settings/app');
+                const res = await fetch('http://localhost:17221/api/settings/app');
                 if (res.ok) {
                     const data = await res.json();
                     setSettings(data);

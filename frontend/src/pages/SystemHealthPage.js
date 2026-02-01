@@ -49,13 +49,13 @@ const SystemHealthPage = () => {
     const fetchHealth = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:3001/api/health');
+            const res = await fetch('http://localhost:17221/api/health');
             const data = await res.json();
             setHealth(data);
 
             // Auto-check connectivity if not done yet
             if (!connectivity) {
-                const netRes = await fetch('http://localhost:3001/api/health/connectivity');
+                const netRes = await fetch('http://localhost:17221/api/health/connectivity');
                 const netData = await netRes.json();
                 setConnectivity(netData);
             }
@@ -69,7 +69,7 @@ const SystemHealthPage = () => {
     const runNetCheck = async () => {
         setCheckingNet(true);
         try {
-            const res = await fetch('http://localhost:3001/api/health/connectivity');
+            const res = await fetch('http://localhost:17221/api/health/connectivity');
             const data = await res.json();
             setConnectivity(data);
         } catch (err) {

@@ -19,13 +19,13 @@ const StudentDetailModal = ({ student, onClose }) => {
     useEffect(() => {
         if (student?.id) {
             // Loans
-            fetch(`http://localhost:3001/api/circulation/loans/${student.id}`)
+            fetch(`http://localhost:17221/api/circulation/loans/${student.id}`)
                 .then(res => res.json())
                 .then(data => setLoans(Array.isArray(data) ? data : []))
                 .catch(console.error);
 
             // Fines
-            fetch(`http://localhost:3001/api/fines/student/${student.id}`)
+            fetch(`http://localhost:17221/api/fines/student/${student.id}`)
                 .then(res => res.json())
                 .then(data => setFines(Array.isArray(data) ? data : []))
                 .catch(console.error);
@@ -34,7 +34,7 @@ const StudentDetailModal = ({ student, onClose }) => {
 
     useEffect(() => {
         if (activeTab === 'circulation' && student?.id) {
-            const url = `http://localhost:3001/api/circulation/history?student_id=${student.id}&limit=100`;
+            const url = `http://localhost:17221/api/circulation/history?student_id=${student.id}&limit=100`;
             console.log("Fetching student history:", url);
             setLoading(true);
             const token = localStorage.getItem('auth_token');
@@ -56,7 +56,7 @@ const StudentDetailModal = ({ student, onClose }) => {
     const [maxLoans, setMaxLoans] = useState(5);
 
     useEffect(() => {
-        fetch('http://localhost:3001/api/policy')
+        fetch('http://localhost:17221/api/policy')
             .then(res => res.json())
             .then(data => {
                 if (data.policy_borrowing?.student?.maxBooks) {

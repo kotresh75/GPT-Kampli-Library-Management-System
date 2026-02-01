@@ -36,7 +36,7 @@ const DbStatusCheck = () => {
   const [status, setStatus] = React.useState('checking');
 
   React.useEffect(() => {
-    fetch('http://localhost:3001/api/status')
+    fetch('http://localhost:17221/api/status')
       .then(res => res.json())
       .then(data => setStatus(data.status === 'online' ? 'online' : 'error'))
       .catch(() => setStatus('offline'));

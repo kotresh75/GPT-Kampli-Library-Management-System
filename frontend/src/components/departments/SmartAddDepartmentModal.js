@@ -49,8 +49,8 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
 
         try {
             const url = isEditMode
-                ? `http://localhost:3001/api/departments/${initialData.id}`
-                : 'http://localhost:3001/api/departments';
+                ? `http://localhost:17221/api/departments/${initialData.id}`
+                : 'http://localhost:17221/api/departments';
             const method = isEditMode ? 'PUT' : 'POST';
 
             const res = await fetch(url, {

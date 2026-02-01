@@ -36,7 +36,7 @@ const StudentSearchSelect = ({ onSelect, selectedStudents = [], placeholder = "S
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:3001/api/students?search=${query}&limit=5`, {
+            const res = await fetch(`http://localhost:17221/api/students?search=${query}&limit=5`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();

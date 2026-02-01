@@ -30,7 +30,7 @@ const UserProfile = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            await axios.post('http://localhost:3001/api/auth/change-password', {
+            await axios.post('http://localhost:17221/api/auth/change-password', {
                 oldPassword: passData.oldPassword,
                 newPassword: passData.newPassword
             }, {

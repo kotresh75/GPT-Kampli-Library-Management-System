@@ -255,7 +255,7 @@ exports.broadcastMessage = async (req, res) => {
         }
 
         // Log Audit
-        auditService.log(req.user, 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipient_group} (${sentCount} recipients)`, { subject, message, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
+        auditService.log(req.user, 'BROADCAST', 'Communication', `Sent broadcast '${subject}' to ${recipientDisplay} (${sentCount} recipients)`, { subject, message, recipient_group, recipient_display: recipientDisplay, sent_count: sentCount });
 
         socketService.emit('broadcast_update', {});
         res.json({ message: `Broadcast initiated to ${sentCount} recipients` });

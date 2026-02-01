@@ -15,7 +15,7 @@ const ExportModal = ({ onClose, onExport, totalBooks, selectedCount, filteredCou
     const [settings, setSettings] = useState({});
 
     useEffect(() => {
-        fetch('http://localhost:3001/api/settings/app')
+        fetch('http://localhost:17221/api/settings/app')
             .then(res => res.json())
             .then(data => setSettings(data))
             .catch(() => { });

@@ -86,7 +86,7 @@ const CatalogPage = () => {
 
     // Fetch Departments
     useEffect(() => {
-        fetch('http://localhost:3001/api/departments')
+        fetch('http://localhost:17221/api/departments')
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -108,7 +108,7 @@ const CatalogPage = () => {
             // Removed status query param
             const query = new URLSearchParams({ search, department: category, sort: sortBy }).toString();
             // TODO: Pagination support on backend would be ideal for infinite scroll
-            const res = await fetch(`http://localhost:3001/api/books?${query}`);
+            const res = await fetch(`http://localhost:17221/api/books?${query}`);
             const data = await res.json();
             if (Array.isArray(data)) {
                 setBooks(data);
@@ -161,7 +161,7 @@ const CatalogPage = () => {
         try {
             for (const id of selectedIds) {
                 // Standard DELETE endpoint is now Safe Hard Delete
-                const url = `http://localhost:3001/api/books/${id}`;
+                const url = `http://localhost:17221/api/books/${id}`;
 
                 const res = await fetch(url, { method: 'DELETE' });
                 if (!res.ok) {
@@ -318,7 +318,7 @@ const CatalogPage = () => {
                             onConfirm: async () => {
                                 setIsDeleting(true);
                                 try {
-                                    const res = await fetch(`http://localhost:3001/api/books/${book.isbn}`, { method: 'DELETE' });
+                                    const res = await fetch(`http://localhost:17221/api/books/${book.isbn}`, { method: 'DELETE' });
                                     if (!res.ok) throw new Error("Failed to delete");
                                     fetchBooks();
                                     setIsDeleting(false);
@@ -527,7 +527,7 @@ const CatalogPage = () => {
                         </button>
                     )}
                     onImport={async (booksData) => {
-                        const res = await fetch('http://localhost:3001/api/books/bulk', {
+                        const res = await fetch('http://localhost:17221/api/books/bulk', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(booksData)
@@ -580,7 +580,7 @@ const CatalogPage = () => {
                     onFetchAll={async () => {
                         try {
                             const query = new URLSearchParams({ search, department: category, sort: sortBy, limit: 10000 }).toString();
-                            const res = await fetch(`http://localhost:3001/api/books?${query}`);
+                            const res = await fetch(`http://localhost:17221/api/books?${query}`);
                             const data = await res.json();
                             return (Array.isArray(data) ? data : []).map(b => ({
                                 ISBN: b.isbn,

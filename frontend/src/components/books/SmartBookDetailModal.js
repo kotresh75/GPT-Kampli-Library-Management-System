@@ -23,7 +23,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
         if (activeTab === 'circulation' && book?.isbn) {
             setLoadingHolders(true);
             const token = localStorage.getItem('auth_token');
-            fetch(`http://localhost:3001/api/circulation/holders/${book.isbn}`, {
+            fetch(`http://localhost:17221/api/circulation/holders/${book.isbn}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.json())
@@ -42,7 +42,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
             setLoadingHistory(true);
             const token = localStorage.getItem('auth_token');
             // Using isbn param for strict filtering
-            fetch(`http://localhost:3001/api/circulation/history?isbn=${encodeURIComponent(book.isbn)}&limit=50`, {
+            fetch(`http://localhost:17221/api/circulation/history?isbn=${encodeURIComponent(book.isbn)}&limit=50`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.json())

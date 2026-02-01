@@ -182,7 +182,22 @@ exports.collectFine = (req, res) => {
 
                 // 5. Audit Log (Batch)
                 const auditUser = req.user ? { id: req.user.id, role: req.user.role || 'Admin' } : collector_id;
-                await auditService.log(auditUser, 'FINE_COLLECTED', 'Finance', `Collected ${fine_ids.length} fines. IDs: ${fine_ids.join(', ')}`);
+                let auditMsg = `Collected ${fine_ids.length} fines. IDs: ${fine_ids.join(', ')}`;
+
+                // If we processed fines and have a student ID, try to get name for log
+                // (Optimization: we have studentName in the last processed fine usually)
+                if (paidItems.length > 0 && fine_ids.length > 0) {
+                    // We can't easily grab the name here without keeping it from loop or fetching.
+                    // The loop has access to 'fine.student_name'. Let's assume single student payment usually.
+                    // But simplest is to just say "Collected payment".
+                    // Better: "Collected fine(s) total ₹${total} from Student..."
+                    // Let's rely on the fact that usually it's one student.
+                    // We will leave it generic but add total amount?
+                    const totalPaid = paidItems.reduce((acc, i) => acc + i.amount, 0);
+                    auditMsg = `Collected fines (Total: ₹${totalPaid}). IDs: ${fine_ids.join(', ')}`;
+                }
+
+                auditService.log(auditUser, 'FINE_COLLECTED', 'Finance', auditMsg);
 
                 db.run("COMMIT", () => {
                     // Send Email Receipt Async
@@ -282,7 +297,7 @@ exports.waiveFine = (req, res) => {
 
                     // Audit Log
                     const auditUser = req.user ? { id: req.user.id, role: req.user.role || 'Admin' } : staff_id;
-                    auditService.log(auditUser, 'FINE_WAIVED', 'Finance', `Waived fine ${fine_id}. Reason: ${reason}`);
+                    auditService.log(auditUser, 'FINE_WAIVED', 'Finance', `Waived fine ${fine_id} for ${fine.student_name} (${fine.student_reg_no}). Reason: ${reason}`);
 
                     db.run("COMMIT", () => {
                         res.json({ success: true });
@@ -362,7 +377,7 @@ exports.updateFine = (req, res) => {
 
                     // Audit Log
                     const auditUser = req.user ? { id: req.user.id, role: req.user.role || 'Admin' } : staff_id;
-                    auditService.log(auditUser, 'FINE_EDITED', 'Finance', `Edited fine ${fine_id}. Amount: ${oldAmount}->${amount}`);
+                    auditService.log(auditUser, 'FINE_EDITED', 'Finance', `Edited fine ${fine_id} for ${fine.student_name} (${fine.student_reg_no}). Amount: ${oldAmount}->${amount}`);
 
                     db.run("COMMIT", () => {
                         res.json({ success: true });

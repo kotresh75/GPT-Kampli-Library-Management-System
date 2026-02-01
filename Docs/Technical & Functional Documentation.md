@@ -68,7 +68,7 @@ The major functions of the system include:
     -   **Auditability**: Financial transactions (Fines) cannot be deleted, only 'Waived' with remarks, to maintain fiscal integrity.
 -   **Technical Constraints**:
     -   **Single Instance**: Only one instance of the application should run at a time to prevent SQLite database locks.
-    -   **Port Availability**: Backend requires a free port (default 3001) to function; auto-negotiation or manual override is provided.
+    -   **Port Availability**: Backend requires a free port (default 17221) to function; auto-negotiation or manual override is provided.
 
 ### 2.5 Assumptions and Dependencies
 -   It is assumed that the college assigns unique Register Numbers to all students.
@@ -3184,7 +3184,7 @@ This section outlines how to install, configure, and deploy the application in b
     ```bash
     npm start
     ```
-    *   **Backend**: runs on Port **3001** (http://localhost:3001).
+    *   **Backend**: runs on Port **17221** (http://localhost:17221).
     *   **Frontend**: runs on Port **3000** (http://localhost:3000).
     *   **Electron**: Launches and loads `http://localhost:3000`.
 
@@ -3192,7 +3192,7 @@ This section outlines how to install, configure, and deploy the application in b
 
 #### System Settings (Database Managed)
 Unlike traditional apps using `.env`, this system stores configuration in the `system_settings` table.
-*   **Port**: Defaults to `3001`.
+*   **Port**: Defaults to `17221`.
 *   **App Title**: Defaults to "GPTK Library".
 *   **Policy Config**: Stored as JSON in `policy_config` table.
 

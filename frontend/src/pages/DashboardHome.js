@@ -37,7 +37,7 @@ const DashboardHome = () => {
 
     const fetchStats = async () => {
         try {
-            const statsRes = await axios.get('http://localhost:3001/api/dashboard/stats');
+            const statsRes = await axios.get('http://localhost:17221/api/dashboard/stats');
             setStats(statsRes.data);
         } catch (err) {
             console.error("Error fetching stats:", err);
@@ -47,7 +47,7 @@ const DashboardHome = () => {
 
     const fetchCharts = async () => {
         try {
-            const chartsRes = await axios.get('http://localhost:3001/api/dashboard/charts');
+            const chartsRes = await axios.get('http://localhost:17221/api/dashboard/charts');
             setCharts(chartsRes.data);
         } catch (err) {
             console.error("Error fetching charts:", err);
@@ -56,7 +56,7 @@ const DashboardHome = () => {
 
     const fetchLogs = async () => {
         try {
-            const logsRes = await axios.get('http://localhost:3001/api/dashboard/logs');
+            const logsRes = await axios.get('http://localhost:17221/api/dashboard/logs');
             setRecentLogs(logsRes.data.recent || []);
         } catch (err) {
             console.error("Error fetching logs:", err);

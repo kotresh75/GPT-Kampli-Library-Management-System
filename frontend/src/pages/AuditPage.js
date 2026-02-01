@@ -47,7 +47,7 @@ const AuditPage = () => {
                 limit,
                 ...filters
             });
-            const res = await axios.get(`http://localhost:3001/api/audit?${params}`, { headers });
+            const res = await axios.get(`http://localhost:17221/api/audit?${params}`, { headers });
             setLogs(res.data.data);
             setTotalPages(res.data.pagination.totalPages);
             setFilteredTotal(res.data.pagination.total);
@@ -64,7 +64,7 @@ const AuditPage = () => {
         try {
             const token = localStorage.getItem('auth_token');
             const headers = { Authorization: `Bearer ${token}` };
-            const res = await axios.get('http://localhost:3001/api/audit/stats', { headers });
+            const res = await axios.get('http://localhost:17221/api/audit/stats', { headers });
             setStats(res.data);
         } catch (error) {
             console.error("Error fetching stats:", error);
@@ -104,7 +104,7 @@ const AuditPage = () => {
             params.append('format', format);
 
             setLoading(true); // Optional: show loading indicator
-            const response = await axios.get(`http://localhost:3001/api/audit/export?${params.toString()}`, {
+            const response = await axios.get(`http://localhost:17221/api/audit/export?${params.toString()}`, {
                 headers,
                 responseType: 'blob'
             });
@@ -254,7 +254,7 @@ const AuditPage = () => {
             </div>
 
             {/* Data Table */}
-            <div className="glass-panel" style={{ flex: 1, padding: '0px', display: 'flex', flexDirection: 'column', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
+            <div className="glass-panel" style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', overflow: 'hidden' }}>
                 <SmartAuditTable
                     logs={logs}
                     loading={loading}
@@ -299,7 +299,7 @@ const AuditPage = () => {
                                 ...filters,
                                 limit: 10000 // Fetch all
                             });
-                            const res = await axios.get(`http://localhost:3001/api/audit?${params}`, { headers });
+                            const res = await axios.get(`http://localhost:17221/api/audit?${params}`, { headers });
                             const allLogs = res.data.data;
                             return allLogs.map(log => ({
                                 TIMESTAMP: new Date(log.timestamp).toLocaleString(),

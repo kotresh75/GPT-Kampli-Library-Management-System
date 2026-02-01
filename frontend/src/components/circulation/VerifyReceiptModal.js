@@ -32,7 +32,7 @@ const VerifyReceiptModal = ({ isOpen, onClose }) => {
             const token = localStorage.getItem('auth_token');
             // Try explicit ID match first
             // Note: Backend uses LIKE %ID%, so strict formatting isn't always required but good for precision
-            const response = await fetch(`http://localhost:3001/api/fines/receipt/${queryId}`, {
+            const response = await fetch(`http://localhost:17221/api/fines/receipt/${queryId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

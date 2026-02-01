@@ -22,7 +22,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
     const fetchCopies = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:3001/api/books/${book.isbn}`);
+            const res = await fetch(`http://localhost:17221/api/books/${book.isbn}`);
             const data = await res.json();
             if (data.copies) setCopies(data.copies);
         } catch (error) {
@@ -60,7 +60,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
         setCopies(updated);
 
         try {
-            await fetch(`http://localhost:3001/api/books/copy/${copyId}`, {
+            await fetch(`http://localhost:17221/api/books/copy/${copyId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
@@ -76,7 +76,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
         if (numToAdd < 1) return;
         setAdding(true);
         try {
-            await fetch(`http://localhost:3001/api/books/${book.isbn}/add-copies`, {
+            await fetch(`http://localhost:17221/api/books/${book.isbn}/add-copies`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ quantity: numToAdd })
@@ -96,7 +96,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
     const executeDelete = async () => {
         if (!confirmModal.id) return;
         try {
-            const res = await fetch(`http://localhost:3001/api/books/copy/${confirmModal.id}`, { method: 'DELETE' });
+            const res = await fetch(`http://localhost:17221/api/books/copy/${confirmModal.id}`, { method: 'DELETE' });
             if (res.ok) {
                 await fetchCopies();
                 if (onUpdate) onUpdate();
