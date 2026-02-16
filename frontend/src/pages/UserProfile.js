@@ -16,7 +16,7 @@ const UserProfile = () => {
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [iconLoading, setIconLoading] = useState(false);
 
-    const profileIcon = userInfo.profile_icon || `/profile-icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.png`;
+    const profileIcon = userInfo.profile_icon || `profile-icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.png`;
     const userInitial = (userInfo.name || 'U').charAt(0).toUpperCase();
 
     const handleChange = (e) => {
@@ -86,7 +86,7 @@ const UserProfile = () => {
                     <div className="profile-avatar-wrapper" onClick={() => setShowIconPicker(true)}>
                         <div className="profile-avatar-large">
                             {profileIcon ? (
-                                <img src={profileIcon} alt="Profile" className="profile-avatar-img" />
+                                <img src={profileIcon.startsWith('/') ? profileIcon.slice(1) : profileIcon} alt="Profile" className="profile-avatar-img" />
                             ) : (
                                 <span className="profile-avatar-initial">{userInitial}</span>
                             )}
@@ -124,7 +124,7 @@ const UserProfile = () => {
                         </div>
                         <div className="icon-picker-grid">
                             {Array.from({ length: TOTAL_ICONS }, (_, i) => {
-                                const iconPath = `/profile-icons/profile_icon_${i + 1}.png`;
+                                const iconPath = `profile-icons/profile_icon_${i + 1}.png`;
                                 const isActive = profileIcon === iconPath;
                                 return (
                                     <button

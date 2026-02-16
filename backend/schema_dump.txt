@@ -1,0 +1,220 @@
+Database Schema Dump
+Database Path: F:\GPTK Library Management System\DB\lms.sqlite
+
+Found 18 tables:
+
+--- Table: system_settings ---
+  - key (TEXT)  PRIMARY KEY
+  - value (TEXT)  
+  - data_type (TEXT)  
+  - category (TEXT)  
+  - description (TEXT)  
+  - is_user_editable (INTEGER)  
+  - requires_restart (INTEGER)  
+  - id (TEXT)  
+
+--- Table: policy_config ---
+  - id (TEXT)  PRIMARY KEY
+  - policy_version (INTEGER)  
+  - active_from (TEXT)  
+  - profiles (TEXT)  
+  - financials (TEXT)  
+  - holidays (TEXT)  
+  - security (TEXT)  
+  - updated_at (TEXT)  
+
+--- Table: sync_queue ---
+  - id (TEXT)  PRIMARY KEY
+  - table_name (TEXT) NOT NULL 
+  - record_id (TEXT) NOT NULL 
+  - operation (TEXT)  
+  - data (TEXT)  
+  - status (TEXT)  
+  - created_at (TEXT)  
+  - synced_at (TEXT)  
+
+--- Table: password_resets ---
+  - email (TEXT)  PRIMARY KEY
+  - otp (TEXT) NOT NULL 
+  - expires_at (TEXT) NOT NULL 
+  - created_at (TEXT)  
+
+--- Table: books ---
+  - id (TEXT)  PRIMARY KEY
+  - isbn (TEXT)  
+  - title (TEXT) NOT NULL 
+  - author (TEXT)  
+  - publisher (TEXT)  
+  - dept_id (TEXT)  
+  - price (REAL)  
+  - cover_image_url (TEXT)  
+  - ebook_link (TEXT)  
+  - total_copies (INTEGER)  
+  - created_at (TEXT)  
+  - updated_at (TEXT)  
+  - category (TEXT)  
+  - status (TEXT)  
+  - shelf_location (TEXT)  
+  - cover_image (TEXT)  
+
+--- Table: transactions ---
+  - id (TEXT)  PRIMARY KEY
+  - session_txn_id (TEXT)  
+  - student_id (TEXT)  
+  - copy_id (TEXT)  
+  - issued_by (TEXT)  
+  - issue_date (TEXT)  
+  - due_date (TEXT)  
+  - return_date (TEXT)  
+  - status (TEXT)  
+  - created_at (TEXT)  
+  - updated_at (TEXT)  
+
+--- Table: sqlite_sequence ---
+  - name ()  
+  - seq ()  
+
+--- Table: staff ---
+  - id (TEXT)  PRIMARY KEY
+  - name (TEXT) NOT NULL 
+  - email (TEXT) NOT NULL 
+  - phone (TEXT)  
+  - designation (TEXT)  
+  - access_permissions (TEXT)  
+  - password_hash (TEXT) NOT NULL 
+  - status (TEXT)  
+  - created_at (TEXT)  
+  - last_login (TEXT)  
+  - updated_at (TEXT)  
+  - profile_icon (TEXT)  
+
+--- Table: transaction_logs ---
+  - id (TEXT)  PRIMARY KEY
+  - session_txn_id (TEXT)  
+  - action_type (TEXT)  
+  - student_id (TEXT)  
+  - student_name (TEXT)  
+  - student_reg_no (TEXT)  
+  - student_dept (TEXT)  
+  - copy_id (TEXT)  
+  - book_title (TEXT)  
+  - book_isbn (TEXT)  
+  - performed_by (TEXT)  
+  - timestamp (TEXT)  
+  - details (TEXT)  
+
+--- Table: departments ---
+  - id (TEXT)  PRIMARY KEY
+  - name (TEXT) NOT NULL 
+  - code (TEXT) NOT NULL 
+  - description (TEXT)  
+  - created_at (TEXT)  
+  - updated_at (TEXT)  
+  - hod_signature (TEXT)  
+
+--- Table: admins ---
+  - id (TEXT)  PRIMARY KEY
+  - name (TEXT) NOT NULL 
+  - email (TEXT) NOT NULL 
+  - phone (TEXT)  
+  - password_hash (TEXT) NOT NULL 
+  - status (TEXT)  
+  - created_at (TEXT)  
+  - last_login (TEXT)  
+  - updated_at (TEXT)  
+  - profile_icon (TEXT)  
+
+--- Table: circulation ---
+  - id (TEXT)  PRIMARY KEY
+  - session_txn_id (TEXT)  
+  - student_id (TEXT)  
+  - copy_id (TEXT)  
+  - issued_by (TEXT)  
+  - issue_date (TEXT)  
+  - due_date (TEXT)  
+  - last_renewed_date (TEXT)  
+  - renewal_count (INTEGER)  
+  - created_at (TEXT)  
+
+--- Table: fines ---
+  - id (TEXT)  PRIMARY KEY
+  - receipt_number (TEXT)  
+  - transaction_id (TEXT)  
+  - student_id (TEXT)  
+  - student_name (TEXT)  
+  - student_reg_no (TEXT)  
+  - amount (REAL)  
+  - status (TEXT)  
+  - is_paid (INTEGER)  
+  - payment_date (TEXT)  
+  - collected_by (TEXT)  
+  - remark (TEXT)  
+  - created_at (TEXT)  
+  - updated_at (TEXT)  
+
+--- Table: audit_logs ---
+  - id (TEXT)  PRIMARY KEY
+  - timestamp (TEXT)  
+  - actor_id (TEXT)  
+  - actor_role (TEXT)  
+  - action_type (TEXT)  
+  - module (TEXT)  
+  - description (TEXT)  
+  - ip_address (TEXT)  
+  - metadata (TEXT)  
+  - remark (TEXT)  
+  - actor_email (TEXT)  
+
+--- Table: students ---
+  - id (TEXT)  PRIMARY KEY
+  - register_number (TEXT) NOT NULL 
+  - full_name (TEXT) NOT NULL 
+  - dept_id (TEXT) NOT NULL 
+  - semester (TEXT)  
+  - email (TEXT)  
+  - phone (TEXT)  
+  - dob (TEXT) NOT NULL 
+  - father_name (TEXT)  
+  - address (TEXT)  
+  - profile_image (TEXT)  
+  - status (TEXT)  
+  - created_at (TEXT)  
+  - updated_at (TEXT)  
+
+--- Table: book_copies ---
+  - id (TEXT)  PRIMARY KEY
+  - accession_number (TEXT)  
+  - book_id (TEXT)  
+  - status (TEXT)  
+  - location (TEXT)  
+  - created_at (TEXT)  
+  - updated_at (TEXT)  
+  - book_isbn (TEXT)  
+
+--- Table: broadcast_logs ---
+  - id (TEXT)  PRIMARY KEY
+  - sender_id (TEXT)  
+  - sent_at (TEXT)  
+  - subject (TEXT)  
+  - message_body (TEXT)  
+  - target_group (TEXT)  
+  - recipient_count (INTEGER)  
+  - status (TEXT)  
+
+--- Table: email_config ---
+  - id (TEXT)  PRIMARY KEY
+  - service_status (INTEGER)  
+  - provider (TEXT)  
+  - smtp_host (TEXT)  
+  - smtp_port (INTEGER)  
+  - smtp_secure (INTEGER)  
+  - smtp_user (TEXT)  
+  - smtp_pass (TEXT)  
+  - cloud_api_key (TEXT)  
+  - cloud_region (TEXT)  
+  - from_email (TEXT)  
+  - from_name (TEXT)  
+  - triggers (TEXT)  
+  - updated_at (TEXT)  
+
+Schema Inspection Completed.

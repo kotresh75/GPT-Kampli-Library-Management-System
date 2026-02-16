@@ -209,6 +209,7 @@ function initializeTables() {
             access_permissions TEXT, -- JSON Array
             password_hash TEXT NOT NULL,
             status TEXT CHECK(status IN ('Active', 'Disabled', 'Deleted')),
+            profile_icon TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_login TEXT,
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP

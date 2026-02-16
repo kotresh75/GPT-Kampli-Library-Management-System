@@ -117,7 +117,7 @@ const Header = ({ toggleSidebar, user, onHelpClick }) => {
                         >
                             <div className="header-avatar">
                                 {profileIcon ? (
-                                    <img src={profileIcon} alt="Profile" className="header-avatar-img" />
+                                    <img src={profileIcon.startsWith('/') ? profileIcon.slice(1) : profileIcon} alt="Profile" className="header-avatar-img" />
                                 ) : (
                                     <span className="header-avatar-initial">{userInitial}</span>
                                 )}
@@ -138,7 +138,7 @@ const Header = ({ toggleSidebar, user, onHelpClick }) => {
                                 <div className="dropdown-header">
                                     <div className="dropdown-avatar">
                                         {profileIcon ? (
-                                            <img src={profileIcon} alt="Profile" className="dropdown-avatar-img" />
+                                            <img src={profileIcon.startsWith('/') ? profileIcon.slice(1) : profileIcon} alt="Profile" className="dropdown-avatar-img" />
                                         ) : (
                                             <span className="dropdown-avatar-initial">{userInitial}</span>
                                         )}
