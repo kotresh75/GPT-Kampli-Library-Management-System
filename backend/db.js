@@ -108,11 +108,13 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 // SCHEMA MIGRATION: Add profile_icon to admins if not exists
                 db.run("ALTER TABLE admins ADD COLUMN profile_icon TEXT", (err) => {
                     if (!err) console.log("Added profile_icon column to admins table");
+                    else if (err.message.indexOf("duplicate column name") === -1) console.error("Error adding profile_icon to admins:", err);
                 });
 
                 // SCHEMA MIGRATION: Add profile_icon to staff if not exists
                 db.run("ALTER TABLE staff ADD COLUMN profile_icon TEXT", (err) => {
                     if (!err) console.log("Added profile_icon column to staff table");
+                    else if (err.message.indexOf("duplicate column name") === -1) console.error("Error adding profile_icon to staff:", err);
                 });
 
                 // SCHEMA MIGRATION: Add id to system_settings if not exists (Fix for legacy schema)
@@ -220,6 +222,7 @@ function initializeTables() {
             phone TEXT,
             password_hash TEXT NOT NULL,
             status TEXT CHECK(status IN ('Active', 'Disabled')),
+            profile_icon TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_login TEXT,
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
