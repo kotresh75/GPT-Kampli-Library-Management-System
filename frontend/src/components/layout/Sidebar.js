@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Book, Users, Repeat, Settings, FileText, Bell, Building, Shield, Briefcase, ArrowLeftRight, Activity } from 'lucide-react';
 import { usePreferences } from '../../context/PreferencesContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUser } from '../../context/UserContext';
 import logo from '../../assets/logo.png';
 
 const Sidebar = ({ isCollapsed }) => {
@@ -26,9 +27,9 @@ const Sidebar = ({ isCollapsed }) => {
     ];
 
     // Get User Permissions
-    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const userRole = userInfo.role || 'Guest';
-    const userPermissions = userInfo.permissions || [];
+    const { currentUser } = useUser();
+    const userRole = currentUser?.role || 'Guest';
+    const userPermissions = currentUser?.permissions || [];
 
     // Filter Items
     const filteredMenu = menuItems.filter(item => {

@@ -409,6 +409,14 @@ function initializeTables() {
         )`);
 
 
+        // 5.16 profile_icons (Store Base64 images)
+        db.run(`CREATE TABLE IF NOT EXISTS profile_icons (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE,
+            data TEXT NOT NULL,
+            created_at TEXT DEFAULT (datetime('now', '+05:30'))
+        )`);
+
         console.log("Database tables initialized successfully.");
 
         // Migration: Add shelf_location column if missing
@@ -422,6 +430,7 @@ function initializeTables() {
         seedSystemSettings();
         ensureDefaultPolicies();
         seedSystemUser();
+        seedProfileIcons();
     });
 }
 
@@ -535,4 +544,55 @@ db.prepare = function (sql, ...params) {
     return stmt;
 };
 
+
+function seedProfileIcons() {
+    db.get("SELECT count(*) as count FROM profile_icons", (err, row) => {
+        if (!err && row && row.count === 0) {
+            console.log("Seeding profile icons into database...");
+            const fs = require('fs');
+            const path = require('path');
+
+            // Look for icons in frontend/public/profile-icons relative to backend
+            // In dev, backend is in /backend, frontend is in /frontend
+            let iconsDir = path.resolve(__dirname, '..', 'frontend', 'public', 'profile-icons');
+
+            // Adjust for production build structure if needed
+            if (!fs.existsSync(iconsDir)) {
+                // Try alternate path for packaged app (assuming standard electron-builder structure)
+                // This might need adjustment based on valid electron paths
+                iconsDir = path.join(process.resourcesPath, 'app', 'frontend', 'build', 'profile-icons');
+            }
+
+            if (fs.existsSync(iconsDir)) {
+                try {
+                    const files = fs.readdirSync(iconsDir).filter(file => file.endsWith('.png'));
+                    const insert = db.prepare("INSERT INTO profile_icons (name, data) VALUES (?, ?)");
+
+                    let count = 0;
+                    files.forEach(file => {
+                        try {
+                            const filePath = path.join(iconsDir, file);
+                            const data = fs.readFileSync(filePath);
+                            const base64 = `data:image/png;base64,${data.toString('base64')}`;
+                            insert.run(file, base64);
+                            count++;
+                        } catch (e) {
+                            console.error(`Failed to read icon ${file}:`, e);
+                        }
+                    });
+
+                    insert.finalize();
+                    console.log(`Seeded ${count} profile icons.`);
+                } catch (e) {
+                    console.error("Failed to read icons directory:", e);
+                }
+            } else {
+                console.warn("Profile icons directory not found for seeding at:", iconsDir);
+            }
+        } else {
+            // Already seeded
+            // console.log("Profile icons already seeded.");
+        }
+    });
+}
 module.exports = db;

@@ -21,8 +21,8 @@
 /* Modal Container */
 .txn-modal {
     width: 100%;
-    max-width: 520px;
-    max-height: 72vh;
+    max-width: 680px;
+    max-height: 90vh;
     display: flex;
     flex-direction: column;
     background: var(--glass-bg);
@@ -180,7 +180,7 @@
 /* Info Cards Grid */
 .txn-info-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: var(--space-3);
 }
 

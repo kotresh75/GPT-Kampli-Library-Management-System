@@ -229,8 +229,8 @@ export function getUserManualData() {
                     </div>
                 </div>
             )
-        }
-        ,
+        },
+
         {
             id: 'dashboard',
             title: <Trans i18nKey="manual.dashboard.title" />,
@@ -1159,6 +1159,121 @@ export function getUserManualData() {
                             <img src={ManualImages.aboutPageImg} alt="About Page" style={{ width: '100%', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)' }} />
                             <div className="um-caption" style={{ textAlign: 'center' }}><Trans i18nKey="manual.public.fig_about" /></div>
                         </div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            id: 'mongodb-setup',
+            title: <Trans i18nKey="manual.mongodb.title" />,
+            icon: <Globe size={16} />,
+            searchKeywords: ['mongodb', 'atlas', 'database', 'connection', 'uri', 'ip address', 'network', 'cloud'],
+            content: (
+                <div className="um-article">
+                    <h3><Trans i18nKey="manual.mongodb.heading" /></h3>
+                    <p>
+                        <Trans i18nKey="manual.mongodb.intro" />
+                    </p>
+
+                    <div className="um-video-container">
+                        <iframe
+                            src="https://www.youtube.com/embed/7a2Nns23d_s"
+                            title="MongoDB Atlas Setup Tutorial"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        />
+                    </div>
+
+                    <div className="um-callout tip">
+                        <strong><Trans i18nKey="manual.mongodb.tip_cloud" /></strong> <Trans i18nKey="manual.mongodb.tip_cloud_desc" />
+                    </div>
+
+                    <h4><Trans i18nKey="manual.mongodb.step1" /></h4>
+                    <p><Trans i18nKey="manual.mongodb.step1_desc" components={{ 1: <strong /> }} /></p>
+
+                    <h4><Trans i18nKey="manual.mongodb.step2" /></h4>
+                    <ol>
+                        <li><Trans i18nKey="manual.mongodb.step2_li1" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.mongodb.step2_li2" /></li>
+                        <li><Trans i18nKey="manual.mongodb.step2_li3" components={{ 1: <strong /> }} /></li>
+                    </ol>
+
+                    <h4><Trans i18nKey="manual.mongodb.step3" /></h4>
+                    <div className="um-step-card">
+                        <h5><Trans i18nKey="manual.mongodb.step3_a" /></h5>
+                        <ul>
+                            <li><Trans i18nKey="manual.mongodb.step3_a_li1" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.mongodb.step3_a_li2" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.mongodb.step3_a_li3" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.mongodb.step3_a_li4" components={{ 1: <strong /> }} /></li>
+                        </ul>
+
+                        <h5 style={{ marginTop: '15px' }}><Trans i18nKey="manual.mongodb.step3_b" /></h5>
+                        <div className="um-callout warning">
+                            <Trans i18nKey="manual.mongodb.warn_network" />
+                        </div>
+                        <ul>
+                            <li><Trans i18nKey="manual.mongodb.step3_b_li1" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.mongodb.step3_b_li2" components={{ 1: <strong /> }} /></li>
+                            <li>
+                                <Trans i18nKey="manual.mongodb.step3_b_li3" components={{ 1: <strong />, 2: <strong />, 3: <code /> }} />
+                            </li>
+                            <li><Trans i18nKey="manual.mongodb.step3_b_li4" components={{ 1: <strong /> }} /></li>
+                        </ul>
+                    </div>
+
+                    <h4><Trans i18nKey="manual.mongodb.step4" /></h4>
+                    <ol>
+                        <li><Trans i18nKey="manual.mongodb.step4_li1" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.mongodb.step4_li2" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.mongodb.step4_li3" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.mongodb.step4_li4" />
+                            <div style={{ background: 'rgba(0,0,0,0.2)', padding: '8px', borderRadius: '4px', fontFamily: 'monospace', marginTop: '5px', fontSize: '11px', userSelect: 'all' }}>
+                                mongodb+srv://&lt;username&gt;:&lt;password&gt;@cluster0.p8n4.mongodb.net/?retryWrites=true&w=majority
+                            </div>
+                        </li>
+                        <li><Trans i18nKey="manual.mongodb.step4_li5" components={{ 1: <code /> }} /></li>
+                        <li><Trans i18nKey="manual.mongodb.final_step" components={{ 1: <strong /> }} /></li>
+                    </ol>
+                </div>
+            )
+        },
+        {
+            id: 'smtp-setup',
+            title: <Trans i18nKey="manual.smtp.title" />,
+            icon: <Mail size={16} />,
+            searchKeywords: ['email', 'smtp', 'gmail', 'password', 'app password', 'otp', 'notification'],
+            content: (
+                <div className="um-article">
+                    <h3><Trans i18nKey="manual.smtp.heading" /></h3>
+                    <p><Trans i18nKey="manual.smtp.intro" /></p>
+
+                    <div className="um-video-container">
+                        <iframe
+                            src="https://www.youtube.com/embed/weA4yBSUMXs"
+                            title="Gmail App Password Tutorial"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        />
+                    </div>
+
+                    <h4><Trans i18nKey="manual.smtp.step1" /></h4>
+                    <p><Trans i18nKey="manual.smtp.step1_desc" components={{ 1: <strong />, 2: <strong />, 3: <strong /> }} /></p>
+
+                    <h4><Trans i18nKey="manual.smtp.step2" /></h4>
+                    <p><Trans i18nKey="manual.smtp.step2_desc" components={{ 1: <code /> }} /></p>
+
+                    <h4><Trans i18nKey="manual.smtp.step3" /></h4>
+                    <ul>
+                        <li><Trans i18nKey="manual.smtp.step3_li1" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.smtp.step3_li2" components={{ 1: <code /> }} /></li>
+                        <li><Trans i18nKey="manual.smtp.step3_li3" components={{ 1: <strong /> }} /></li>
+                    </ul>
+
+                    <h4><Trans i18nKey="manual.smtp.step4" /></h4>
+                    <p><Trans i18nKey="manual.smtp.step4_desc" components={{ 1: <code /> }} /></p>
+                    <div className="um-callout tip">
+                        <Trans i18nKey="manual.smtp.step4_action" components={{ 1: <strong />, 2: <strong />, 3: <strong /> }} />
                     </div>
                 </div>
             )

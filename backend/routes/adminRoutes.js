@@ -43,6 +43,7 @@ router.post('/:id/reset-password', adminController.resetPassword);
 router.delete('/:id', adminController.deleteAdmin);
 router.get('/:id/logs', adminController.getAdminLogs);
 router.get('/broadcast/history', adminController.getBroadcastHistory);
+router.get('/:id', adminController.getAdminById);
 router.post('/broadcast', upload.single('attachment'), adminController.broadcastMessage);
 
 module.exports = router;

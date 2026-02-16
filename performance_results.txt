@@ -1,0 +1,5 @@
+--- Performance Test Results ---
+--- Initializing Performance Test Script ---
+--- Starting Performance Test ---
+
+1. Measuring Login Performance...

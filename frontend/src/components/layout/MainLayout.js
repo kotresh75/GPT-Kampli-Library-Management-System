@@ -10,16 +10,8 @@ import '../../styles/animations.css';
 
 const MainLayout = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [user, setUser] = useState(null);
     const { openManual } = useTutorial();
     const location = useLocation();
-
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user_info');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
 
     // Scroll Reveal Observer
     useEffect(() => {
@@ -63,7 +55,7 @@ const MainLayout = () => {
                 )}
 
                 <div className={`layout-main ${isSidebarCollapsed ? 'expanded' : ''}`}>
-                    <Header toggleSidebar={toggleSidebar} user={user} onHelpClick={() => openManual()} />
+                    <Header toggleSidebar={toggleSidebar} onHelpClick={() => openManual()} />
 
                     <main className="layout-scroll-container">
                         <div className="page-content page-transition" key={location.pathname}>

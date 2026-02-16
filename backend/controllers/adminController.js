@@ -10,7 +10,7 @@ const { getISTISOWithOffset } = require('../utils/dateUtils');
 exports.getAdmins = (req, res) => {
     // Exclude password_hash; mark the earliest-created admin as 'founder'
     const query = `
-        SELECT id, name, email, phone, status, last_login, created_at,
+        SELECT id, name, email, phone, status, last_login, created_at, profile_icon,
             CASE WHEN created_at = (SELECT MIN(created_at) FROM admins) THEN 1 ELSE 0 END as is_founder
         FROM admins ORDER BY created_at DESC`;
     db.all(query, [], (err, rows) => {
@@ -19,9 +19,19 @@ exports.getAdmins = (req, res) => {
     });
 };
 
+// GET /api/admins/:id
+exports.getAdminById = (req, res) => {
+    const { id } = req.params;
+    db.get("SELECT id, name, email, phone, status, last_login, created_at, profile_icon FROM admins WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Admin not found" });
+        res.json(row);
+    });
+};
+
 // POST /api/admins
 exports.createAdmin = (req, res) => {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, profile_icon } = req.body;
 
     if (!name || !email) return res.status(400).json({ error: "Name and Email are required" });
 
@@ -33,9 +43,9 @@ exports.createAdmin = (req, res) => {
         if (err) return res.status(500).json({ error: "Encryption error" });
 
         const id = uuidv4();
-        const query = `INSERT INTO admins (id, name, email, phone, password_hash, status) VALUES (?, ?, ?, ?, ?, 'Active')`;
+        const query = `INSERT INTO admins (id, name, email, phone, password_hash, status, profile_icon) VALUES (?, ?, ?, ?, ?, 'Active', ?)`;
 
-        db.run(query, [id, name, email, phone, hash], function (err) {
+        db.run(query, [id, name, email, phone, hash, profile_icon], function (err) {
             if (err) {
                 if (err.message.includes('UNIQUE')) return res.status(409).json({ error: "Email already exists" });
                 return res.status(500).json({ error: err.message });
@@ -51,10 +61,10 @@ exports.createAdmin = (req, res) => {
 // PUT /api/admins/:id
 exports.updateAdmin = (req, res) => {
     const { id } = req.params;
-    const { name, phone } = req.body;
+    const { name, phone, profile_icon } = req.body;
 
-    const query = `UPDATE admins SET name = ?, phone = ?, updated_at = datetime('now', '+05:30') WHERE id = ?`;
-    db.run(query, [name, phone, id], function (err) {
+    const query = `UPDATE admins SET name = ?, phone = ?, profile_icon = ?, updated_at = datetime('now', '+05:30') WHERE id = ?`;
+    db.run(query, [name, phone, profile_icon, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         if (this.changes === 0) return res.status(404).json({ error: "Admin not found" });
         socketService.emit('admin_update', { type: 'UPDATE', id });

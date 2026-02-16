@@ -40,6 +40,8 @@ app.use('/api/health', require('./routes/healthRoutes'));
 app.use('/api/fines', require('./routes/fineRoutes'));
 app.use('/api/reports', require('./routes/reportsRoutes'));
 app.use('/api/audit', require('./routes/auditRoutes'));
+app.use('/api/utils', require('./routes/utilRoutes'));
+app.use('/api/database', require('./routes/databaseRoutes'));
 
 // API: Get Status
 app.get('/api/status', (req, res) => {

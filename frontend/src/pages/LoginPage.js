@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type, Globe, ArrowLeft } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useUser } from '../context/UserContext';
 import logo from '../assets/logo.png';
 import LogoParticles from '../components/common/LogoParticles';
 import InteractiveBG from '../components/common/InteractiveBG';
@@ -14,6 +15,7 @@ const LoginPage = () => {
     const navigate = useNavigate();
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
     const { t, language, toggleLanguage } = useLanguage();
+    const { login } = useUser();
     const [showWarning, setShowWarning] = useState(false);
 
     // Map numeric scale to labels
@@ -65,8 +67,7 @@ const LoginPage = () => {
 
             // Success
             const { token, user } = response.data;
-            localStorage.setItem('auth_token', token);
-            localStorage.setItem('user_info', JSON.stringify(user));
+            login(user, token);
 
             navigate('/dashboard');
         } catch (err) {

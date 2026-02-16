@@ -1,0 +1,981 @@
+/* ═══════════════════════════════════════════════════════
+   DATABASE VIEWER — MongoDB Compass-Style UI
+   Glass-morphism dark design system
+   ═══════════════════════════════════════════════════════ */
+
+/* ─── Password Gate ──────────────────────────────── */
+.db-viewer-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 24px;
+    animation: dbFadeIn 0.6s ease;
+}
+
+.db-viewer-gate .gate-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a78bfa;
+    animation: dbPulse 2s ease-in-out infinite;
+}
+
+.db-viewer-gate h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+}
+
+.db-viewer-gate p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    max-width: 400px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.db-viewer-gate .gate-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 32px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.15));
+    color: #a78bfa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.db-viewer-gate .gate-btn:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(139, 92, 246, 0.15);
+}
+
+/* ─── Main Layout ──────────────────────────────── */
+.db-viewer-container {
+    display: flex;
+    height: calc(100vh - 120px);
+    gap: 0;
+    animation: dbFadeIn 0.4s ease;
+}
+
+/* ─── Table Sidebar ──────────────────────────────── */
+.db-table-sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: rgba(15, 15, 25, 0.5);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.db-table-sidebar .sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.db-sidebar-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 12px 0;
+}
+
+.db-sidebar-title svg {
+    color: #a78bfa;
+}
+
+.db-table-search {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.db-table-search:focus {
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.db-table-search::placeholder {
+    color: var(--text-secondary);
+}
+
+.db-table-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.db-table-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    margin-bottom: 2px;
+}
+
+.db-table-item:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.15);
+}
+
+.db-table-item.active {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.db-table-item .table-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.db-table-item .table-name svg {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.db-table-item.active .table-name svg {
+    color: #a78bfa;
+}
+
+.db-table-item .table-count {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    min-width: 28px;
+    text-align: center;
+}
+
+.db-table-item.active .table-count {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+}
+
+/* ─── Main Content Area ──────────────────────────── */
+.db-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+/* ─── Toolbar ────────────────────────────────────── */
+.db-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(15, 15, 25, 0.3);
+    flex-wrap: wrap;
+}
+
+.db-toolbar .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.db-toolbar .toolbar-search {
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    padding: 8px 12px 8px 36px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.db-toolbar .toolbar-search:focus {
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.db-toolbar .search-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+}
+
+.db-toolbar .search-wrapper svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.db-toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.db-toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.db-toolbar-btn.primary {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #c4b5fd;
+}
+
+.db-toolbar-btn.primary:hover {
+    background: rgba(139, 92, 246, 0.25);
+}
+
+.db-toolbar-btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+}
+
+.db-toolbar-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.db-toolbar-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ─── Data Grid ──────────────────────────────────── */
+.db-grid-wrapper {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+}
+
+.db-grid {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.84rem;
+}
+
+.db-grid thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.db-grid thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    background: rgba(20, 20, 35, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--glass-border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+    position: relative;
+}
+
+.db-grid thead th:hover {
+    color: var(--text-main);
+}
+
+.db-grid thead th.sorted {
+    color: #a78bfa;
+}
+
+.db-grid thead th .sort-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+.db-grid thead th.sorted .sort-arrow {
+    opacity: 1;
+    color: #a78bfa;
+}
+
+.db-grid tbody tr {
+    transition: background 0.15s ease;
+}
+
+.db-grid tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.015);
+}
+
+.db-grid tbody tr:hover {
+    background: rgba(139, 92, 246, 0.06);
+}
+
+.db-grid tbody tr.selected {
+    background: rgba(139, 92, 246, 0.12);
+}
+
+.db-grid tbody td {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    color: var(--text-main);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.db-grid tbody td.cell-null {
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.5;
+}
+
+.db-grid tbody td.cell-number {
+    color: #86efac;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.db-grid tbody td.cell-pk {
+    font-weight: 600;
+    color: #fbbf24;
+}
+
+.db-grid tbody td .cell-truncated {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.db-cell-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.1);
+    color: #c4b5fd;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.db-cell-expand-btn:hover {
+    background: rgba(139, 92, 246, 0.25);
+}
+
+/* Row actions */
+.db-grid .row-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.db-grid tbody tr:hover .row-actions {
+    opacity: 1;
+}
+
+.row-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.row-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.row-action-btn.edit:hover {
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+.row-action-btn.delete:hover {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+/* ─── Pagination ─────────────────────────────────── */
+.db-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(15, 15, 25, 0.3);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+
+.db-pagination .pagination-info {
+    color: var(--text-secondary);
+}
+
+.db-pagination .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.db-page-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.db-page-btn:hover:not(:disabled) {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.db-page-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.db-page-btn.active {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+    color: #c4b5fd;
+    font-weight: 600;
+}
+
+.db-pagination .page-size-select {
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    outline: none;
+}
+
+/* ─── Cell Preview Modal ─────────────────────────── */
+.cell-preview-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: dbFadeIn 0.2s ease;
+}
+
+.cell-preview-modal {
+    background: rgba(20, 20, 35, 0.98);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    animation: dbSlideUp 0.3s ease;
+}
+
+.cell-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.cell-preview-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cell-preview-header .preview-meta {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.cell-preview-body {
+    flex: 1;
+    overflow: auto;
+    padding: 20px;
+}
+
+.cell-preview-body .preview-text {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.cell-preview-body .preview-json {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #86efac;
+    white-space: pre-wrap;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.cell-preview-body .preview-image {
+    max-width: 100%;
+    max-height: 50vh;
+    border-radius: 8px;
+    object-fit: contain;
+    border: 1px solid var(--glass-border);
+}
+
+/* ─── Edit / Add Row Modal ───────────────────────── */
+.db-edit-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: dbFadeIn 0.2s ease;
+}
+
+.db-edit-modal {
+    background: rgba(20, 20, 35, 0.98);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+    animation: dbSlideUp 0.3s ease;
+}
+
+.db-edit-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.db-edit-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.db-edit-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.db-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.db-edit-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.db-edit-field label .field-badge {
+    font-size: 0.65rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.db-edit-field label .field-badge.pk {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.db-edit-field label .field-badge.notnull {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.db-edit-field label .field-type {
+    font-weight: 400;
+    font-size: 0.7rem;
+    color: #86efac;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.db-edit-field input,
+.db-edit-field textarea {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.db-edit-field input:focus,
+.db-edit-field textarea:focus {
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.db-edit-field textarea {
+    min-height: 80px;
+    resize: vertical;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.82rem;
+}
+
+.db-edit-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--glass-border);
+}
+
+/* ─── Filter Panel ───────────────────────────────── */
+.db-filter-panel {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(15, 15, 25, 0.4);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: dbSlideDown 0.2s ease;
+}
+
+.db-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.db-filter-row select,
+.db-filter-row input {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 0.82rem;
+    outline: none;
+}
+
+.db-filter-row select:focus,
+.db-filter-row input:focus {
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.db-filter-remove {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.db-filter-remove:hover {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* ─── Column Toggle Dropdown ─────────────────────── */
+.db-column-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 220px;
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(20, 20, 35, 0.98);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    padding: 8px;
+    z-index: 100;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    animation: dbFadeIn 0.15s ease;
+}
+
+.db-column-dropdown label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--text-main);
+    transition: background 0.15s;
+}
+
+.db-column-dropdown label:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.db-column-dropdown input[type="checkbox"] {
+    accent-color: #8b5cf6;
+}
+
+/* ─── Empty & Loading States ─────────────────────── */
+.db-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    gap: 12px;
+}
+
+.db-empty-state svg {
+    opacity: 0.3;
+}
+
+.db-empty-state p {
+    font-size: 0.95rem;
+}
+
+.db-loading-skeleton {
+    padding: 16px;
+}
+
+.db-skeleton-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.db-skeleton-cell {
+    height: 16px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: dbShimmer 1.5s ease-in-out infinite;
+}
+
+/* ─── Schema Info Badge ──────────────────────────── */
+.db-schema-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(15, 15, 25, 0.2);
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+.db-schema-info .schema-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--glass-border);
+}
+
+.db-schema-info .schema-badge.pk {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+.db-schema-info .schema-badge.fk {
+    color: #60a5fa;
+    border-color: rgba(59, 130, 246, 0.2);
+}
+
+/* ─── Animations ─────────────────────────────────── */
+@keyframes dbFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes dbSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dbSlideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dbPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes dbShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ─── Scrollbar ──────────────────────────────────── */
+.db-grid-wrapper::-webkit-scrollbar,
+.db-table-list::-webkit-scrollbar,
+.cell-preview-body::-webkit-scrollbar,
+.db-edit-body::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.db-grid-wrapper::-webkit-scrollbar-track,
+.db-table-list::-webkit-scrollbar-track,
+.cell-preview-body::-webkit-scrollbar-track,
+.db-edit-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.db-grid-wrapper::-webkit-scrollbar-thumb,
+.db-table-list::-webkit-scrollbar-thumb,
+.cell-preview-body::-webkit-scrollbar-thumb,
+.db-edit-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.db-grid-wrapper::-webkit-scrollbar-thumb:hover,
+.db-table-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ─── Checkbox in grid ───────────────────────────── */
+.db-grid input[type="checkbox"] {
+    accent-color: #8b5cf6;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+}
+
+/* ─── Toast inline error ─────────────────────────── */
+.db-inline-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 16px;
+}

@@ -14,7 +14,7 @@ exports.getAllStaff = (req, res) => {
     let query = `
         SELECT 
             s.id, s.name, s.email, s.phone, s.designation, s.access_permissions, 
-            s.status, s.last_login, s.created_at,
+            s.status, s.last_login, s.created_at, s.profile_icon,
             (SELECT COUNT(*) FROM transaction_logs WHERE performed_by = s.id) as transaction_count
         FROM staff s 
         WHERE s.status != 'Deleted'`;
@@ -77,9 +77,22 @@ exports.getStats = (req, res) => {
     });
 };
 
+// GET /api/staff/:id
+exports.getStaffById = (req, res) => {
+    const { id } = req.params;
+    db.get("SELECT id, name, email, phone, designation, access_permissions, status, last_login, created_at, profile_icon FROM staff WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Staff not found" });
+
+        // Parse permissions
+        row.access_permissions = row.access_permissions ? JSON.parse(row.access_permissions) : [];
+        res.json(row);
+    });
+};
+
 // POST /api/staff
 exports.createStaff = (req, res) => {
-    const { name, email, phone, designation, access_permissions } = req.body;
+    const { name, email, phone, designation, access_permissions, profile_icon } = req.body;
     const actorId = req.user ? req.user.id : 'SYSTEM';
     const actorRole = req.user ? req.user.role : 'System';
 
@@ -93,9 +106,9 @@ exports.createStaff = (req, res) => {
         if (err) return res.status(500).json({ error: "Encryption failed" });
 
         const id = uuidv4();
-        const query = `INSERT INTO staff (id, name, email, phone, designation, access_permissions, password_hash, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')`;
+        const query = `INSERT INTO staff (id, name, email, phone, designation, access_permissions, password_hash, status, profile_icon) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active', ?)`;
 
-        db.run(query, [id, name, email, phone, designation, permissionsJson, hash], function (err) {
+        db.run(query, [id, name, email, phone, designation, permissionsJson, hash, profile_icon], function (err) {
             if (err) {
                 if (err.message.includes('UNIQUE')) return res.status(409).json({ error: "Email already exists" });
                 return res.status(500).json({ error: err.message });
@@ -111,14 +124,14 @@ exports.createStaff = (req, res) => {
 // PUT /api/staff/:id
 exports.updateStaff = (req, res) => {
     const { id } = req.params;
-    const { name, phone, designation, access_permissions } = req.body;
+    const { name, phone, designation, access_permissions, profile_icon } = req.body;
     const actorId = req.user ? req.user.id : 'SYSTEM';
     const actorRole = req.user ? req.user.role : 'System';
 
     const permissionsJson = JSON.stringify(access_permissions || []);
 
-    const query = `UPDATE staff SET name=?, phone=?, designation=?, access_permissions=?, updated_at=datetime('now', '+05:30') WHERE id=?`;
-    db.run(query, [name, phone, designation, permissionsJson, id], function (err) {
+    const query = `UPDATE staff SET name=?, phone=?, designation=?, access_permissions=?, profile_icon=?, updated_at=datetime('now', '+05:30') WHERE id=?`;
+    db.run(query, [name, phone, designation, permissionsJson, profile_icon, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
 
         auditService.log(req.user, 'UPDATE', 'Staff Mgmt', `Updated staff: ${name}`, { staff_id: id });

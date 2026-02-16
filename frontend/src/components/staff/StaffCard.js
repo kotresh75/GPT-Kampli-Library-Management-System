@@ -25,9 +25,18 @@ const StaffCard = ({ staff, onEdit, onToggleStatus, onDelete, onView }) => {
                         width: '40px', height: '40px', borderRadius: '50%',
                         background: 'rgba(255,255,255,0.1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: 'var(--text-main)'
+                        color: 'var(--text-main)',
+                        overflow: 'hidden'
                     }}>
-                        <User size={20} />
+                        {staff.profile_icon ? (
+                            <img
+                                src={staff.profile_icon.startsWith('data:') ? staff.profile_icon : (staff.profile_icon.startsWith('/') ? staff.profile_icon.slice(1) : staff.profile_icon)}
+                                alt={staff.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                        ) : (
+                            <User size={20} />
+                        )}
                     </div>
                     <div>
                         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{staff.name}</h3>

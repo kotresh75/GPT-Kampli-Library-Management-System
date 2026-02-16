@@ -53,8 +53,8 @@ const LogoParticles = ({ logoSrc, title, subtitle, compact = false, titleIcon, h
 
         const ctx = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
-        const rect = wrapper.getBoundingClientRect();
-        const w = rect.width;
+        // Use clientWidth to get the full width even if scaled down by animation
+        const w = wrapper.clientWidth;
         const h = compact ? 100 : 140;
 
         canvas.width = w * dpr;

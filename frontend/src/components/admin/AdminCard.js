@@ -15,9 +15,18 @@ const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword })
                         width: '40px', height: '40px', borderRadius: '50%',
                         background: isRoot ? 'linear-gradient(135deg, #f6e05e 0%, #d69e2e 100%)' : 'rgba(255,255,255,0.1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: isRoot ? '#000' : 'var(--text-main)'
+                        color: isRoot ? '#000' : 'var(--text-main)',
+                        overflow: 'hidden'
                     }}>
-                        <Shield size={20} />
+                        {admin.profile_icon ? (
+                            <img
+                                src={admin.profile_icon.startsWith('data:') ? admin.profile_icon : (admin.profile_icon.startsWith('/') ? admin.profile_icon.slice(1) : admin.profile_icon)}
+                                alt={admin.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                        ) : (
+                            <Shield size={20} />
+                        )}
                     </div>
                     <div>
                         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{admin.name}</h3>

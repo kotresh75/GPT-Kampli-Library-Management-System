@@ -46,11 +46,19 @@ const StaffDetailModal = ({ staff, onClose }) => {
                 {/* Header with Profile Summarry */}
                 <div className="p-5 border-b flex justify-between items-start" style={{ borderColor: 'var(--glass-border)', background: 'rgba(255,255,255,0.05)' }}>
                     <div className="flex items-center gap-5">
-                        <div className="w-16 h-16 rounded-full flex items-center justify-center border" style={{
+                        <div className="w-16 h-16 rounded-full flex items-center justify-center border overflow-hidden" style={{
                             background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
                             borderColor: 'var(--glass-border)'
                         }}>
-                            <User size={30} style={{ color: 'var(--text-main)' }} />
+                            {staff.profile_icon ? (
+                                <img
+                                    src={staff.profile_icon.startsWith('data:') ? staff.profile_icon : (staff.profile_icon.startsWith('/') ? staff.profile_icon.slice(1) : staff.profile_icon)}
+                                    alt={staff.name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <User size={30} style={{ color: 'var(--text-main)' }} />
+                            )}
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--text-main)' }}>{staff.name}</h2>

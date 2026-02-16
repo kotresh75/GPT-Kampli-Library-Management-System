@@ -18,7 +18,7 @@ const TransactionDetailModal = ({ isOpen, onClose, transaction }) => {
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1400
         }}>
-            <div className="glass-panel w-full max-w-lg overflow-hidden animate-scale-in flex flex-col max-h-[90vh]"
+            <div className="glass-panel w-full max-w-2xl overflow-hidden animate-scale-in flex flex-col max-h-[90vh]"
                 onClick={e => e.stopPropagation()}
                 style={{
                     padding: 0, // Reset default glass-panel padding for this specific layout

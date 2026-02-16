@@ -41,40 +41,29 @@ const DashboardHome = () => {
     const userRole = userInfo.role || 'Guest';
     const userPermissions = userInfo.permissions || [];
 
-    const fetchStats = async () => {
+    const fetchAllData = async () => {
+        setLoading(true);
         try {
-            const statsRes = await axios.get('http://localhost:17221/api/dashboard/stats');
+            const [statsRes, chartsRes, logsRes] = await Promise.all([
+                axios.get('http://localhost:17221/api/dashboard/stats'),
+                axios.get('http://localhost:17221/api/dashboard/charts'),
+                axios.get('http://localhost:17221/api/dashboard/logs')
+            ]);
+
             setStats(statsRes.data);
-        } catch (err) {
-            console.error("Error fetching stats:", err);
-            setError(err.message);
-        }
-    };
-
-    const fetchCharts = async () => {
-        try {
-            const chartsRes = await axios.get('http://localhost:17221/api/dashboard/charts');
             setCharts(chartsRes.data);
-        } catch (err) {
-            console.error("Error fetching charts:", err);
-        }
-    };
-
-    const fetchLogs = async () => {
-        try {
-            const logsRes = await axios.get('http://localhost:17221/api/dashboard/logs');
             setRecentLogs(logsRes.data.recent || []);
         } catch (err) {
-            console.error("Error fetching logs:", err);
+            console.error("Error fetching dashboard data:", err);
+            setError(err.message || 'Failed to load dashboard data');
         } finally {
             setLoading(false);
         }
     };
 
+    // Fetch initial data on component mount
     useEffect(() => {
-        fetchStats();
-        fetchCharts();
-        fetchLogs();
+        fetchAllData();
     }, []);
 
     // Socket Listener
@@ -83,9 +72,7 @@ const DashboardHome = () => {
 
         const handleUpdate = () => {
             console.log("Real-time update received: Refreshing Dashboard");
-            fetchStats();
-            fetchCharts();
-            fetchLogs();
+            fetchAllData();
         };
 
         socket.on('circulation_update', handleUpdate);

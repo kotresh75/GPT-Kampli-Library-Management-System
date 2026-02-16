@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Lock, AlertCircle } from 'lucide-react';
 
 const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Verification", message = "Please enter your admin password to continue." }) => {
@@ -35,7 +36,7 @@ const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Ver
         }
     };
 
-    return (
+    return createPortal(
         <div className="modal-overlay">
             <div className="modal-content modal-content-sm animate-bounce-in" onClick={e => e.stopPropagation()}>
                 {/* Header */}
@@ -90,7 +91,8 @@ const PasswordPromptModal = ({ isOpen, onClose, onSuccess, title = "Security Ver
                     </form>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

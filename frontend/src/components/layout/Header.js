@@ -3,19 +3,22 @@ import { Menu, LogOut, User, Sun, Moon, Type, ChevronDown, HelpCircle } from 'lu
 import { useNavigate } from 'react-router-dom';
 import { usePreferences } from '../../context/PreferencesContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useUser } from '../../context/UserContext';
 import StatusModal from '../common/StatusModal';
 
-const Header = ({ toggleSidebar, user, onHelpClick }) => {
+const Header = ({ toggleSidebar, onHelpClick }) => {
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
     const { language, setLanguage, t } = useLanguage();
+    const { currentUser, logout } = useUser();
     const navigate = useNavigate();
     const [showWarning, setShowWarning] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const dropdownRef = useRef(null);
 
-    const userInfo = JSON.parse(localStorage.getItem('user_info') || '{}');
-    const profileIcon = userInfo.profile_icon || null;
-    const userInitial = (user?.name || userInfo.name || 'U').charAt(0).toUpperCase();
+    // Use current user directly from context
+    const user = currentUser || {};
+    const profileIcon = user.profile_icon || null;
+    const userInitial = (user.name || 'U').charAt(0).toUpperCase();
 
     // Map numeric scale to labels for display/cycling
     const SCALE_MAP = {
@@ -39,8 +42,7 @@ const Header = ({ toggleSidebar, user, onHelpClick }) => {
     };
 
     const handleLogout = () => {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_info');
+        logout();
         setShowProfileDropdown(false);
         navigate('/login');
     };
@@ -123,8 +125,8 @@ const Header = ({ toggleSidebar, user, onHelpClick }) => {
                                 )}
                             </div>
                             <div className="header-user-text">
-                                <span className="user-name">{user?.name || userInfo.name || 'Admin'}</span>
-                                <span className="user-role">{user?.role || userInfo.role || 'Profile'}</span>
+                                <span className="user-name">{user.name || 'Admin'}</span>
+                                <span className="user-role">{user.role || 'Profile'}</span>
                             </div>
                             <ChevronDown
                                 size={16}
@@ -144,8 +146,8 @@ const Header = ({ toggleSidebar, user, onHelpClick }) => {
                                         )}
                                     </div>
                                     <div className="dropdown-user-info">
-                                        <span className="dropdown-user-name">{user?.name || userInfo.name}</span>
-                                        <span className="dropdown-user-email">{user?.email || userInfo.email}</span>
+                                        <span className="dropdown-user-name">{user.name}</span>
+                                        <span className="dropdown-user-email">{user.email}</span>
                                     </div>
                                 </div>
                                 <div className="dropdown-divider"></div>

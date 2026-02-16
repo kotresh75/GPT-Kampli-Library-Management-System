@@ -3,6 +3,7 @@ import { Search, Shield, Plus, Lock } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
+import { useUser } from '../context/UserContext';
 import AdminCard from '../components/admin/AdminCard';
 import AddAdminModal from '../components/admin/AddAdminModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
@@ -10,6 +11,7 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 const AdminManager = () => {
     const { t } = useLanguage();
     const { setPageContext } = useTutorial();
+    const { currentUser, updateUser } = useUser();
     useEffect(() => {
         setPageContext('admin');
     }, []);
@@ -208,7 +210,21 @@ const AdminManager = () => {
                 <AddAdminModal
                     admin={editingAdmin}
                     onClose={() => setShowAddModal(false)}
-                    onSave={fetchAdmins}
+                    onSave={() => {
+                        fetchAdmins();
+                        // If editing self, update context
+                        if (editingAdmin && editingAdmin.id === currentUser?.id) {
+                            // Fetch fresh data for self
+                            fetch(`http://localhost:17221/api/admins/${currentUser.id}`, {
+                                headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data && !data.error) updateUser(data);
+                                })
+                                .catch(err => console.error("Failed to refresh self", err));
+                        }
+                    }}
                 />
             )}
 

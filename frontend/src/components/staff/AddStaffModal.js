@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Save, User, Lock, Check, Zap, Shield, AlertCircle, Info } from 'lucide-react';
+import { X, Save, User, Lock, Check, Zap, Shield, AlertCircle, Info, Camera, Upload } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
 import ConfirmationModal from '../common/ConfirmationModal';
 import StatusModal from '../common/StatusModal';
@@ -35,6 +35,8 @@ const ROLE_PRESETS = {
     }
 };
 
+const TOTAL_ICONS = 15;
+
 const AddStaffModal = ({ staff, onClose, onSave }) => {
     const { t } = useLanguage();
     const isEdit = !!staff;
@@ -43,11 +45,14 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
         email: '',
         phone: '',
         designation: '',
-        access_permissions: []
+        access_permissions: [],
+        profile_icon: ''
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPresetHint, setShowPresetHint] = useState(false);
+    const [icons, setIcons] = useState([]);
+    const [showIconPicker, setShowIconPicker] = useState(false);
     const [mounted, setMounted] = useState(false);
 
     // Modals
@@ -56,6 +61,10 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
 
     useEffect(() => {
         setMounted(true);
+        fetch('http://localhost:17221/api/utils/icons')
+            .then(res => res.json())
+            .then(data => setIcons(Array.isArray(data) ? data : []))
+            .catch(err => console.error("Failed to fetch icons", err));
         return () => setMounted(false);
     }, []);
 
@@ -66,7 +75,8 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                 email: staff.email || '',
                 phone: staff.phone || '',
                 designation: staff.designation || '',
-                access_permissions: staff.access_permissions || []
+                access_permissions: staff.access_permissions || [],
+                profile_icon: staff.profile_icon || ''
             });
         }
     }, [staff]);
@@ -100,6 +110,11 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
             }
         });
         setShowPresetHint(false);
+    };
+
+    const handleIconSelect = (iconPath) => {
+        setFormData(prev => ({ ...prev, profile_icon: iconPath }));
+        setShowIconPicker(false);
     };
 
     const handleSubmit = async (e) => {
@@ -227,6 +242,70 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                     )}
 
                     <form id="staff-form" onSubmit={handleSubmit} style={{ display: 'contents' }}>
+
+                        {/* Profile Image Select - Now using Popover */}
+                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', position: 'relative' }}>
+                            <div
+                                style={{ position: 'relative', width: '100px', height: '100px', cursor: 'pointer' }}
+                                onClick={() => setShowIconPicker(!showIconPicker)}
+                                title="Click to choose avatar"
+                            >
+                                <div style={{
+                                    width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden',
+                                    border: `2px dashed ${showIconPicker ? 'var(--primary-color)' : 'var(--glass-border)'}`,
+                                    background: 'rgba(255,255,255,0.05)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    transition: 'all 0.2s'
+                                }}>
+                                    {formData.profile_icon ? (
+                                        <img
+                                            src={formData.profile_icon}
+                                            alt="Profile"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <User size={40} color="var(--text-secondary)" style={{ opacity: 0.5 }} />
+                                    )}
+                                </div>
+                                <div style={{
+                                    position: 'absolute', bottom: 0, right: 0,
+                                    width: '32px', height: '32px', borderRadius: '50%',
+                                    background: 'var(--primary-color)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    border: '2px solid var(--bg-color)', boxShadow: '0 2px 5px rgba(0,0,0,0.3)'
+                                }}>
+                                    <User size={16} color="white" />
+                                </div>
+                            </div>
+
+                            {/* Icon Picker Popover */}
+                            {showIconPicker && (
+                                <div className="icon-picker-popover">
+                                    <div className="icon-picker-grid">
+                                        {icons.map((icon, i) => {
+                                            const isActive = formData.profile_icon === icon.data;
+                                            return (
+                                                <div
+                                                    key={icon.id || i}
+                                                    className={`icon-picker-item ${isActive ? 'active' : ''}`}
+                                                    onClick={() => handleIconSelect(icon.data)}
+                                                >
+                                                    <img src={icon.data} alt={icon.name} />
+                                                    {isActive && <div className="icon-picker-check"><Check size={16} color="white" /></div>}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Backdrop to close popover */}
+                            {showIconPicker && (
+                                <div
+                                    style={{ position: 'fixed', inset: 0, zIndex: 2150 }}
+                                    onClick={() => setShowIconPicker(false)}
+                                />
+                            )}
+                        </div>
 
                         {/* Name & Email Row */}
                         <div className="form-row">

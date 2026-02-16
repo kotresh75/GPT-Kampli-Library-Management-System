@@ -4,20 +4,33 @@ import {
     User, Mail, Shield, Lock, Save, CheckCircle, AlertCircle,
     Key, Camera, Briefcase, Hash, X
 } from 'lucide-react';
+import { useUser } from '../context/UserContext';
 import '../styles/pages/ProfileStyles.css';
 
 const TOTAL_ICONS = 15;
 
 const UserProfile = () => {
-    const [userInfo, setUserInfo] = useState(JSON.parse(localStorage.getItem('user_info') || '{}'));
+    const { currentUser, updateUser } = useUser();
+
+    // Fallback if context not ready
+    const user = currentUser || JSON.parse(localStorage.getItem('user_info') || '{}');
+
     const [passData, setPassData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
     const [status, setStatus] = useState({ type: '', message: '' });
     const [loading, setLoading] = useState(false);
+    const [icons, setIcons] = useState([]);
     const [showIconPicker, setShowIconPicker] = useState(false);
     const [iconLoading, setIconLoading] = useState(false);
 
-    const profileIcon = userInfo.profile_icon || `profile-icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.png`;
-    const userInitial = (userInfo.name || 'U').charAt(0).toUpperCase();
+    // Fetch Icons on Mount
+    useEffect(() => {
+        axios.get('http://localhost:17221/api/utils/icons')
+            .then(res => setIcons(res.data))
+            .catch(err => console.error("Failed to fetch icons", err));
+    }, []);
+
+    const profileIcon = user.profile_icon;
+    const userInitial = (user.name || 'U').charAt(0).toUpperCase();
 
     const handleChange = (e) => {
         setPassData({ ...passData, [e.target.name]: e.target.value });
@@ -55,20 +68,18 @@ const UserProfile = () => {
         }
     };
 
-    const handleIconSelect = async (iconPath) => {
+    const handleIconSelect = async (iconData) => {
         setIconLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
             await axios.put('http://localhost:17221/api/auth/profile-icon', {
-                profileIcon: iconPath
+                profileIcon: iconData
             }, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            // Update localStorage
-            const updated = { ...userInfo, profile_icon: iconPath };
-            localStorage.setItem('user_info', JSON.stringify(updated));
-            setUserInfo(updated);
+            // Update Context & Local Storage via Context
+            updateUser({ profile_icon: iconData });
             setShowIconPicker(false);
         } catch (err) {
             console.error('Failed to update icon:', err);
@@ -86,7 +97,7 @@ const UserProfile = () => {
                     <div className="profile-avatar-wrapper" onClick={() => setShowIconPicker(true)}>
                         <div className="profile-avatar-large">
                             {profileIcon ? (
-                                <img src={profileIcon.startsWith('/') ? profileIcon.slice(1) : profileIcon} alt="Profile" className="profile-avatar-img" />
+                                <img src={profileIcon} alt="Profile" className="profile-avatar-img" />
                             ) : (
                                 <span className="profile-avatar-initial">{userInitial}</span>
                             )}
@@ -96,16 +107,17 @@ const UserProfile = () => {
                             <span>Change</span>
                         </div>
                     </div>
+                    {/* ... (rest of hero info) ... */}
                     <div className="profile-hero-info">
-                        <h1 className="profile-hero-name">{userInfo.name || 'User Name'}</h1>
+                        <h1 className="profile-hero-name">{user.name || 'User Name'}</h1>
                         <span className="profile-role-badge">
                             <Shield size={14} />
-                            {userInfo.role || 'Staff'}
+                            {user.role || 'Staff'}
                         </span>
-                        {userInfo.department && (
+                        {user.department && (
                             <span className="profile-department">
                                 <Briefcase size={14} />
-                                {userInfo.department}
+                                {user.department}
                             </span>
                         )}
                     </div>
@@ -123,17 +135,16 @@ const UserProfile = () => {
                             </button>
                         </div>
                         <div className="icon-picker-grid">
-                            {Array.from({ length: TOTAL_ICONS }, (_, i) => {
-                                const iconPath = `profile-icons/profile_icon_${i + 1}.png`;
-                                const isActive = profileIcon === iconPath;
+                            {icons.map((icon, i) => {
+                                const isActive = profileIcon === icon.data;
                                 return (
                                     <button
-                                        key={i}
+                                        key={icon.id || i}
                                         className={`icon-picker-item ${isActive ? 'active' : ''}`}
-                                        onClick={() => handleIconSelect(iconPath)}
+                                        onClick={() => handleIconSelect(icon.data)}
                                         disabled={iconLoading}
                                     >
-                                        <img src={iconPath} alt={`Icon ${i + 1}`} />
+                                        <img src={icon.data} alt={icon.name} />
                                         {isActive && <div className="icon-picker-check"><CheckCircle size={16} /></div>}
                                     </button>
                                 );
@@ -159,29 +170,29 @@ const UserProfile = () => {
                                 <User size={16} />
                                 <span>Full Name</span>
                             </div>
-                            <span className="profile-detail-value">{userInfo.name || '—'}</span>
+                            <span className="profile-detail-value">{user.name || '—'}</span>
                         </div>
                         <div className="profile-detail-row">
                             <div className="profile-detail-label">
                                 <Mail size={16} />
                                 <span>Email Address</span>
                             </div>
-                            <span className="profile-detail-value">{userInfo.email || '—'}</span>
+                            <span className="profile-detail-value">{user.email || '—'}</span>
                         </div>
                         <div className="profile-detail-row">
                             <div className="profile-detail-label">
                                 <Shield size={16} />
                                 <span>Role</span>
                             </div>
-                            <span className="profile-detail-badge">{userInfo.role || '—'}</span>
+                            <span className="profile-detail-badge">{user.role || '—'}</span>
                         </div>
-                        {userInfo.department && (
+                        {user.department && (
                             <div className="profile-detail-row">
                                 <div className="profile-detail-label">
                                     <Briefcase size={16} />
                                     <span>Department</span>
                                 </div>
-                                <span className="profile-detail-value">{userInfo.department}</span>
+                                <span className="profile-detail-value">{user.department}</span>
                             </div>
                         )}
                         <div className="profile-detail-row">
@@ -189,7 +200,7 @@ const UserProfile = () => {
                                 <Hash size={16} />
                                 <span>Member ID</span>
                             </div>
-                            <span className="profile-detail-mono">{userInfo.id ? userInfo.id.substring(0, 8).toUpperCase() : '—'}</span>
+                            <span className="profile-detail-mono">{user.id ? user.id.substring(0, 8).toUpperCase() : '—'}</span>
                         </div>
                     </div>
                 </div>

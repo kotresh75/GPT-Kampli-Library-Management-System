@@ -14,5 +14,6 @@ router.patch('/:id/status', staffController.toggleStatus);
 router.delete('/:id', staffController.deleteStaff);
 router.post('/:id/reset-password', staffController.resetPassword);
 router.get('/:id/activity', staffController.getStaffActivity);
+router.get('/:id', staffController.getStaffById);
 
 module.exports = router;

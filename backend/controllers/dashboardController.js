@@ -44,8 +44,17 @@ exports.getStats = async (req, res) => {
     }
 };
 
-exports.getCharts = (req, res) => {
+exports.getCharts = async (req, res) => {
     const charts = {};
+
+    const runQuery = (query, params = []) => {
+        return new Promise((resolve, reject) => {
+            db.all(query, params, (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows);
+            });
+        });
+    };
 
     // Books by Dept
     const booksByDeptQuery = `
@@ -63,37 +72,34 @@ exports.getCharts = (req, res) => {
         GROUP BY d.id
     `;
 
-    db.all(booksByDeptQuery, [], (err, bookRows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        charts.booksByDept = bookRows;
+    // Most Issued Books (Top 5) - From Transaction Logs
+    const mostIssuedQuery = `
+        SELECT b.title as name, count(tl.id) as value
+        FROM transaction_logs tl
+        JOIN book_copies bc ON tl.copy_id = bc.id
+        JOIN books b ON bc.book_isbn = b.isbn
+        WHERE tl.action_type = 'ISSUE'
+        GROUP BY b.id
+        ORDER BY value DESC
+        LIMIT 5
+    `;
 
-        db.all(studentsByDeptQuery, [], (err, studentRows) => {
-            if (err) return res.status(500).json({ error: err.message });
-            charts.studentsByDept = studentRows;
+    try {
+        const [booksByDept, studentsByDept, mostIssuedBooks] = await Promise.all([
+            runQuery(booksByDeptQuery),
+            runQuery(studentsByDeptQuery),
+            runQuery(mostIssuedQuery)
+        ]);
 
-            // Most Issued Books (Top 5) - From Transaction Logs
-            const mostIssuedQuery = `
-                SELECT b.title as name, count(tl.id) as value
-                FROM transaction_logs tl
-                JOIN book_copies bc ON tl.copy_id = bc.id
-                JOIN books b ON bc.book_isbn = b.isbn
-                WHERE tl.action_type = 'ISSUE'
-                GROUP BY b.id
-                ORDER BY value DESC
-                LIMIT 5
-            `;
-
-            db.all(mostIssuedQuery, [], (err, topBooks) => {
-                if (err) {
-                    console.error("Error fetching top books:", err);
-                    charts.mostIssuedBooks = []; // Fallback
-                } else {
-                    charts.mostIssuedBooks = topBooks;
-                }
-                res.json(charts);
-            });
+        res.json({
+            booksByDept,
+            studentsByDept,
+            mostIssuedBooks
         });
-    });
+    } catch (err) {
+        console.error("Dashboard Charts Error:", err);
+        res.status(500).json({ error: err.message });
+    }
 };
 
 exports.getLogs = async (req, res) => {
