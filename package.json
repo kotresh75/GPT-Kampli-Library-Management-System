@@ -8,7 +8,8 @@
     "start": "concurrently --kill-others \"cross-env BROWSER=none npm start --prefix frontend\" \"wait-on http://localhost:3000 && electron electron/main.js\"",
     "build:frontend": "npm run build --prefix frontend",
     "build:exe": "npm run build:frontend && electron-builder --win nsis",
-    "build:msi": "npm run build:frontend && electron-builder --win msi"
+    "build:msi": "npm run build:frontend && electron-builder --win msi",
+    "postinstall": "npm install --prefix frontend --legacy-peer-deps && npm install --prefix backend"
   },
   "keywords": [],
   "license": "ISC",
@@ -43,9 +44,9 @@
       "createStartMenuShortcut": true,
       "shortcutName": "GPTK Library Manager",
       "include": "build/installer.nsh",
-      "installerSidebar": "build/installerSidebar.bmp",
-      "uninstallerSidebar": "build/installerSidebar.bmp",
-      "installerHeader": "build/installerHeader.bmp"
+      "installerSidebar": "${projectDir}/build/installerSidebar.bmp",
+      "uninstallerSidebar": "${projectDir}/build/installerSidebar.bmp",
+      "installerHeader": "${projectDir}/build/installerHeader.bmp"
     },
     "directories": {
       "output": "Final_export"
