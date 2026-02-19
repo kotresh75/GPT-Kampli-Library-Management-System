@@ -2,7 +2,7 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import SetupPage from './pages/SetupPage';
+import SetupWizard from './pages/SetupWizard';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardHome from './pages/DashboardHome';
 import AboutPage from './pages/AboutPage';
@@ -87,7 +87,7 @@ function App() {
                     <GlobalNotifications />
                     <LockScreen />
                     <Routes>
-                      <Route path="/setup" element={<SetupPage />} />
+                      <Route path="/setup" element={<SetupWizard />} />
                       <Route path="/" element={<SetupGuard><LandingPage /></SetupGuard>} />
                       <Route path="/login" element={<SetupGuard><LoginPage /></SetupGuard>} />
                       <Route path="/about" element={<AboutPage />} />
