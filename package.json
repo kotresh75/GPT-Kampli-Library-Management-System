@@ -69,6 +69,10 @@
           "!**/inspect_*.js",
           "!**/migrate_*.js"
         ]
+      },
+      {
+        "from": "frontend/public/profile-icons",
+        "to": "profile-icons"
       }
     ],
     "asarUnpack": [

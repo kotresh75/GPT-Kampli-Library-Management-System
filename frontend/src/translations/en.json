@@ -675,6 +675,7 @@
             "enter_subject": "Enter subject...",
             "body": "Message Body",
             "type_message": "Type your message here...",
+            "attachment": "Attachment",
             "types": {
                 "dept": "Specific Department",
                 "student": "Specific Students",

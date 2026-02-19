@@ -1,23 +1,23 @@
 import React, { forwardRef, useState, useEffect } from 'react';
-import cardBgUrl from '../../ID Template/id_bg.png';
-import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 
-const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }, ref) => {
+const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, base64Bg, base64Emblem, base64BloodGroup }, ref) => {
     // --- STYLES (Inline for seamless SVG export) ---
     const styles = {
         card: {
             width: '380px',
-            height: '603px', // 29:46 Aspect Ratio
+            height: '615px', // 55mm : 89mm Aspect Ratio (~0.618)
             backgroundColor: 'white',
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             fontFamily: "'Roboto Condensed', 'Arial Narrow', Arial, sans-serif",
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            border: '2px solid #90EE90' // Light green border
         },
-        // Font loading for SVG export - REMOVED EXTERNAL LOAD TO PREVENT TAINT
+        // Font loading for SVG export
         fontStyle: `
+            @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400&family=Roboto+Condensed:wght@400;700&display=swap');
             .id-card-text { font-family: 'Roboto Condensed', 'Arial Narrow', Arial, sans-serif; }
         `,
         bgImg: {
@@ -27,14 +27,14 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
             width: '100%',
             height: '100%',
             objectFit: 'cover',
-            zIndex: 0 // Ensure it stays at the bottom
+            zIndex: 0
         },
         header: {
             backgroundColor: '#2e1f5e',
             color: 'white',
             textAlign: 'center',
-            padding: '15px 10px 10px 10px',
-            borderBottom: '2px solid black', // Changed from green to thin black
+            padding: '15px 10px 15px 10px', // Increased bottom padding
+            borderBottom: '2px solid black',
             position: 'relative',
             zIndex: 2
         },
@@ -46,7 +46,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
             marginBottom: '5px'
         },
         topText: {
-            fontSize: '16px', // Reduced from 21px
+            fontSize: '18px',
             fontWeight: 700,
             letterSpacing: '0.5px'
         },
@@ -55,18 +55,20 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
             height: 'auto'
         },
         deptName: {
-            fontSize: '17px', // Increased from 15px
+            fontSize: '18px',
             fontWeight: 400,
             marginTop: '5px',
             letterSpacing: '1.5px'
         },
         collegeName: {
             color: '#fffa00',
-            fontSize: '14px',
-            fontWeight: 900,
-            marginTop: '5px',
+            fontSize: '18px',
+            fontWeight: 400, // Regular (Thicker than 300)
+            fontFamily: "'Oswald', sans-serif",
+            marginTop: '2px',
+            letterSpacing: '3px', // Increased spacing
             textTransform: 'uppercase',
-            lineHeight: 1.2,
+            lineHeight: 1,
             textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
             whiteSpace: 'nowrap'
         },
@@ -81,22 +83,25 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
         photoWrapper: {
             display: 'flex',
             justifyContent: 'center',
+            alignItems: 'center',
             marginTop: '10px',
-            marginBottom: '10px'
+            marginBottom: '10px',
+            position: 'relative' // For potential absolute positioning if needed, but using flex gap
         },
         photoBox: {
-            width: '120px',
-            height: '150px',
-            border: '2px solid black', // Added distinct border
+            width: '130px',
+            height: '160px',
+            border: '2px solid black',
             backgroundColor: 'rgba(248, 248, 248, 0.8)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             color: '#888',
-            fontSize: '11px',
+            fontSize: '13px',
             overflow: 'hidden'
         },
+
         photoIcon: {
             fontSize: '24px',
             marginBottom: '5px',
@@ -115,7 +120,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
         tdLabel: {
             width: '100px',
             whiteSpace: 'nowrap',
-            fontSize: '17px',
+            fontSize: '18px',
             fontWeight: 700,
             color: '#2e1f5e',
             verticalAlign: 'top'
@@ -123,22 +128,22 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
         tdColon: {
             width: '15px',
             textAlign: 'center',
-            fontSize: '17px',
+            fontSize: '18px',
             fontWeight: 700,
             color: '#2e1f5e',
             verticalAlign: 'top'
         },
         tdValue: {
-            fontSize: '17px',
+            fontSize: '18px',
             fontWeight: 700,
-            color: '#2e1f5e',
+            color: 'black',
             verticalAlign: 'top'
         },
         classOptions: {
-            fontSize: '17px',
+            fontSize: '18px',
             letterSpacing: '1px',
             fontWeight: 700,
-            color: '#2e1f5e',
+            color: 'black',
             verticalAlign: 'top'
         },
         signatures: {
@@ -162,7 +167,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
             justifyContent: 'center'
         },
         signLabel: {
-            fontSize: '12px',
+            fontSize: '14px',
             fontWeight: 700,
             color: '#2e1f5e',
             position: 'relative',
@@ -178,32 +183,23 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
     };
 
     // Helper: Convert URL to Base64 for safe Export
-    const [base64Bg, setBase64Bg] = useState(null);
     const [base64Profile, setBase64Profile] = useState(null);
-    const [base64Emblem, setBase64Emblem] = useState(null);
 
     useEffect(() => {
         const convertToBase64 = async (url, setter) => {
             if (!url) return;
             try {
                 const res = await fetch(url);
-                if (!res.ok) throw new Error(`Failed to load ${url}`);
+                if (!res.ok) throw new Error(`Failed to load ${url} `);
                 const blob = await res.blob();
                 const reader = new FileReader();
                 reader.onloadend = () => setter(reader.result);
                 reader.readAsDataURL(blob);
             } catch (e) {
                 console.error("Image Load Error:", e);
-                // STRICT MODE: Do NOT fallback to URL. Leave as null to prevent crash.
                 setter(null);
             }
         };
-
-        // Convert BG
-        convertToBase64(cardBgUrl, setBase64Bg);
-
-        // Convert Emblem
-        convertToBase64(emblemBgUrl, setBase64Emblem);
 
         // Convert Profile
         if (student.profile_image) {
@@ -219,10 +215,16 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
             const yearShort = student.register_number.substring(5, 7);
             // Simple validation to check if it's a number
             if (!isNaN(yearShort)) {
-                return `20${yearShort}`;
+                return `20${yearShort} `;
             }
         }
         return student.admission_year || '';
+    };
+
+    // Helper: Title Case
+    const toTitleCase = (str) => {
+        if (!str) return '';
+        return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
     };
 
     return (
@@ -259,6 +261,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
             {/* Content */}
             <div style={styles.content}>
                 {/* Photo */}
+                {/* Photo & Blood Group */}
                 <div style={styles.photoWrapper}>
                     <div style={styles.photoBox}>
                         {base64Profile ? (
@@ -270,6 +273,8 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
                             </>
                         )}
                     </div>
+
+
                 </div>
 
                 {/* Details */}
@@ -278,12 +283,12 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature }
                         <tr>
                             <td style={styles.tdLabel}>Name</td>
                             <td style={styles.tdColon}>:</td>
-                            <td style={styles.tdValue}>{student.full_name?.toUpperCase()}</td>
+                            <td style={styles.tdValue}>{toTitleCase(student.full_name)}</td>
                         </tr>
                         <tr>
                             <td style={styles.tdLabel}>F. Name</td>
                             <td style={styles.tdColon}>:</td>
-                            <td style={styles.tdValue}>{student.father_name?.toUpperCase() || ''}</td>
+                            <td style={styles.tdValue}>{toTitleCase(student.father_name)}</td>
                         </tr>
                         <tr>
                             <td style={styles.tdLabel}>Adm. Year</td>

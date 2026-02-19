@@ -237,7 +237,10 @@ const TransactionDetailsModal = ({ isOpen, onClose, transaction }) => {
                                         </div>
                                     </div>
                                     {(actionType === 'FINE_PAID' || actionType === 'Fine Collected') && (
-                                        <span className="txn-fine-paid-badge">PAID</span>
+                                        <span className="txn-fine-paid-badge" style={{ borderColor: 'var(--green-500-30)', color: 'var(--green-400)', background: 'var(--green-500-10)' }}>PAID</span>
+                                    )}
+                                    {actionType === 'FINE_WAIVED' && (
+                                        <span className="txn-fine-paid-badge" style={{ borderColor: 'var(--orange-500-30)', color: 'var(--orange-400)', background: 'var(--orange-500-10)' }}>WAIVED</span>
                                     )}
                                 </div>
                             )}

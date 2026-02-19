@@ -7,7 +7,7 @@ import {
     BookOpen, Users, DollarSign, LayoutDashboard, Settings, FileText,
     Layers, ShieldCheck, HelpCircle, Building, UserCog, Keyboard,
     Globe, Lightbulb, AlertTriangle, Info, Eye, Activity,
-    Book, Repeat, Mail, Lock, Search, Filter, Plus, Upload, Download, RefreshCcw, IndianRupee, CreditCard, User, ScanLine, ArrowRight
+    Book, Repeat, Mail, Lock, Search, Filter, Plus, Upload, Download, RefreshCcw, IndianRupee, CreditCard, User, ScanLine, ArrowRight, ExternalLink
 } from 'lucide-react';
 
 // This file is now refactored to be a hook or function to support dynamic translation updates
@@ -1175,13 +1175,28 @@ export function getUserManualData() {
                         <Trans i18nKey="manual.mongodb.intro" />
                     </p>
 
-                    <div className="um-video-container">
-                        <iframe
-                            src="https://www.youtube.com/embed/7a2Nns23d_s"
-                            title="MongoDB Atlas Setup Tutorial"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
+                    <a
+                        href="https://www.youtube.com/watch?v=7a2Nns23d_s"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="um-video-container"
+                        style={{ position: 'relative', cursor: 'pointer', display: 'block', textDecoration: 'none' }}
+                    >
+                        <img
+                            src="https://img.youtube.com/vi/7a2Nns23d_s/hqdefault.jpg"
+                            alt="MongoDB Setup Tutorial"
+                            style={{ width: '100%', borderRadius: '8px', opacity: 0.8 }}
                         />
+                        <div style={{
+                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                            background: 'rgba(0,0,0,0.7)', padding: '15px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '10px'
+                        }}>
+                            <ExternalLink size={24} color="#fff" />
+                            <span style={{ color: '#fff', fontWeight: 'bold' }}>Watch on YouTube</span>
+                        </div>
+                    </a>
+                    <div style={{ textAlign: 'center', marginTop: '5px', fontSize: '0.9rem', color: '#666' }}>
+                        (Click to open video in browser)
                     </div>
 
                     <div className="um-callout tip">
@@ -1248,13 +1263,28 @@ export function getUserManualData() {
                     <h3><Trans i18nKey="manual.smtp.heading" /></h3>
                     <p><Trans i18nKey="manual.smtp.intro" /></p>
 
-                    <div className="um-video-container">
-                        <iframe
-                            src="https://www.youtube.com/embed/weA4yBSUMXs"
-                            title="Gmail App Password Tutorial"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
+                    <a
+                        href="https://www.youtube.com/watch?v=weA4yBSUMXs"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="um-video-container"
+                        style={{ position: 'relative', cursor: 'pointer', display: 'block', textDecoration: 'none' }}
+                    >
+                        <img
+                            src="https://img.youtube.com/vi/weA4yBSUMXs/maxresdefault.jpg"
+                            alt="Gmail App Password Tutorial"
+                            style={{ width: '100%', borderRadius: '8px', opacity: 0.8 }}
                         />
+                        <div style={{
+                            position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+                            background: 'rgba(0,0,0,0.7)', padding: '15px 20px', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '10px'
+                        }}>
+                            <ExternalLink size={24} color="#fff" />
+                            <span style={{ color: '#fff', fontWeight: 'bold' }}>Watch on YouTube</span>
+                        </div>
+                    </a>
+                    <div style={{ textAlign: 'center', marginTop: '5px', fontSize: '0.9rem', color: '#666' }}>
+                        (Click to open video in browser)
                     </div>
 
                     <h4><Trans i18nKey="manual.smtp.step1" /></h4>

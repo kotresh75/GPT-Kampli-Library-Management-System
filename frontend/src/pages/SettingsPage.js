@@ -19,19 +19,7 @@ import GlassSelect from '../components/common/GlassSelect';
 import BulkIDCardDownload from '../components/students/BulkIDCardDownload';
 
 // Help functions
-const getPasswordStrength = (password) => {
-    if (!password) return { level: 0, label: '', color: '' };
-    let score = 0;
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
 
-    if (score <= 2) return { level: score, label: 'Weak', color: 'bg-red-500' };
-    if (score <= 3) return { level: score, label: 'Medium', color: 'bg-yellow-500' };
-    return { level: score, label: 'Strong', color: 'bg-green-500' };
-};
 
 // Extracted Components
 const AppearanceTab = ({ settings, handleChange, handleSave }) => {
@@ -136,10 +124,9 @@ const AppearanceTab = ({ settings, handleChange, handleSave }) => {
     );
 };
 
-const AccountSecurityTab = ({ settings, handleChange, handleSave, passwordForm, setPasswordForm, handlePasswordChange, passwordError, passwordSuccess, changingPassword }) => {
+const AccountSecurityTab = ({ settings, handleChange, handleSave }) => {
     const { t } = useLanguage();
-    const strength = getPasswordStrength(passwordForm.new);
-    // Initial check: if loaded value is NOT in preset list, assume custom mode
+    // derived state for custom logic
     const [isCustomMode, setIsCustomMode] = useState(() =>
         ![0, 5, 10, 15, 30].includes(settings.app_security?.autoLockMinutes)
     );
@@ -148,89 +135,7 @@ const AccountSecurityTab = ({ settings, handleChange, handleSave, passwordForm, 
         <div className="section-wrapper">
             <h2 className="settings-page-title">{t('settings.security.title')}</h2>
 
-            {/* Change Password */}
-            <div className="settings-card padding-lg">
-                <div className="card-header">
-                    <h3 className="card-title"><Lock size={18} /> {t('settings.security.change_pwd')}</h3>
-                </div>
 
-                <form onSubmit={handlePasswordChange} className="width-constrained">
-                    <div className="form-group">
-                        <label className="form-label">{t('settings.security.current_pwd')}</label>
-                        <input
-                            type="password"
-                            className="glass-input width-full"
-                            style={{ width: '100%' }}
-                            placeholder=""
-                            value={passwordForm.current}
-                            onChange={e => setPasswordForm(p => ({ ...p, current: e.target.value }))}
-                            required
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">{t('settings.security.new_pwd')}</label>
-                        <input
-                            type="password"
-                            className="glass-input width-full"
-                            style={{ width: '100%' }}
-                            placeholder=""
-                            value={passwordForm.new}
-                            onChange={e => setPasswordForm(p => ({ ...p, new: e.target.value }))}
-                            required
-                        />
-                        {/* Strength Meter */}
-                        {passwordForm.new && (
-                            <div className="password-meter">
-                                <div className="meter-bar-bg">
-                                    <div
-                                        className="meter-fill"
-                                        style={{ width: `${(strength.level / 5) * 100}% `, background: strength.color === 'bg-green-500' ? '#22c55e' : strength.color === 'bg-yellow-500' ? '#eab308' : '#ef4444' }}
-                                    />
-                                </div>
-                                <span className={`meter - text ${strength.color === 'bg-green-500' ? 'text-success' : strength.color === 'bg-yellow-500' ? 'text-warning' : 'text-danger'} `}>
-                                    {strength.label}
-                                </span>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">{t('settings.security.confirm_pwd')}</label>
-                        <input
-                            type="password"
-                            className="glass-input width-full"
-                            style={{ width: '100%' }}
-                            placeholder=""
-                            value={passwordForm.confirm}
-                            onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
-                            required
-                        />
-                        {passwordForm.confirm && passwordForm.new !== passwordForm.confirm && (
-                            <span className="text-danger" style={{ fontSize: '0.75rem' }}>{t('settings.security.pwd_mismatch')}</span>
-                        )}
-                    </div>
-
-                    {passwordError && (
-                        <div className="text-danger" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <X size={16} /> {passwordError}
-                        </div>
-                    )}
-                    {passwordSuccess && (
-                        <div className="text-success" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                            <Check size={16} /> {passwordSuccess}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        className="primary-glass-btn"
-                        disabled={changingPassword}
-                    >
-                        {changingPassword ? t('settings.security.changing') : t('settings.security.update_btn')}
-                    </button>
-                </form>
-            </div>
 
             {/* Session Settings */}
             <div className="settings-card padding-lg">
@@ -551,6 +456,7 @@ const HardwareTab = ({ settings, handleChange, handleSave, onTestPrint, showNoti
 
 const DataMaintenanceTab = ({
     settings,
+    unsavedChanges,
     handleChange,
     handleSave,
     testingConnection,
@@ -581,30 +487,49 @@ const DataMaintenanceTab = ({
                             value={settings.backup_config?.connectionUri || ''}
                             onChange={e => handleChange('backup_config', 'connectionUri', e.target.value)}
                         />
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button
-                            className="nav-button"
-                            style={{ width: 'auto', border: '1px solid var(--glass-border)' }}
-                            onClick={handleTestConnection}
-                            disabled={testingConnection}
-                        >
-                            {testingConnection ? (
-                                <><RefreshCw size={16} className="animate-spin" /> {t('settings.data.testing')}</>
-                            ) : (
-                                <><Wifi size={16} /> {t('settings.data.test_conn')}</>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                            <button
+                                className="secondary-glass-btn"
+                                onClick={handleTestConnection}
+                                disabled={testingConnection}
+                                style={{ whiteSpace: 'nowrap' }}
+                            >
+                                {testingConnection ? 'Testing...' : 'Test Connection'}
+                            </button>
+
+                            {settings.backup_config?.connectionUri && (
+                                <>
+                                    <div className={`status-badge ${testingConnection ? 'pending' : 'neutral'}`}>
+                                        {testingConnection ? 'Connecting...' : 'Click Test to Verify'}
+                                    </div>
+
+                                    {!testingConnection && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9em', fontWeight: 500 }}>
+                                            {unsavedChanges['backup_config'] ? (
+                                                <span style={{ color: '#F59E0B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    ⚠ Unsaved Changes
+                                                </span>
+                                            ) : (
+                                                <span style={{ color: '#10B981', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                    ✓ Saved
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
                             )}
-                        </button>
-                        <button
-                            className="primary-glass-btn"
-                            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                            onClick={handleSave}
-                        >
-                            <Save size={16} /> {t('settings.data.save_restart')}
-                        </button>
+                        </div>
                     </div>
+                    <button
+                        className="primary-glass-btn"
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                        onClick={handleSave}
+                    >
+                        <Save size={16} /> Save Configuration
+                    </button>
                 </div>
             </div>
+
 
             {/* Backup Operations */}
             <div className="settings-card">
@@ -723,7 +648,7 @@ const DataMaintenanceTab = ({
                     <Save size={18} /> {t('settings.data.save_data')}
                 </button>
             </div>
-        </div>
+        </div >
     );
 };
 
@@ -907,7 +832,7 @@ const BulkPhotoUpload = () => {
         });
     };
 
-    const handleFolderSelect = async (e) => {
+    const handleFileSelect = async (e) => {
         const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
         if (files.length === 0) return;
 
@@ -968,11 +893,8 @@ const BulkPhotoUpload = () => {
                         style={{
                             border: '2px dashed var(--glass-border)', borderRadius: '12px', padding: '30px',
                             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px',
-                            cursor: 'pointer', transition: 'all 0.2s', background: 'rgba(255,255,255,0.02)'
+                            transition: 'all 0.2s', background: 'rgba(255,255,255,0.02)'
                         }}
-                        onClick={() => fileInputRef.current.click()}
-                        onMouseEnter={e => e.currentTarget.style.borderColor = '#3B82F6'}
-                        onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--glass-border)'}
                     >
                         <div style={{ padding: '15px', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', color: '#3B82F6' }}>
                             <UploadCloud size={32} />
@@ -981,12 +903,41 @@ const BulkPhotoUpload = () => {
                             <h4 style={{ margin: '0 0 5px 0', fontSize: '1rem', color: 'var(--text-main)' }}>{t('settings.photos.click_select')}</h4>
                             <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{t('settings.photos.supported')}</p>
                         </div>
+
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                            <button
+                                className="nav-button"
+                                style={{ border: '1px solid var(--glass-border)', padding: '6px 12px', height: 'auto', borderRadius: '8px', fontSize: '0.8rem' }}
+                                onClick={() => fileInputRef.current.click()}
+                            >
+                                <Upload size={14} /> Select Files
+                            </button>
+                            <button
+                                className="nav-button"
+                                style={{ border: '1px solid var(--glass-border)', padding: '6px 12px', height: 'auto', borderRadius: '8px', fontSize: '0.8rem' }}
+                                onClick={() => folderInputRef.current.click()}
+                            >
+                                <UploadCloud size={14} /> Select Folder
+                            </button>
+                        </div>
+
+                        {/* File Input (Multiple) */}
                         <input
                             type="file"
                             ref={fileInputRef}
                             style={{ display: 'none' }}
+                            multiple
+                            accept="image/*"
+                            onChange={handleFileSelect}
+                        />
+
+                        {/* Folder Input */}
+                        <input
+                            type="file"
+                            ref={folderInputRef}
+                            style={{ display: 'none' }}
                             webkitdirectory="" directory="" multiple
-                            onChange={handleFolderSelect}
+                            onChange={handleFileSelect}
                         />
                     </div>
                 )}
@@ -1021,13 +972,15 @@ const BulkPhotoUpload = () => {
                         )}
 
                         {!status.uploading && (
-                            <button
-                                className="secondary-glass-btn"
-                                style={{ marginTop: '15px', width: '100%', justifyContent: 'center' }}
-                                onClick={() => setStatus({ uploading: false, processed: 0, total: 0, success: 0, failed: 0, currentFile: '' })}
-                            >
-                                {t('settings.photos.upload_more')}
-                            </button>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+                                <button
+                                    className="secondary-glass-btn"
+                                    style={{ flex: 1, justifyContent: 'center' }}
+                                    onClick={() => setStatus({ uploading: false, processed: 0, total: 0, success: 0, failed: 0, currentFile: '' })}
+                                >
+                                    {t('settings.photos.upload_more')}
+                                </button>
+                            </div>
                         )}
                     </div>
                 )}
@@ -1695,12 +1648,10 @@ const SettingsPage = () => {
     const showNotification = (title, message, type = 'info') => setNotification({ isOpen: true, title, message, type });
     const closeNotification = () => setNotification(n => ({ ...n, isOpen: false }));
 
-    // Password change state
-    const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
-    const [passwordError, setPasswordError] = useState('');
-    const [passwordSuccess, setPasswordSuccess] = useState('');
-    const [changingPassword, setChangingPassword] = useState(false);
+
     const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+    const [isLocalRestoreModalOpen, setIsLocalRestoreModalOpen] = useState(false); // For local backup restore
+    const [pendingRestoreFile, setPendingRestoreFile] = useState(null);
     const [isClearCacheModalOpen, setIsClearCacheModalOpen] = useState(false); // New state for custom modal
 
     // Auth context - check both possible localStorage keys and use case-insensitive role check
@@ -1976,44 +1927,7 @@ const SettingsPage = () => {
         }
     };
 
-    const handlePasswordChange = async (e) => {
-        e.preventDefault();
-        setPasswordError('');
-        setPasswordSuccess('');
 
-        if (passwordForm.new !== passwordForm.confirm) {
-            setPasswordError('Passwords do not match (ERR_VAL_PWD_MATCH)');
-            return;
-        }
-        if (passwordForm.new.length < 8) {
-            setPasswordError('Password must be at least 8 characters (ERR_VAL_PWD_LEN)');
-            return;
-        }
-
-        setChangingPassword(true);
-        try {
-            const res = await fetch('http://localhost:17221/api/settings/change-password', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    user_id: user.id,
-                    current_password: passwordForm.current,
-                    new_password: passwordForm.new
-                })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                setPasswordSuccess('Password changed successfully!');
-                setPasswordForm({ current: '', new: '', confirm: '' });
-            } else {
-                setPasswordError((data.error || 'Failed to change password') + ' (ERR_PWD_CHG)');
-            }
-        } catch (e) {
-            setPasswordError('Network error (ERR_NET_PWD)');
-        } finally {
-            setChangingPassword(false);
-        }
-    };
 
     const handleTestConnection = async () => {
         setTestingConnection(true);
@@ -2327,18 +2241,69 @@ const SettingsPage = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        showNotification('Restoring', 'Analyzing backup file...', 'info');
-        // Simulate restore process
-        setTimeout(() => {
-            showNotification('Success', 'System restored! Logging out...', 'success');
-            setTimeout(() => {
-                localStorage.clear();
-                sessionStorage.clear();
-                // Fix: Use hash routing for Electron/HashRouter
-                window.location.hash = '/login';
-                window.location.reload();
-            }, 2000);
-        }, 2000);
+        // Save file reference and open confirmation modal
+        setPendingRestoreFile(file);
+        setIsLocalRestoreModalOpen(true);
+
+        // Reset input value so same file can be selected again if cancelled
+        e.target.value = '';
+    };
+
+    const executeLocalRestore = () => {
+        if (!pendingRestoreFile) return;
+        setIsLocalRestoreModalOpen(false);
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const backupData = JSON.parse(event.target.result);
+
+                // Basic validation
+                if (!backupData.version || !backupData.data) {
+                    throw new Error("Invalid backup file format");
+                }
+
+                showNotification('Restoring', 'Restoring data from backup...', 'info');
+
+                setPendingAction(() => async (password) => {
+                    try {
+                        const res = await fetch('http://localhost:17221/api/settings/backup/restore', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                admin_id: user.id,
+                                admin_password: password,
+                                backup_data: backupData
+                            })
+                        });
+
+                        const data = await res.json();
+
+                        if (res.ok) {
+                            showNotification('Success', 'Restore Complete! logging out...', 'success');
+                            setTimeout(() => {
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                window.location.hash = '/login';
+                                window.location.reload();
+                            }, 2000);
+                        } else {
+                            throw new Error(data.error || 'Restore Failed');
+                        }
+                    } catch (err) {
+                        showNotification('Error', 'Restore Failed: ' + err.message, 'error');
+                    }
+                    setPendingRestoreFile(null); // Clear file
+                });
+                setIsPromptOpen(true);
+
+            } catch (err) {
+                console.error("File Parse Error:", err);
+                showNotification('Error', 'Invalid Backup File', 'error');
+                setPendingRestoreFile(null);
+            }
+        };
+        reader.readAsText(pendingRestoreFile);
     };
 
     const handleClearCache = () => {
@@ -2501,12 +2466,6 @@ const SettingsPage = () => {
                         settings={settings}
                         handleChange={handleChange}
                         handleSave={handleSave}
-                        passwordForm={passwordForm}
-                        setPasswordForm={setPasswordForm}
-                        handlePasswordChange={handlePasswordChange}
-                        passwordError={passwordError}
-                        passwordSuccess={passwordSuccess}
-                        changingPassword={changingPassword}
                     />
                 )}
                 {activeCategory === 'hardware' && (
@@ -2521,6 +2480,7 @@ const SettingsPage = () => {
                 {activeCategory === 'data' && (
                     <DataMaintenanceTab
                         settings={settings}
+                        unsavedChanges={unsavedChanges}
                         handleChange={handleChange}
                         handleSave={handleSave}
                         testingConnection={testingConnection}
@@ -2607,6 +2567,20 @@ const SettingsPage = () => {
                 title="Clear App Cache"
                 message="Are you sure you want to clear all app cache? This will reset your session, wipe local preferences, and log you out immediately."
                 confirmText="Yes, Clear & Logout"
+                cancelText="Cancel"
+                isDangerous={true}
+            />
+
+            <ConfirmationModal
+                isOpen={isLocalRestoreModalOpen}
+                onClose={() => {
+                    setIsLocalRestoreModalOpen(false);
+                    setPendingRestoreFile(null);
+                }}
+                onConfirm={executeLocalRestore}
+                title="Confirm Local Restore"
+                message="WARNING: This will overwrite ALL current data with the selected backup file. This cannot be undone. Are you sure?"
+                confirmText="Restore Data"
                 cancelText="Cancel"
                 isDangerous={true}
             />

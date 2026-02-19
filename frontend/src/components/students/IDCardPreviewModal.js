@@ -4,6 +4,8 @@ import { Download, X, FileText, Loader } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import IDCardTemplate from './IDCardTemplate';
+import cardBgUrl from '../../ID Template/id_bg.png';
+import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 
 const IDCardPreviewModal = ({ student, onClose }) => {
     const cardRef = useRef(null);
@@ -11,16 +13,17 @@ const IDCardPreviewModal = ({ student, onClose }) => {
     const [status, setStatus] = useState(''); // 'processing', 'success', ''
     const [signatures, setSignatures] = useState({ hod: null, principal: null });
     const [signaturesLoading, setSignaturesLoading] = useState(true);
+    const [assets, setAssets] = useState({ bg: null, emblem: null });
 
     // Fetch HOD and Principal signatures on mount
+    // Fetch HOD and Principal signatures and Assets on mount
     useEffect(() => {
-        const fetchSignatures = async () => {
+        const fetchSignaturesAndAssets = async () => {
             try {
-                // Fetch Principal Signature
+                // 1. Fetch Signatures
                 const principalRes = await fetch('http://localhost:17221/api/settings/principal-signature');
                 const principalData = await principalRes.json();
 
-                // Fetch Department for HOD signature
                 let hodSignature = null;
                 if (student.dept_id) {
                     const deptRes = await fetch(`http://localhost:17221/api/departments/${student.dept_id}`);
@@ -34,14 +37,38 @@ const IDCardPreviewModal = ({ student, onClose }) => {
                     hod: hodSignature,
                     principal: principalData.signature
                 });
+
+                // 2. Fetch Assets (BG & Emblem)
+                const loadAsset = async (url) => {
+                    try {
+                        const res = await fetch(url);
+                        const blob = await res.blob();
+                        return new Promise((resolve) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.readAsDataURL(blob);
+                        });
+                    } catch (e) {
+                        console.error("Failed to load asset:", url, e);
+                        return null;
+                    }
+                };
+
+                const [bg, emblem] = await Promise.all([
+                    loadAsset(cardBgUrl),
+                    loadAsset(emblemBgUrl)
+                ]);
+
+                setAssets({ bg, emblem });
+
             } catch (e) {
-                console.error("Failed to fetch signatures", e);
+                console.error("Failed to fetch data", e);
             } finally {
                 setSignaturesLoading(false);
             }
         };
 
-        fetchSignatures();
+        fetchSignaturesAndAssets();
     }, [student.dept_id]);
 
     const generateCardImage = async (scale = 3) => {
@@ -136,6 +163,8 @@ const IDCardPreviewModal = ({ student, onClose }) => {
                             student={student}
                             hodSignature={signatures.hod}
                             principalSignature={signatures.principal}
+                            base64Bg={assets.bg}
+                            base64Emblem={assets.emblem}
                         />
 
                         {/* Loading Overlay */}

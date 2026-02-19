@@ -44,6 +44,7 @@ router.delete('/:id', adminController.deleteAdmin);
 router.get('/:id/logs', adminController.getAdminLogs);
 router.get('/broadcast/history', adminController.getBroadcastHistory);
 router.get('/:id', adminController.getAdminById);
+router.post('/transfer-root', adminController.transferRootPrivileges);
 router.post('/broadcast', upload.single('attachment'), adminController.broadcastMessage);
 
 module.exports = router;

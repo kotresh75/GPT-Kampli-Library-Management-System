@@ -15,7 +15,8 @@ const SmartTransactionTable = ({
     selectedIds,
     onSelect,
     onSelectAll,
-    onView
+    onView,
+    renderCustomActions
 }) => {
     const { t } = useLanguage();
     const safeTransactions = Array.isArray(transactions) ? transactions : [];
@@ -283,6 +284,7 @@ const SmartTransactionTable = ({
                                     {/* Actions */}
                                     <td>
                                         <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity whitespace-nowrap shrink-0">
+                                            {renderCustomActions && renderCustomActions(txn)}
                                             <button
                                                 onClick={() => onView && onView(txn)}
                                                 className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"

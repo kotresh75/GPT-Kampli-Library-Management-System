@@ -111,6 +111,20 @@ const db = new sqlite3.Database(dbPath, (err) => {
                     else if (err.message.indexOf("duplicate column name") === -1) console.error("Error adding profile_icon to admins:", err);
                 });
 
+                // SCHEMA MIGRATION: Add is_root to admins if not exists
+                db.run("ALTER TABLE admins ADD COLUMN is_root INTEGER DEFAULT 0", (err) => {
+                    if (!err) {
+                        console.log("Added is_root column to admins table");
+                        // Backfill: Make the oldest admin the Root Admin if no root exists
+                        db.get("SELECT COUNT(*) as count FROM admins WHERE is_root = 1", (err, row) => {
+                            if (!err && row.count === 0) {
+                                console.log("No Root Admin found. Assigning oldest admin as Root.");
+                                db.run(`UPDATE admins SET is_root = 1 WHERE id = (SELECT id FROM admins ORDER BY created_at ASC LIMIT 1)`);
+                            }
+                        });
+                    }
+                });
+
                 // SCHEMA MIGRATION: Add profile_icon to staff if not exists
                 db.run("ALTER TABLE staff ADD COLUMN profile_icon TEXT", (err) => {
                     if (!err) console.log("Added profile_icon column to staff table");
@@ -224,6 +238,7 @@ function initializeTables() {
             password_hash TEXT NOT NULL,
             status TEXT CHECK(status IN ('Active', 'Disabled')),
             profile_icon TEXT,
+            is_root INTEGER DEFAULT 0,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP,
             last_login TEXT,
             updated_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -552,14 +567,16 @@ function seedProfileIcons() {
             const fs = require('fs');
             const path = require('path');
 
-            // Look for icons in frontend/public/profile-icons relative to backend
-            // In dev, backend is in /backend, frontend is in /frontend
-            let iconsDir = path.resolve(__dirname, '..', 'frontend', 'public', 'profile-icons');
+            // Priority 1: Check in resources (Production - via extraResources)
+            let iconsDir = path.join(process.resourcesPath, 'profile-icons');
 
-            // Adjust for production build structure if needed
+            // Priority 2: Check in development path (relative to backend/db.js)
             if (!fs.existsSync(iconsDir)) {
-                // Try alternate path for packaged app (assuming standard electron-builder structure)
-                // This might need adjustment based on valid electron paths
+                iconsDir = path.resolve(__dirname, '..', 'frontend', 'public', 'profile-icons');
+            }
+
+            // Priority 3: Fallback for different packagings
+            if (!fs.existsSync(iconsDir)) {
                 iconsDir = path.join(process.resourcesPath, 'app', 'frontend', 'build', 'profile-icons');
             }
 

@@ -1,37 +1,53 @@
 import { formatDate } from '../../utils/dateUtils';
-import { Mail, Phone, Edit2, Trash2, Shield, Activity, Lock, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Mail, Phone, Edit2, Trash2, Shield, Activity, Lock, ToggleLeft, ToggleRight, Repeat } from 'lucide-react';
+import { useUser } from '../../context/UserContext';
 
-const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword }) => {
+const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword, onTransferRoot }) => {
+    const { currentUser } = useUser();
     const isActive = admin.status === 'Active';
-    const isRoot = !!admin.is_founder;
+    const isRoot = admin.is_root === 1;
+    const isCurrentUserRoot = currentUser?.is_root === 1;
 
     return (
-        <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '15px', position: 'relative', borderTop: isRoot ? '3px solid #f6e05e' : '1px solid var(--glass-border)' }}>
+        <div className="glass-panel" style={{
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px',
+            position: 'relative',
+            border: isRoot ? '1px solid #ffd700' : '1px solid var(--glass-border)',
+            boxShadow: isRoot ? '0 0 15px rgba(255, 215, 0, 0.1)' : 'none'
+        }}>
 
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{
                         width: '40px', height: '40px', borderRadius: '50%',
-                        background: isRoot ? 'linear-gradient(135deg, #f6e05e 0%, #d69e2e 100%)' : 'rgba(255,255,255,0.1)',
+                        background: isRoot ? 'linear-gradient(135deg, #ffd700 0%, #b7950b 100%)' : 'rgba(255,255,255,0.1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: isRoot ? '#000' : 'var(--text-main)',
-                        overflow: 'hidden'
+                        color: isRoot ? '#fff' : 'var(--text-main)',
+                        overflow: 'hidden',
+                        border: isRoot ? '2px solid rgba(255,255,255,0.2)' : 'none'
                     }}>
                         {admin.profile_icon ? (
                             <img
-                                src={admin.profile_icon.startsWith('data:') ? admin.profile_icon : (admin.profile_icon.startsWith('/') ? admin.profile_icon.slice(1) : admin.profile_icon)}
+                                src={admin.profile_icon.startsWith('data:') ? admin.profile_icon : (admin.profile_icon.startsWith('/') ? admin.profile_icon : '/' + admin.profile_icon)}
                                 alt={admin.name}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                onError={(e) => e.target.style.display = 'none'}
                             />
                         ) : (
                             <Shield size={20} />
                         )}
                     </div>
                     <div>
-                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>{admin.name}</h3>
-                        <span style={{ fontSize: '0.8rem', color: isRoot ? '#f6e05e' : 'var(--text-secondary)' }}>
-                            {isRoot ? 'Root Administrator' : 'System Administrator'}
+                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {admin.name}
+                            {isRoot && <Shield size={14} fill="#ffd700" color="#ffd700" />}
+                        </h3>
+                        <span style={{ fontSize: '0.8rem', color: isRoot ? '#ffd700' : 'var(--text-secondary)' }}>
+                            {isRoot ? 'Root Administrator' : 'Administrator'}
                         </span>
                     </div>
                 </div>
@@ -59,6 +75,18 @@ const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword })
 
             {/* Actions */}
             <div style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '15px', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                {/* Transfer Root - Only visible to current root user looking at other active admins */}
+                {isCurrentUserRoot && !isRoot && isActive && (
+                    <button
+                        className="icon-btn"
+                        style={{ color: '#ecc94b' }}
+                        title="Transfer Root Privileges"
+                        onClick={() => onTransferRoot(admin)}
+                    >
+                        <Repeat size={18} />
+                    </button>
+                )}
+
                 {!isRoot && (
                     <>
                         <button
@@ -74,9 +102,11 @@ const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword })
                         </button>
                     </>
                 )}
+
                 <button className="icon-btn" title="Edit Details" onClick={() => onEdit(admin)}>
                     <Edit2 size={18} />
                 </button>
+
                 {!isRoot && (
                     <button className="icon-btn danger-hover" title="Delete Admin" onClick={() => onDelete(admin)}>
                         <Trash2 size={18} />

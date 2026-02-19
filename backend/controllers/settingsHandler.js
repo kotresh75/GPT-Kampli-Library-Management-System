@@ -111,6 +111,11 @@ exports.updateAppSettings = async (req, res) => {
 
                 keys.forEach(key => {
                     let value = updates[key];
+                    // Determine data type BEFORE stringifying
+                    let dataType = typeof value === 'object' ? 'json' : 'string';
+                    if (typeof value === 'boolean') dataType = 'boolean';
+                    else if (typeof value === 'number') dataType = 'number';
+
                     if (typeof value === 'object') value = JSON.stringify(value);
 
                     db.run("UPDATE system_settings SET value = ? WHERE key = ?", [value, key], function (err) {
@@ -127,9 +132,7 @@ exports.updateAppSettings = async (req, res) => {
                             else if (key.startsWith('email_')) category = 'Email';
                             else if (key.startsWith('backup_')) category = 'Data';
 
-                            let dataType = typeof value === 'object' ? 'json' : 'string';
-                            if (typeof updates[key] === 'boolean') dataType = 'boolean';
-                            else if (typeof updates[key] === 'number') dataType = 'number';
+                            // dataType is already calculated correctly above
 
                             db.run("INSERT INTO system_settings (key, value, category, data_type, description) VALUES (?, ?, ?, ?, ?)",
                                 [key, value, category, dataType, `Auto-created setting for ${key}`],
@@ -331,6 +334,101 @@ exports.createLocalBackup = async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', `attachment; filename=backup-${Date.now()}.json`);
     res.send(JSON.stringify(backup, null, 2));
+};
+
+exports.restoreLocalBackup = async (req, res) => {
+    const { admin_id, admin_password, backup_data } = req.body;
+
+    if (!admin_id || !admin_password) {
+        return res.status(400).json({ error: "Admin authentication required" });
+    }
+    if (!backup_data || !backup_data.data) {
+        return res.status(400).json({ error: "Invalid backup data" });
+    }
+
+    try {
+        // 1. Verify Admin
+        const admin = await new Promise((resolve, reject) => {
+            db.get("SELECT id, password_hash FROM admins WHERE id = ?", [admin_id], (err, row) => {
+                if (err) reject(err); else resolve(row);
+            });
+        });
+
+        if (!admin || !admin.password_hash) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        const match = await bcrypt.compare(admin_password, admin.password_hash);
+        if (!match) {
+            return res.status(401).json({ error: "Invalid Admin Password" });
+        }
+
+        // 2. Perform Restore in Transaction
+        const runDb = (sql, params = []) => new Promise((res, rej) => db.run(sql, params, (err) => err ? rej(err) : res()));
+
+        try {
+            await runDb("PRAGMA foreign_keys = OFF;");
+            await runDb("BEGIN TRANSACTION;");
+
+            let totalRestored = 0;
+            const tables = Object.keys(backup_data.data);
+
+            for (const table of tables) {
+                const rows = backup_data.data[table];
+
+                // Security check: ensure table name is valid (alphanumeric) to prevent SQL injection
+                if (!/^[a-zA-Z0-9_]+$/.test(table)) {
+                    console.warn(`[Restore] Skipping invalid table name: ${table}`);
+                    continue;
+                }
+
+                if (rows && rows.length > 0) {
+                    // Clear Table
+                    await runDb(`DELETE FROM ${table}`);
+
+                    // Prepare Insert
+                    const keys = Object.keys(rows[0]);
+                    if (keys.length > 0) {
+                        const placeholders = keys.map(() => '?').join(',');
+                        const sql = `INSERT INTO ${table} (${keys.join(',')}) VALUES (${placeholders})`;
+
+                        const stmt = db.prepare(sql);
+                        const runStmt = (values) => new Promise((res, rej) => stmt.run(values, (err) => err ? rej(err) : res()));
+
+                        for (const row of rows) {
+                            const values = keys.map(k => {
+                                const val = row[k];
+                                return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
+                            });
+                            await runStmt(values);
+                        }
+                        stmt.finalize();
+                        totalRestored += rows.length;
+                    }
+                } else {
+                    // Empty table in backup? Clear local too?
+                    // Usually yes, full restore means making local match backup.
+                    await runDb(`DELETE FROM ${table}`);
+                }
+            }
+
+            await runDb("COMMIT;");
+            await runDb("PRAGMA foreign_keys = ON;");
+
+            auditService.log(admin_id, 'RESTORE_LOCAL', 'System', `Restored ${totalRestored} records from local backup`);
+            res.json({ success: true, message: "Restore completed successfully" });
+
+        } catch (txErr) {
+            await runDb("ROLLBACK;");
+            await runDb("PRAGMA foreign_keys = ON;");
+            console.error("Restore Transaction Failed:", txErr);
+            throw txErr;
+        }
+
+    } catch (e) {
+        console.error("Local Restore Error:", e);
+        res.status(500).json({ error: "Server error during restore: " + e.message });
+    }
 };
 
 exports.triggerCloudBackup = async (req, res) => {

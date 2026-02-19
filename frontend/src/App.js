@@ -30,6 +30,7 @@ import { SocketProvider } from './context/SocketContext';
 import { TutorialProvider } from './context/TutorialContext';
 import GlobalNotifications from './components/common/GlobalNotifications';
 import UserManualModal from './components/common/UserManualModal';
+import DatabaseSchemaModal from './components/common/DatabaseSchemaModal';
 import LockScreen from './components/common/LockScreen';
 import TitleBar from './components/layout/TitleBar';
 import './styles/index.css';
@@ -116,6 +117,7 @@ function App() {
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                     <UserManualModal />
+                    <DatabaseSchemaModal />
                   </div>
                 </Router>
               </TutorialProvider>

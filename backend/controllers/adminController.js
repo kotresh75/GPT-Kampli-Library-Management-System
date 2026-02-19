@@ -10,7 +10,7 @@ const { getISTISOWithOffset } = require('../utils/dateUtils');
 exports.getAdmins = (req, res) => {
     // Exclude password_hash; mark the earliest-created admin as 'founder'
     const query = `
-        SELECT id, name, email, phone, status, last_login, created_at, profile_icon,
+        SELECT id, name, email, phone, status, last_login, created_at, profile_icon, is_root,
             CASE WHEN created_at = (SELECT MIN(created_at) FROM admins) THEN 1 ELSE 0 END as is_founder
         FROM admins ORDER BY created_at DESC`;
     db.all(query, [], (err, rows) => {
@@ -20,9 +20,10 @@ exports.getAdmins = (req, res) => {
 };
 
 // GET /api/admins/:id
+// GET /api/admins/:id
 exports.getAdminById = (req, res) => {
     const { id } = req.params;
-    db.get("SELECT id, name, email, phone, status, last_login, created_at, profile_icon FROM admins WHERE id = ?", [id], (err, row) => {
+    db.get("SELECT id, name, email, phone, status, last_login, created_at, profile_icon, is_root FROM admins WHERE id = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Admin not found" });
         res.json(row);
@@ -80,12 +81,15 @@ exports.toggleStatus = (req, res) => {
 
     if (!['Active', 'Disabled'].includes(status)) return res.status(400).json({ error: "Invalid status" });
 
-    db.get("SELECT email FROM admins WHERE id = ?", [id], (err, row) => {
+    db.get("SELECT email, is_root FROM admins WHERE id = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Admin not found" });
 
-        // Prevent disabling the last active admin
+        // Prevent disabling the last active admin AND the Root Admin
         if (status === 'Disabled') {
+            if (row.is_root === 1) {
+                return res.status(403).json({ error: "Cannot disable the Root Administrator." });
+            }
             db.get("SELECT COUNT(*) as count FROM admins WHERE status = 'Active'", (err, countRow) => {
                 if (err) return res.status(500).json({ error: err.message });
                 if (countRow.count <= 1) {
@@ -114,9 +118,13 @@ exports.toggleStatus = (req, res) => {
 exports.deleteAdmin = (req, res) => {
     const { id } = req.params;
 
-    db.get("SELECT email FROM admins WHERE id = ?", [id], (err, row) => {
+    db.get("SELECT email, is_root FROM admins WHERE id = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Admin not found" });
+
+        if (row.is_root === 1) {
+            return res.status(403).json({ error: "Cannot delete the Root Administrator." });
+        }
 
         // Prevent deleting the last admin
         db.get("SELECT COUNT(*) as count FROM admins", (err, countRow) => {
@@ -156,6 +164,62 @@ exports.resetPassword = (req, res) => {
             auditService.log(req.user, 'RESET_PASSWORD', 'Admin Management', `Reset password for admin ID: ${id}`, { target_id: id });
             socketService.emit('admin_update', { type: 'UPDATE', id });
             res.json({ message: "Password reset to 'password123'" });
+        });
+    });
+};
+
+// POST /api/admins/transfer-root
+exports.transferRootPrivileges = (req, res) => {
+    const { targetAdminId } = req.body;
+    const currentAdminId = req.user.id;
+
+    if (!targetAdminId) return res.status(400).json({ error: "Target Admin ID is required" });
+    if (targetAdminId === currentAdminId) return res.status(400).json({ error: "You are already the Root Admin" });
+
+    // 1. Verify Current User is Root
+    db.get("SELECT is_root FROM admins WHERE id = ?", [currentAdminId], (err, currentRow) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!currentRow || currentRow.is_root !== 1) {
+            return res.status(403).json({ error: "Only the Root Administrator can transfer privileges." });
+        }
+
+        // 2. Verify Target Admin Exists and is Active
+        db.get("SELECT name, status FROM admins WHERE id = ?", [targetAdminId], (err, targetRow) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (!targetRow) return res.status(404).json({ error: "Target Admin not found" });
+            if (targetRow.status !== 'Active') return res.status(400).json({ error: "Target Admin must be Active to receive Root privileges." });
+
+            // 3. Perform transfer via Transaction logic (Serialized for safety)
+            db.serialize(() => {
+                db.run("BEGIN TRANSACTION");
+
+                // Demote current root
+                db.run("UPDATE admins SET is_root = 0 WHERE id = ?", [currentAdminId]);
+
+                // Promote target
+                db.run("UPDATE admins SET is_root = 1 WHERE id = ?", [targetAdminId], (err) => {
+                    if (err) {
+                        db.run("ROLLBACK");
+                        return res.status(500).json({ error: "Transfer failed during update." });
+                    }
+
+                    db.run("COMMIT", (err) => {
+                        if (err) return res.status(500).json({ error: "Transaction commit failed." });
+
+                        auditService.log(
+                            req.user,
+                            'ROOT_TRANSFER',
+                            'Admin Management',
+                            `Root privileges transferred to ${targetRow.name}`,
+                            { previous_root: currentAdminId, new_root: targetAdminId }
+                        );
+
+                        // Force token refresh or Logout optional, but for now just notify
+                        socketService.emit('admin_update', { type: 'ROOT_TRANSFER' });
+                        res.json({ message: `Root privileges successfully transferred to ${targetRow.name}` });
+                    });
+                });
+            });
         });
     });
 };

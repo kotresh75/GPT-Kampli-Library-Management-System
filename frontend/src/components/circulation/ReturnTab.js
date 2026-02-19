@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Search, RotateCcw, CheckCircle, AlertCircle, RefreshCcw, User, BookOpen, Calendar, Banknote, Package, X, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import StatusModal from '../common/StatusModal';
+import '../../styles/components/TransactionDetailsModal.css';
 import { useLanguage } from '../../context/LanguageContext';
 
 // Helper: Format date to DD/MM/YYYY
@@ -538,22 +540,24 @@ const ReturnTab = () => {
             </div>
 
             {/* Return Modal */}
-            {returnModal.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="modal-content w-full max-w-lg animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                        <div className="p-6 border-b border-white/10 flex-shrink-0">
-                            <div className="flex justify-between items-center">
-                                <h2 className="modal-title flex items-center gap-2">
-                                    <RotateCcw className="text-blue-400" /> {t('circulation.return.return_book')}
-                                </h2>
-                                <button onClick={() => setReturnModal(p => ({ ...p, isOpen: false }))} className="modal-close">
-                                    <X size={20} />
-                                </button>
+            {returnModal.isOpen && createPortal(
+                <div className="txn-modal-overlay" style={{ zIndex: 10000 }}>
+                    <div className="txn-modal" style={{ maxWidth: '500px', maxHeight: '80vh' }}>
+                        <div className="txn-modal-header">
+                            <div className="txn-header-left">
+                                <div className="txn-header-icon return">
+                                    <RotateCcw size={20} className="text-white" />
+                                </div>
+                                <h3 className="txn-header-title" style={{ alignSelf: 'center', marginLeft: '8px' }}>
+                                    {t('circulation.return.return_book')}
+                                </h3>
                             </div>
+                            <button onClick={() => setReturnModal(p => ({ ...p, isOpen: false }))} className="txn-close-btn">
+                                <X size={20} />
+                            </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
-
+                        <div className="txn-modal-body">
                             {/* Student Info */}
                             <div className="p-3 rounded-xl mb-4 flex items-center gap-3" style={{ background: 'var(--hover-overlay)' }}>
                                 <User size={16} className="text-blue-400" />
@@ -588,8 +592,6 @@ const ReturnTab = () => {
                                 <div style={{ display: 'flex', gap: '8px' }}>
                                     {conditions.map(c => {
                                         const isSelected = returnModal.condition === c.value;
-
-                                        // Set colors based on condition type
                                         const colors = {
                                             Good: { bg: '#22c55e', hoverBg: 'rgba(34, 197, 94, 0.15)' },
                                             Damaged: { bg: '#f97316', hoverBg: 'rgba(249, 115, 22, 0.15)' },
@@ -621,7 +623,7 @@ const ReturnTab = () => {
                                 </div>
                             </div>
 
-                            {/* Fine Input (shown if applicable) */}
+                            {/* Fine Input */}
                             {(returnModal.condition !== 'Good' || calculateOverdueFine(returnModal.loan) > 0) && (
                                 <div className="mb-4 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
                                     <label className="block text-sm text-orange-400 mb-2 font-medium flex items-center gap-2">
@@ -639,7 +641,7 @@ const ReturnTab = () => {
                                 </div>
                             )}
 
-                            {/* Replacement Option (for Lost) */}
+                            {/* Replacement Option */}
                             {returnModal.condition === 'Lost' && (
                                 <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(147, 51, 234, 0.1)', border: '1px solid rgba(147, 51, 234, 0.2)' }}>
                                     <label className="flex items-center gap-3 cursor-pointer">
@@ -706,26 +708,29 @@ const ReturnTab = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Renew Modal */}
-            {renewModal.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="modal-content w-full max-w-md animate-in zoom-in-95 flex flex-col max-h-[90vh]">
-                        <div className="p-6 border-b border-white/10 flex-shrink-0">
-                            <div className="flex justify-between items-center">
-                                <h2 className="modal-title flex items-center gap-2">
-                                    <Calendar className="text-purple-400" /> {t('circulation.return.renew_book')}
-                                </h2>
-                                <button onClick={() => setRenewModal(p => ({ ...p, isOpen: false }))} className="modal-close">
-                                    <X size={20} />
-                                </button>
+            {renewModal.isOpen && createPortal(
+                <div className="txn-modal-overlay" style={{ zIndex: 10000 }}>
+                    <div className="txn-modal" style={{ maxWidth: '450px', maxHeight: '80vh' }}>
+                        <div className="txn-modal-header">
+                            <div className="txn-header-left">
+                                <div className="txn-header-icon renew">
+                                    <Calendar size={20} />
+                                </div>
+                                <h3 className="txn-header-title" style={{ alignSelf: 'center', marginLeft: '8px' }}>
+                                    {t('circulation.return.renew_book')}
+                                </h3>
                             </div>
+                            <button onClick={() => setRenewModal(p => ({ ...p, isOpen: false }))} className="txn-close-btn">
+                                <X size={20} />
+                            </button>
                         </div>
 
-                        <div className="p-6 overflow-y-auto">
-
+                        <div className="txn-modal-body">
                             {/* Student Info */}
                             <div className="p-3 rounded-xl mb-4 flex items-center gap-3" style={{ background: 'var(--hover-overlay)' }}>
                                 <User size={16} className="text-purple-400" />
@@ -787,7 +792,8 @@ const ReturnTab = () => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             <StatusModal

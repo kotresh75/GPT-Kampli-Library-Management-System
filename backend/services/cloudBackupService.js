@@ -154,12 +154,15 @@ exports.restoreFromCloud = async () => {
         console.log('[CloudRestore] Connected to MongoDB Atlas. Fetching data...');
 
         // 3. Perform Restore in Transaction
-        return await new Promise((resolve, reject) => {
-            db.serialize(async () => {
+        return await new Promise(async (resolve, reject) => {
+            try {
+                // Manually manage transaction with Promises
+                // Wrap db.run in a helper for cleaner code
+                const runDb = (sql, params = []) => new Promise((res, rej) => db.run(sql, params, (err) => err ? rej(err) : res()));
+
                 try {
-                    // Disable FKs temporarily
-                    db.run("PRAGMA foreign_keys = OFF;");
-                    db.run("BEGIN TRANSACTION;");
+                    await runDb("PRAGMA foreign_keys = OFF;");
+                    await runDb("BEGIN TRANSACTION;");
 
                     let totalRestored = 0;
 
@@ -169,46 +172,51 @@ exports.restoreFromCloud = async () => {
 
                         if (documents.length > 0) {
                             // Clear Local Table
-                            await new Promise((res, rej) => db.run(`DELETE FROM ${table}`, (err) => err ? rej(err) : res()));
+                            await runDb(`DELETE FROM ${table}`);
 
-                            // Insert Data
-                            // Prepare statement dynamically based on keys
+                            // Insert Data using Prepare Statement
                             const keys = Object.keys(documents[0]).filter(k => k !== '_id'); // Exclude Mongo ID
-                            const placeholders = keys.map(() => '?').join(',');
-                            const sql = `INSERT INTO ${table} (${keys.join(',')}) VALUES (${placeholders})`;
 
-                            const stmt = db.prepare(sql);
+                            if (keys.length > 0) {
+                                const placeholders = keys.map(() => '?').join(',');
+                                const sql = `INSERT INTO ${table} (${keys.join(',')}) VALUES (${placeholders})`;
 
-                            for (const doc of documents) {
-                                const values = keys.map(k => {
-                                    const val = doc[k];
-                                    return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
-                                });
-                                await new Promise((res, rej) => stmt.run(values, (err) => err ? rej(err) : res()));
+                                const stmt = db.prepare(sql);
+                                const runStmt = (values) => new Promise((res, rej) => stmt.run(values, (err) => err ? rej(err) : res()));
+
+                                for (const doc of documents) {
+                                    const values = keys.map(k => {
+                                        const val = doc[k];
+                                        return (typeof val === 'object' && val !== null) ? JSON.stringify(val) : val;
+                                    });
+                                    await runStmt(values);
+                                }
+                                stmt.finalize();
+
+                                console.log(`[CloudRestore] Restored ${documents.length} records to ${table}`);
+                                totalRestored += documents.length;
                             }
-                            stmt.finalize();
-
-                            console.log(`[CloudRestore] Restored ${documents.length} records to ${table}`);
-                            totalRestored += documents.length;
                         }
                     }
 
-                    db.run("COMMIT;", async () => {
-                        db.run("PRAGMA foreign_keys = ON;");
-                        console.log('[CloudRestore] Restore completed successfully.');
-                        auditService.log('SYSTEM', 'RESTORE_CLOUD', 'System', `Restored ${totalRestored} records from MongoDB Atlas`);
-                        resolve({ success: true, totalRecords: totalRestored });
-                    });
+                    await runDb("COMMIT;");
+                    await runDb("PRAGMA foreign_keys = ON;");
 
-                } catch (err) {
-                    db.run("ROLLBACK;", () => {
-                        db.run("PRAGMA foreign_keys = ON;");
-                        console.error('[CloudRestore] Restore failed:', err);
-                        auditService.log('SYSTEM', 'RESTORE_FAILED', 'System', `Cloud restore failed: ${err.message}`);
-                        reject({ success: false, error: err.message });
-                    });
+                    console.log('[CloudRestore] Restore completed successfully.');
+                    auditService.log('SYSTEM', 'RESTORE_CLOUD', 'System', `Restored ${totalRestored} records from MongoDB Atlas`);
+                    resolve({ success: true, totalRecords: totalRestored });
+
+                } catch (txErr) {
+                    await runDb("ROLLBACK;");
+                    await runDb("PRAGMA foreign_keys = ON;");
+                    throw txErr;
                 }
-            });
+
+            } catch (err) {
+                console.error('[CloudRestore] Restore failed:', err);
+                auditService.log('SYSTEM', 'RESTORE_FAILED', 'System', `Cloud restore failed: ${err.message}`);
+                reject({ success: false, error: err.message });
+            }
         });
 
     } catch (error) {

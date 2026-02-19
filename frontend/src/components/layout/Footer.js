@@ -10,7 +10,7 @@ const Footer = () => {
                 </span>
                 <span className="footer-dot">•</span>
                 <span className="footer-made">
-                    Made with <Heart size={12} className="footer-heart" /> by GPTK
+                    Made with <Heart size={12} className="footer-heart" /> by GPT Kampli CSE
                 </span>
                 <span className="footer-dot">•</span>
                 <span className="footer-version">v1.0.0</span>

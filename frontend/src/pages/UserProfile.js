@@ -31,6 +31,10 @@ const UserProfile = () => {
 
     const profileIcon = user.profile_icon;
     const userInitial = (user.name || 'U').charAt(0).toUpperCase();
+    const [imageError, setImageError] = useState(false);
+
+    // Reset error when user/icon changes
+    useEffect(() => { setImageError(false); }, [profileIcon]);
 
     const handleChange = (e) => {
         setPassData({ ...passData, [e.target.name]: e.target.value });
@@ -96,8 +100,13 @@ const UserProfile = () => {
                 <div className="profile-hero-content">
                     <div className="profile-avatar-wrapper" onClick={() => setShowIconPicker(true)}>
                         <div className="profile-avatar-large">
-                            {profileIcon ? (
-                                <img src={profileIcon} alt="Profile" className="profile-avatar-img" />
+                            {profileIcon && !imageError ? (
+                                <img
+                                    src={profileIcon}
+                                    alt="Profile"
+                                    className="profile-avatar-img"
+                                    onError={() => setImageError(true)}
+                                />
                             ) : (
                                 <span className="profile-avatar-initial">{userInitial}</span>
                             )}

@@ -7,6 +7,7 @@ import { useUser } from '../context/UserContext';
 import AdminCard from '../components/admin/AdminCard';
 import AddAdminModal from '../components/admin/AddAdminModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import StatusModal from '../components/common/StatusModal';
 
 const AdminManager = () => {
     const { t } = useLanguage();
@@ -23,6 +24,7 @@ const AdminManager = () => {
     const [showAddModal, setShowAddModal] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState(null);
     const [confirmConfig, setConfirmConfig] = useState({ show: false, action: null, data: null });
+    const [statusModal, setStatusModal] = useState({ show: false, type: 'success', title: '', message: '' });
 
     // Functions
     const fetchAdmins = async () => {
@@ -86,6 +88,10 @@ const AdminManager = () => {
         setConfirmConfig({ show: true, action: 'reset_password', data: admin });
     };
 
+    const handleTransferRoot = (admin) => {
+        setConfirmConfig({ show: true, action: 'transfer_root', data: admin });
+    };
+
     const executeConfirmation = async () => {
         const { action, data } = confirmConfig;
         setConfirmConfig({ show: false, action: null, data: null }); // Close modal immediately
@@ -114,20 +120,61 @@ const AdminManager = () => {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+            } else if (action === 'transfer_root') {
+                res = await fetch(`http://localhost:17221/api/admins/transfer-root`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ targetAdminId: data.id })
+                });
             }
 
             if (res.ok) {
                 fetchAdmins();
-                if (action === 'reset_password') {
-                    alert(t('admin.actions.success_reset', { name: data.name }));
+
+                // Refresh Current User Context if Transfer Successful (Role might have changed)
+                if (action === 'transfer_root') {
+                    // Force refresh user data
+                    const userRes = await fetch(`http://localhost:17221/api/admins/${currentUser.id}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const userData = await userRes.json();
+                    if (userData && !userData.error) {
+                        updateUser({ ...currentUser, ...userData });
+                    }
+                    setStatusModal({
+                        show: true,
+                        type: 'success',
+                        title: 'Success!',
+                        message: `Root privileges successfully transferred to ${data.name}. You are no longer the Root Administrator.`
+                    });
+                } else if (action === 'reset_password') {
+                    setStatusModal({
+                        show: true,
+                        type: 'success',
+                        title: 'Password Reset',
+                        message: t('admin.actions.success_reset', { name: data.name })
+                    });
                 }
             } else {
                 const err = await res.json();
-                alert(t('admin.actions.failed', { error: err.error }));
+                setStatusModal({
+                    show: true,
+                    type: 'error',
+                    title: 'Action Failed',
+                    message: t('admin.actions.failed', { error: err.error })
+                });
             }
         } catch (error) {
             console.error(error);
-            alert(t('admin.actions.network_err'));
+            setStatusModal({
+                show: true,
+                type: 'error',
+                title: 'Network Error',
+                message: t('admin.actions.network_err')
+            });
         }
     };
 
@@ -149,6 +196,11 @@ const AdminManager = () => {
             title: t('admin.actions.reset_title'),
             message: t('admin.actions.reset_msg', { name: data.name }),
             confirmText: t('admin.actions.reset_btn'), isDanger: true
+        };
+        if (action === 'transfer_root') return {
+            title: "Transfer Root Privileges",
+            message: `Are you sure you want to transfer Root Administrator privileges to ${data.name}? You will lose your Root status.`,
+            confirmText: "Confirm Transfer", isDanger: true // Using danger as it's a significant action
         };
         return {};
     };
@@ -199,6 +251,7 @@ const AdminManager = () => {
                                 onToggleStatus={handleToggleStatus}
                                 onDelete={handleDelete}
                                 onResetPassword={handleResetPassword}
+                                onTransferRoot={handleTransferRoot}
                             />
                         ))
                     )}
@@ -233,6 +286,14 @@ const AdminManager = () => {
                 onClose={() => setConfirmConfig({ ...confirmConfig, show: false })}
                 onConfirm={executeConfirmation}
                 {...getConfirmProps()}
+            />
+
+            <StatusModal
+                isOpen={statusModal.show}
+                onClose={() => setStatusModal({ ...statusModal, show: false })}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
             />
         </div>
     );

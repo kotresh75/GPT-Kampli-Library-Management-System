@@ -41,10 +41,12 @@ exports.setupAdmin = (req, res) => {
             const id = uuidv4();
             const createdAt = getISTISOWithOffset();
             const profileIcon = `/profile-icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.png`;
+            // First admin created via setup is always Root
+            const isRoot = 1;
 
             db.run(
-                "INSERT INTO admins (id, name, email, password_hash, status, created_at, profile_icon) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                [id, name, email, hash, 'Active', createdAt, profileIcon],
+                "INSERT INTO admins (id, name, email, password_hash, status, created_at, profile_icon, is_root) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [id, name, email, hash, 'Active', createdAt, profileIcon, isRoot],
                 function (err) {
                     if (err) {
                         if (err.message.includes('UNIQUE')) return res.status(409).json({ error: 'Email already exists' });
@@ -145,14 +147,15 @@ exports.login = (req, res) => {
                     role: role,
                     designation: user.designation,
                     permissions: user.access_permissions ? JSON.parse(user.access_permissions) : [],
-                    profile_icon: user.profile_icon || null
+                    profile_icon: user.profile_icon || null,
+                    is_root: user.is_root || 0
                 }
             });
         });
     };
 
     // 1. Check Admins Table (Find by Email only first)
-    db.get("SELECT id, name, email, password_hash, status, profile_icon, 'Admin' as role FROM admins WHERE email = ?", [email], (err, admin) => {
+    db.get("SELECT id, name, email, password_hash, status, profile_icon, is_root, 'Admin' as role FROM admins WHERE email = ?", [email], (err, admin) => {
         if (err) return res.status(500).json({ message: 'Database error' });
 
         if (admin) {
@@ -377,7 +380,11 @@ exports.updateProfileIcon = (req, res) => {
     db.run(`UPDATE ${table} SET profile_icon = ? WHERE id = ?`, [profileIcon, id], function (err) {
         if (err) return res.status(500).json({ message: 'Failed to update profile icon' });
 
-        auditService.log(req.user, 'PROFILE_ICON_CHANGE', 'Auth', `User changed profile icon to ${profileIcon}`);
-        res.json({ message: 'Profile icon updated successfully', profile_icon: profileIcon });
+        // Lookup icon name for audit log
+        db.get("SELECT name FROM profile_icons WHERE data = ?", [profileIcon], (err, row) => {
+            const iconName = row ? row.name : 'Custom/Unknown Icon';
+            auditService.log(req.user, 'PROFILE_ICON_CHANGE', 'Auth', `User changed profile icon to ${iconName}`);
+            res.json({ message: 'Profile icon updated successfully', profile_icon: profileIcon });
+        });
     });
 };

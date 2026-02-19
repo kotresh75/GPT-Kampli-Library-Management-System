@@ -109,6 +109,15 @@ function createWindow() {
         }, 500);
     });
 
+    // Handle external links (target="_blank") to open in default browser
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            shell.openExternal(url);
+            return { action: 'deny' };
+        }
+        return { action: 'allow' };
+    });
+
     // -------------------------------------------------------------------------
     // Shutdown & Backup Logic Handlers
     // -------------------------------------------------------------------------

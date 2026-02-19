@@ -11,6 +11,7 @@ router.post('/cloud/test-connection', settingsController.testCloudConnection);
 router.post('/cloud/backup', settingsController.triggerCloudBackup);
 router.post('/cloud/restore', settingsController.triggerCloudRestore);
 router.post('/backup/create', settingsController.createLocalBackup);
+router.post('/backup/restore', settingsController.restoreLocalBackup);
 router.post('/factory-reset', settingsController.factoryReset);
 
 // Principal Signature routes

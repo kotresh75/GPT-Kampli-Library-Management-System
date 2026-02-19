@@ -125,6 +125,7 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
                                             src={formData.profile_icon}
                                             alt="Profile"
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            onError={() => setFormData(prev => ({ ...prev, profile_icon: '' }))}
                                         />
                                     ) : (
                                         <Shield size={32} color="var(--text-secondary)" style={{ opacity: 0.5 }} />

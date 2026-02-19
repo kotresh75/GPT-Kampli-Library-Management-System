@@ -4,6 +4,8 @@ import GlassAutocomplete from '../common/GlassAutocomplete';
 import ConfirmationModal from '../common/ConfirmationModal';
 import StatusModal from '../common/StatusModal';
 import IDCardTemplate from '../students/IDCardTemplate';
+import cardBgUrl from '../../ID Template/id_bg.png';
+import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 import { useLanguage } from '../../context/LanguageContext';
 
 const IssueTab = () => {
@@ -43,6 +45,7 @@ const IssueTab = () => {
 
     // Signature state for ID Card
     const [signatures, setSignatures] = useState({ hod: null, principal: null });
+    const [assets, setAssets] = useState({ bg: null, emblem: null });
 
     // Fetch signatures when student changes
     useEffect(() => {
@@ -77,6 +80,35 @@ const IssueTab = () => {
 
         fetchSignatures();
     }, [student]);
+
+    // Fetch Assets (BG & Emblem) on mount
+    useEffect(() => {
+        const loadAssets = async () => {
+            const loadAsset = async (url) => {
+                try {
+                    const res = await fetch(url);
+                    const blob = await res.blob();
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(blob);
+                    });
+                } catch (e) {
+                    console.error("Failed to load asset:", url, e);
+                    return null;
+                }
+            };
+
+            const [bg, emblem] = await Promise.all([
+                loadAsset(cardBgUrl),
+                loadAsset(emblemBgUrl)
+            ]);
+
+            setAssets({ bg, emblem });
+        };
+
+        loadAssets();
+    }, []);
 
     // --- Student Logic ---
 
@@ -535,6 +567,8 @@ const IssueTab = () => {
                                     student={student}
                                     hodSignature={signatures.hod}
                                     principalSignature={signatures.principal}
+                                    base64Bg={assets.bg}
+                                    base64Emblem={assets.emblem}
                                 />
                             </div>
                         </div>

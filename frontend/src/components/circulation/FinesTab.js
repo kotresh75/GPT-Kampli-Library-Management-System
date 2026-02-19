@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import '../../styles/components/tables.css';
 import { formatDate } from '../../utils/dateUtils';
-import { IndianRupee, Clock, FileText, Search, User, ChevronDown, ChevronUp, Edit, Filter, Calendar, CheckCircle, Download, BookOpen, AlertCircle } from 'lucide-react';
+import { IndianRupee, Clock, FileText, Search, User, ChevronDown, ChevronUp, Edit, Filter, Calendar, CheckCircle, Download, BookOpen, AlertCircle, Mail } from 'lucide-react';
 import ReceiptPreviewModal from '../finance/ReceiptPreviewModal';
 import VerifyReceiptModal from './VerifyReceiptModal';
 import EditFineModal from './EditFineModal';
 import StatusModal from '../common/StatusModal';
-import FineHistoryTable from './FineHistoryTable';
-import TransactionDetailModal from './TransactionDetailModal';
+import TransactionDetailsModal from '../common/TransactionDetailsModal';
+import SmartTransactionTable from '../history/SmartTransactionTable';
 import GlassSelect from '../common/GlassSelect';
 import SmartExportModal from '../common/SmartExportModal';
 import PdfPreviewModal from '../common/PdfPreviewModal';
@@ -373,23 +373,40 @@ const FinesTab = ({ initialTab }) => {
     };
 
     const handleViewDetails = (fine) => {
-        // Map fine object to transaction format expected by modal
+        const lowerStatus = (fine.status || '').toLowerCase();
+        const actionType = (lowerStatus === 'paid' || lowerStatus === 'fine_paid')
+            ? 'FINE_PAID'
+            : ((lowerStatus === 'waived' || lowerStatus === 'fine_waived') ? 'FINE_WAIVED' : 'FINE_GENERATED');
+
+        // Map fine object to transaction format expected by standard TransactionDetailsModal
         setDetailModal({
             isOpen: true,
             transaction: {
-                id: fine.transaction_id || fine.id, // Fallback
-                action: fine.status === 'Paid' ? 'FINE PAID' : fine.status,
-                timestamp: fine.payment_date || fine.updated_at,
+                id: fine.transaction_id || fine.id,
+                action_type: actionType,
+                timestamp: fine.payment_date || fine.updated_at || fine.created_at,
+                // Top-level fields expected by common modal
+                student_name: fine.student_name,
+                student_reg_no: fine.roll_number,
+                department_name: fine.department_name,
+                book_title: fine.book_title,
+                accession_number: fine.accession_number,
+
+                // Detailed object
                 details: {
-                    ...fine,
+                    fine_amount: fine.amount,
+                    reason: fine.reason || fine.remark,
                     book_title: fine.book_title,
                     accession: fine.accession_number,
-                    fine_amount: fine.amount,
-                    remarks: fine.reason || fine.remark
+                    remarks: fine.reason || fine.remark, // Ensure remarks are shown
+                    waiver_reason: (lowerStatus === 'waived' || lowerStatus === 'fine_waived') ? (fine.reason || fine.remark) : null
                 },
+
+                // Fallback objects if modal uses them
                 student: {
                     name: fine.student_name,
-                    regNo: fine.roll_number
+                    regNo: fine.roll_number,
+                    dept: fine.department_name
                 }
             }
         });
@@ -544,11 +561,45 @@ const FinesTab = ({ initialTab }) => {
                             </div>
                         </div>
 
-                        <FineHistoryTable
-                            fines={filteredHistoryFines}
-                            onViewReceipt={handleViewReceipt}
-                            onViewDetails={handleViewDetails}
-                            onResendEmail={handleResendEmail}
+                        <SmartTransactionTable
+                            transactions={filteredHistoryFines.map(fine => ({
+                                ...fine,
+                                register_number: fine.roll_number,
+                                timestamp: fine.payment_date || fine.updated_at || fine.created_at,
+                                status: (fine.status || '').toLowerCase() === 'paid' ? 'FINE_PAID' : ((fine.status || '').toLowerCase() === 'waived' ? 'FINE_WAIVED' : fine.status),
+                                details: JSON.stringify({
+                                    fine_amount: fine.amount,
+                                    reason: fine.reason || fine.remark,
+                                    book_title: fine.book_title,
+                                    accession: fine.accession_number,
+                                    remarks: fine.reason || fine.remark,
+                                    waiver_reason: (fine.status || '').toLowerCase() === 'waived' ? (fine.reason || fine.remark) : null
+                                })
+                            }))}
+                            loading={loading}
+                            onView={handleViewDetails}
+                            renderCustomActions={(txn) => (
+                                <>
+                                    {txn.status === 'FINE_PAID' && (
+                                        <>
+                                            <button
+                                                onClick={() => handleViewReceipt(txn)}
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-blue-400 hover:text-white transition-colors"
+                                                title={t('circulation.fines.history.view_receipt')}
+                                            >
+                                                <FileText size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleResendEmail(txn)}
+                                                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-purple-400 hover:text-white transition-colors"
+                                                title={t('circulation.fines.history.resend_email')}
+                                            >
+                                                <Mail size={16} />
+                                            </button>
+                                        </>
+                                    )}
+                                </>
+                            )}
                         />
                     </div>
                 ) : (
@@ -736,7 +787,7 @@ const FinesTab = ({ initialTab }) => {
                 onWaive={handleWaiveFine}
             />
 
-            <TransactionDetailModal
+            <TransactionDetailsModal
                 isOpen={detailModal.isOpen}
                 onClose={() => setDetailModal({ isOpen: false, transaction: null })}
                 transaction={detailModal.transaction}
