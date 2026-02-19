@@ -5,6 +5,7 @@ import { usePreferences } from '../../context/PreferencesContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useUser } from '../../context/UserContext';
 import StatusModal from '../common/StatusModal';
+import UpdateBanner from '../common/UpdateBanner';
 
 const Header = ({ toggleSidebar, onHelpClick }) => {
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
@@ -108,6 +109,8 @@ const Header = ({ toggleSidebar, onHelpClick }) => {
                             {theme === 'dark' ? <Sun size={18} fill="#f1c40f" /> : <Moon size={18} />}
                         </button>
                     </div>
+
+                    <UpdateBanner />
 
                     <div className="divider-vertical"></div>
 
