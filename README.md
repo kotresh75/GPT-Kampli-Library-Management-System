@@ -1,12 +1,12 @@
 <div align="center">
-  <img src="assets/icons/College_icon.png" alt="College Logo" width="120"/>
+  <img src="assets/logos/College_Logo.png" alt="College Logo" width="120"/>
   <h1>GPTK Library Management System</h1>
   <p>A modern, offline-first desktop application designed to digitize and automate the operations of the library at <b>Government Polytechnic, Kampli</b>.</p>
 
-  [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
-  [![Electron Version](https://img.shields.io/badge/Electron-v40.0.0-9cf)](https://www.electronjs.org/)
-  [![React Version](https://img.shields.io/badge/React-v18-blue)](https://reactjs.org/)
-  [![SQLite](https://img.shields.io/badge/Database-SQLite3-003B57?logo=sqlite)](https://www.sqlite.org/)
+  [![Backend: Node.js](https://img.shields.io/badge/Backend-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+  [![Electron Version](https://img.shields.io/badge/Electron-v40.0.0-9cf?logo=electron&logoColor=white)](https://www.electronjs.org/)
+  [![React Version](https://img.shields.io/badge/React-v18-00d8ff?logo=react&logoColor=white)](https://reactjs.org/)
+  [![SQLite](https://img.shields.io/badge/Database-SQLite3-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 </div>
 
 ---
