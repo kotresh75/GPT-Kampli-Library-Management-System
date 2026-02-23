@@ -51,7 +51,7 @@ GPTK-Library-Management-System/
 ├── electron/        # Electron main process, IPC handlers, and preload scripts
 ├── DB/              # SQLite database storage directory
 ├── assets/          # Static assets (Icons, logos, default images)
-├── Docs/            # Project documentation and manuals
+├── Documentation/   # User manuals, release notes, and guides
 └── build/           # Electron builder configurations and installer assets
 ```
 
@@ -110,6 +110,17 @@ npm run build:portable
 ```bash
 npm run build:all
 ```
+
+---
+
+## 📚 Documentation
+
+The `Documentation/` folder contains essential guides and resources:
+- [📖 User Manual](Documentation/User%20Manual.md) — Comprehensive guide on using the application
+- [⚙️ Installation Guide](Documentation/Installation%20Guide.md) — Detailed setup instructions
+- [📦 Release Notes (v1.0.0)](Documentation/RELEASE_NOTES_v1.0.0.md) — Features and changelog
+- [🔄 Update Guide](Documentation/Update%20Guide.md) — Instructions for updating the app
+- [🎬 Video Subtitles (EN/KN)](Documentation/Video%20Project%20English.srt) — Subtitles for the demo video
 
 ---
 

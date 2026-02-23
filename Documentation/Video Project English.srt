@@ -1,0 +1,431 @@
+1
+00:00:00,140 --> 00:00:02,590
+Hello! In this video, we will see how to
+
+2
+00:00:02,590 --> 00:00:05,040
+install the Library Management System
+
+3
+00:00:05,040 --> 00:00:07,490
+on your Windows computer,
+
+4
+00:00:07,490 --> 00:00:09,940
+step by step.
+
+5
+00:00:09,940 --> 00:00:12,389
+This software is specially developed for
+
+6
+00:00:12,389 --> 00:00:14,227
+the library of Government Polytechnic,
+
+7
+00:00:14,227 --> 00:00:16,064
+Kampli. The entire process is
+
+8
+00:00:16,064 --> 00:00:18,514
+very simple and takes only
+
+9
+00:00:18,514 --> 00:00:21,180
+about 5 minutes. First, go to
+
+10
+00:00:21,180 --> 00:00:23,871
+our GitHub releases page —
+
+11
+00:00:23,871 --> 00:00:26,562
+the link is provided in the description.
+
+12
+00:00:26,562 --> 00:00:28,715
+In the Assets section, you'll see the GPTK Library Manager
+
+13
+00:00:28,715 --> 00:00:31,407
+Setup installer file.
+
+14
+00:00:31,407 --> 00:00:34,098
+Here, EXE, MSI,
+
+15
+00:00:34,098 --> 00:00:36,789
+and Portable versions are
+
+16
+00:00:36,789 --> 00:00:39,480
+also available. Let's download the EXE installer
+
+17
+00:00:39,480 --> 00:00:42,425
+now. The download is
+
+18
+00:00:42,425 --> 00:00:45,134
+about 90 MB. Depending on your internet
+
+19
+00:00:45,134 --> 00:00:47,302
+speed, it may take a couple
+
+20
+00:00:47,302 --> 00:00:49,469
+of minutes. After the download is complete,
+
+21
+00:00:49,469 --> 00:00:52,178
+double-click the installer file
+
+22
+00:00:52,178 --> 00:00:54,887
+to start the installation. If a SmartScreen
+
+23
+00:00:54,887 --> 00:00:57,055
+warning appears, don't worry.
+
+24
+00:00:57,055 --> 00:00:59,764
+This is a standard warning for new applications —
+
+25
+00:00:59,764 --> 00:01:01,931
+our software is completely safe. Click "More info",
+
+26
+00:01:01,931 --> 00:01:04,624
+then click "Run anyway".
+
+27
+00:01:04,624 --> 00:01:07,207
+The installer welcome page
+
+28
+00:01:07,207 --> 00:01:09,789
+will appear. Click "Next" to continue. Now
+
+29
+00:01:09,789 --> 00:01:12,371
+choose who to install for —
+
+30
+00:01:12,371 --> 00:01:14,954
+there are two options here. "Anyone who uses this
+
+31
+00:01:14,954 --> 00:01:17,536
+computer" means all users of this PC,
+
+32
+00:01:17,536 --> 00:01:20,118
+and "Only for me" means just
+
+33
+00:01:20,118 --> 00:01:22,701
+the current user. Select "Only for me"
+
+34
+00:01:22,701 --> 00:01:25,650
+and click "Next". This
+
+35
+00:01:25,650 --> 00:01:28,420
+page shows where the application will be installed.
+
+36
+00:01:28,420 --> 00:01:30,635
+The default location is "Program Files".
+
+37
+00:01:30,635 --> 00:01:32,850
+No need to change it.
+
+38
+00:01:32,850 --> 00:01:35,066
+Leave it as default. To start the installation,
+
+39
+00:01:35,066 --> 00:01:37,835
+click the "Install" button. The installer
+
+40
+00:01:37,835 --> 00:01:40,604
+is now extracting the application files.
+
+41
+00:01:40,604 --> 00:01:42,819
+This includes the
+
+42
+00:01:42,819 --> 00:01:45,588
+Electron runtime, React frontend, Node.js backend,
+
+43
+00:01:45,728 --> 00:01:48,432
+and the SQLite database engine.
+
+44
+00:01:48,432 --> 00:01:51,137
+It usually takes 30 seconds to 1
+
+45
+00:01:51,137 --> 00:01:53,841
+minute. Please do not close this window.
+
+46
+00:01:53,841 --> 00:01:55,463
+Installation completed
+
+47
+00:01:55,463 --> 00:01:57,627
+successfully! Desktop and Start Menu
+
+48
+00:01:57,627 --> 00:02:00,331
+shortcuts have also been created. Make sure
+
+49
+00:02:00,331 --> 00:02:02,494
+"Run GPTK Library Manager" is checked,
+
+50
+00:02:02,494 --> 00:02:05,198
+then click "Finish".
+
+51
+00:02:05,198 --> 00:02:08,098
+The application will now open. Starting
+
+52
+00:02:08,098 --> 00:02:09,953
+for the first time — in the background,
+
+53
+00:02:09,953 --> 00:02:12,426
+the Node.js server and SQLite
+
+54
+00:02:12,426 --> 00:02:14,899
+database are being initialized. A loading screen
+
+55
+00:02:14,899 --> 00:02:17,372
+will appear. Please wait a few seconds.
+
+56
+00:02:17,372 --> 00:02:19,845
+Since this is a fresh installation,
+
+57
+00:02:19,845 --> 00:02:22,317
+the Setup Wizard will open. There are five
+
+58
+00:02:22,317 --> 00:02:24,790
+steps — Welcome, Language, Admin
+
+59
+00:02:24,790 --> 00:02:27,263
+Account, Library Info, and
+
+60
+00:02:27,263 --> 00:02:30,232
+Complete. The first page shows the Government Polytechnic
+
+61
+00:02:30,232 --> 00:02:32,857
+Kampli logo, campus photo, and
+
+62
+00:02:32,857 --> 00:02:34,957
+library mission. To begin setup,
+
+63
+00:02:34,957 --> 00:02:37,057
+click the "Get Started"
+
+64
+00:02:37,057 --> 00:02:39,682
+button. The second
+
+65
+00:02:39,682 --> 00:02:42,308
+step is Personalization. There are three options here.
+
+66
+00:02:42,308 --> 00:02:44,933
+First, Language — English or Kannada.
+
+67
+00:02:44,933 --> 00:02:47,558
+All menus, buttons, and
+
+68
+00:02:47,558 --> 00:02:50,219
+messages in the application will appear in your chosen language.
+
+69
+00:02:50,219 --> 00:02:52,801
+Second, Appearance — Light Mode
+
+70
+00:02:52,801 --> 00:02:55,382
+or Dark Mode. Third, Text
+
+71
+00:02:55,382 --> 00:02:57,964
+Size — Small, Medium, Large, or Extra Large.
+
+72
+00:02:57,964 --> 00:03:00,546
+All these settings can be changed later
+
+73
+00:03:00,546 --> 00:03:02,612
+anytime from the Settings page.
+
+74
+00:03:02,612 --> 00:03:05,194
+The third step is the most important — Admin
+
+75
+00:03:05,194 --> 00:03:07,776
+Account creation. This account will be
+
+76
+00:03:07,776 --> 00:03:10,493
+the primary administrator with full
+
+77
+00:03:10,493 --> 00:03:12,471
+access — book management,
+
+78
+00:03:12,471 --> 00:03:14,448
+student registration, staff management,
+
+79
+00:03:14,448 --> 00:03:17,413
+backup, and settings control. Enter your
+
+80
+00:03:17,413 --> 00:03:20,379
+full name, email address, and a strong
+
+81
+00:03:20,379 --> 00:03:23,345
+password. The password must be at least six
+
+82
+00:03:23,345 --> 00:03:26,311
+characters long. Remember this password — it will be
+
+83
+00:03:26,311 --> 00:03:28,288
+used for your first login. Click "Continue".
+
+84
+00:03:28,288 --> 00:03:31,277
+The fourth step is Library
+
+85
+00:03:31,277 --> 00:03:34,129
+Details. The library name is already pre-filled as
+
+86
+00:03:34,129 --> 00:03:36,410
+"GPT Kampli Library". No need to
+
+87
+00:03:36,410 --> 00:03:38,121
+change it. Verify that it's correct
+
+88
+00:03:38,121 --> 00:03:40,403
+and click "Continue".
+
+89
+00:03:40,403 --> 00:03:42,684
+Setup is now complete! This
+
+90
+00:03:42,684 --> 00:03:45,535
+page shows a summary of all the details
+
+91
+00:03:45,535 --> 00:03:48,387
+you entered — admin name, email,
+
+92
+00:03:48,387 --> 00:03:51,154
+selected language, and library
+
+93
+00:03:51,154 --> 00:03:53,643
+name. Click "Go to Login" to proceed
+
+94
+00:03:53,643 --> 00:03:56,629
+to the login page. Use the admin email
+
+95
+00:03:56,629 --> 00:03:59,616
+and password you created during setup
+
+96
+00:03:59,616 --> 00:04:02,603
+to log in. After logging in,
+
+97
+00:04:02,603 --> 00:04:05,092
+the Dashboard will open. From here, you can
+
+98
+00:04:05,092 --> 00:04:07,083
+manage the book catalog, student registration,
+
+99
+00:04:07,083 --> 00:04:09,572
+book issue and return, fine
+
+100
+00:04:09,572 --> 00:04:12,538
+management, staff management, backup,
+
+101
+00:04:12,538 --> 00:04:14,846
+and much more.
+
+102
+00:04:14,846 --> 00:04:17,154
+The Library Management System installation
+
+103
+00:04:17,154 --> 00:04:19,463
+and setup is now complete. If you face any issues,
+
+104
+00:04:19,463 --> 00:04:21,771
+go to the "System Health" page
+
+105
+00:04:21,771 --> 00:04:24,656
+in the application and use the "Report Bug"
+
+106
+00:04:24,656 --> 00:04:27,542
+button to report directly on GitHub.
+
+107
+00:04:27,542 --> 00:04:29,850
+Thank you for watching!
+
+108
+00:04:29,850 --> 00:04:32,751
+Government Polytechnic, Kampli — CS&E Department.
