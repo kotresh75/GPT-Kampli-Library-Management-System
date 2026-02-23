@@ -140,7 +140,7 @@ const AboutPage = () => {
 
                 <footer style={{ borderTop: '1px solid var(--glass-border)', paddingTop: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)', textAlign: 'center', marginTop: '40px' }}>
                     <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '10px' }}>
-                        <span onClick={() => window.electron.openExternal("https://github.com/kotresh75/College-Project.git")} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: 'inherit', textDecoration: 'none', padding: '5px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>
+                        <span onClick={() => window.electron.openExternal("https://github.com/kotresh75/GPT-Kampli-Library-Management-System.git")} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: 'inherit', textDecoration: 'none', padding: '5px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>
                             <Github size={16} /> GitHub
                         </span>
                         <span onClick={() => window.electron.openExternal("https://gptklibrary-students.pages.dev/")} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', color: 'inherit', textDecoration: 'none', padding: '5px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '5px' }}>

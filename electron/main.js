@@ -23,80 +23,271 @@ let isQuitting = false;
 
 // Config
 const isDev = !app.isPackaged;
-const userDataPath = app.getPath('userData');
+const isPortable = !!process.env.PORTABLE_EXECUTABLE_DIR;
+const userDataPath = isPortable
+    ? path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'GPTK-Data')
+    : app.getPath('userData');
 const stateFilePath = path.join(userDataPath, 'window-state.json');
+
+// Ensure data directory exists (needed for portable mode)
+if (isPortable && !fs.existsSync(userDataPath)) {
+    fs.mkdirSync(userDataPath, { recursive: true });
+}
 
 // -----------------------------------------------------------------------------
 // AUTO-UPDATER CONFIGURATION
 // -----------------------------------------------------------------------------
-autoUpdater.autoDownload = true;
+const log = require('electron-log');
+log.transports.file.level = 'info';
+log.transports.file.maxSize = 5 * 1024 * 1024; // 5 MB max log file size
+if (isPortable) {
+    log.transports.file.resolvePathFn = () => path.join(userDataPath, 'logs', 'main.log');
+}
+autoUpdater.logger = log;
+
+autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
-autoUpdater.disableDifferentialDownload = true;
-autoUpdater.logger = require('electron').app.getLogger ? null : console;
+
+// -----------------------------------------------------------------------------
+// GLOBAL ERROR HANDLERS — catch unhandled errors and write to log file
+// -----------------------------------------------------------------------------
+process.on('uncaughtException', (error) => {
+    log.error('[CRASH] Uncaught Exception:', error.stack || error.message || error);
+});
+
+process.on('unhandledRejection', (reason) => {
+    log.error('[CRASH] Unhandled Promise Rejection:', reason?.stack || reason?.message || reason);
+});
+
+// Persistent update state
+let updateState = { status: 'idle', version: '', percent: 0, transferred: 0, total: 0 };
+let isUserDownloading = false; // Flag to distinguish user-initiated downloads
+
+function sendUpdateState() {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('update-status-changed', { ...updateState });
+    }
+}
+
+function logUpdate(msg) {
+    log.info(`[AutoUpdater] ${msg}`);
+    console.log(`[AutoUpdater] ${msg}`);
+}
 
 function setupAutoUpdater() {
     if (isDev) {
-        console.log('[AutoUpdater] Skipping in dev mode');
+        logUpdate('Skipping in dev mode');
         return;
     }
 
     autoUpdater.on('checking-for-update', () => {
-        console.log('[AutoUpdater] Checking for updates...');
+        logUpdate('Checking for updates...');
     });
 
     autoUpdater.on('update-available', (info) => {
-        console.log('[AutoUpdater] Update available:', info.version);
-        if (mainWindow) {
-            mainWindow.webContents.send('update-available', {
-                version: info.version,
-                releaseDate: info.releaseDate
-            });
+        logUpdate(`Update available: ${info.version}`);
+        // Only set status to available if user hasn't started downloading
+        if (!isUserDownloading) {
+            updateState = { status: 'available', version: info.version, percent: 0, transferred: 0, total: 0 };
+            sendUpdateState();
         }
     });
 
     autoUpdater.on('update-not-available', () => {
-        console.log('[AutoUpdater] App is up to date.');
+        logUpdate('App is up to date.');
+        // Notify renderer so "Check for Updates" can show feedback
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('update-status-changed', { status: 'uptodate' });
+        }
     });
 
     autoUpdater.on('download-progress', (progress) => {
-        console.log(`[AutoUpdater] Download: ${Math.round(progress.percent)}%`);
-        if (mainWindow) {
-            mainWindow.webContents.send('update-download-progress', {
-                percent: Math.round(progress.percent),
-                transferred: progress.transferred,
-                total: progress.total
-            });
-        }
+        logUpdate(`Download: ${Math.round(progress.percent)}% (${progress.transferred}/${progress.total})`);
+        updateState.status = 'downloading';
+        updateState.percent = Math.round(progress.percent);
+        updateState.transferred = progress.transferred;
+        updateState.total = progress.total;
+        sendUpdateState();
     });
 
     autoUpdater.on('update-downloaded', (info) => {
-        console.log('[AutoUpdater] Update downloaded:', info.version);
-        if (mainWindow) {
-            mainWindow.webContents.send('update-downloaded', {
-                version: info.version,
-                releaseDate: info.releaseDate
-            });
-        }
+        logUpdate(`Update downloaded: ${info.version}`);
+        isUserDownloading = false;
+        updateState = { status: 'ready', version: info.version, percent: 100, transferred: 0, total: 0 };
+        sendUpdateState();
     });
 
     autoUpdater.on('error', (err) => {
-        console.error('[AutoUpdater] Error:', err.message);
+        logUpdate(`Error: ${err.stack || err.message || err}`);
+        isUserDownloading = false;
+        if (updateState.status === 'downloading' && updateState.version) {
+            updateState.status = 'available';
+            updateState.percent = 0;
+            updateState.transferred = 0;
+            updateState.total = 0;
+            sendUpdateState();
+        }
     });
 
-    // Check for updates after a short delay (let the app settle first)
+    // Check for updates after a short delay
     setTimeout(() => {
-        autoUpdater.checkForUpdatesAndNotify().catch(err => {
-            console.error('[AutoUpdater] Check failed:', err.message);
+        logUpdate('Starting initial update check...');
+        autoUpdater.checkForUpdates().catch(err => {
+            logUpdate(`Initial check failed: ${err.message}`);
         });
     }, 5000);
 }
 
+// IPC: Renderer queries current update state
+ipcMain.handle('get-update-status', () => {
+    return { ...updateState };
+});
+
+// IPC: Renderer requests to start downloading the update
+ipcMain.on('start-download', () => {
+    logUpdate('User clicked Download Now');
+    isUserDownloading = true;
+    updateState.status = 'downloading';
+    updateState.percent = 0;
+    sendUpdateState();
+
+    logUpdate('Calling autoUpdater.downloadUpdate()...');
+    autoUpdater.downloadUpdate()
+        .then((paths) => {
+            logUpdate(`downloadUpdate() resolved. Paths: ${JSON.stringify(paths)}`);
+        })
+        .catch(err => {
+            logUpdate(`downloadUpdate() FAILED: ${err.stack || err.message || err}`);
+            isUserDownloading = false;
+            updateState.status = 'available';
+            updateState.percent = 0;
+            sendUpdateState();
+        });
+});
+
+// IPC: Renderer requests to cancel the download
+ipcMain.on('cancel-download', () => {
+    logUpdate('User cancelled download');
+    isUserDownloading = false;
+    updateState.status = 'available';
+    updateState.percent = 0;
+    updateState.transferred = 0;
+    updateState.total = 0;
+    sendUpdateState();
+});
+
 // IPC: Renderer requests to install the update and restart
 ipcMain.on('install-update', () => {
-    console.log('[AutoUpdater] User requested install. Quitting and installing...');
-    isQuitting = true;
-    autoUpdater.quitAndInstall(false, true);
+    logUpdate('User requested install. Showing overlay and toast...');
+    // Save current version before update so we can detect post-update
+    const versionFile = path.join(app.getPath('userData'), 'pre-update-version.txt');
+    try { fs.writeFileSync(versionFile, app.getVersion()); } catch (e) { /* ignore */ }
+
+    // Send installing state so renderer shows full-screen overlay
+    updateState.status = 'installing';
+    sendUpdateState();
+
+    // Fire a Windows toast notification that persists after app closes
+    const { Notification } = require('electron');
+    if (Notification.isSupported()) {
+        const toast = new Notification({
+            title: 'Updating GPTK Library Manager',
+            body: `Installing v${updateState.version}... The app will reopen automatically. Please don't turn off your computer.`,
+            icon: path.join(__dirname, '../assets/icons/College_icon.ico'),
+            silent: true
+        });
+        toast.show();
+    }
+
+    // Give the renderer 2.5s to show the overlay, then quit and install
+    setTimeout(() => {
+        isQuitting = true;
+        autoUpdater.quitAndInstall(false, true); // Non-silent: shows NSIS progress bar (pages skipped by installer.nsh)
+    }, 2500);
 });
+
+// IPC: Renderer requests to manually check for updates
+ipcMain.on('manual-check-updates', () => {
+    logUpdate('User manually checking for updates...');
+    autoUpdater.checkForUpdates().catch(err => {
+        logUpdate('Manual check failed: ' + err.message);
+        // Notify renderer of check failure
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('update-status-changed', { status: 'check-error' });
+        }
+    });
+});
+
+// Post-update detection: renderer pulls this data on startup
+ipcMain.handle('check-post-update', async () => {
+    const versionFile = path.join(app.getPath('userData'), 'pre-update-version.txt');
+    try {
+        if (!fs.existsSync(versionFile)) return null;
+        const oldVersion = fs.readFileSync(versionFile, 'utf8').trim();
+        const currentVersion = app.getVersion();
+        // Clean up the file immediately
+        fs.unlinkSync(versionFile);
+        if (oldVersion === currentVersion) return null;
+        logUpdate(`Post-update detected: ${oldVersion} → ${currentVersion}`);
+
+        // Kill any leftover mshta loading screens
+        try { exec('taskkill /f /im mshta.exe', { stdio: 'ignore' }); } catch (e) { /* ignore */ }
+
+        // Fetch release notes from GitHub
+        const https = require('https');
+        const releaseNotes = await new Promise((resolve) => {
+            const url = 'https://api.github.com/repos/kotresh75/GPT-Kampli-Library-Management-System/releases/latest';
+            https.get(url, { headers: { 'User-Agent': 'GPTK-Library-Manager' } }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const release = JSON.parse(data);
+                        resolve({
+                            version: release.tag_name || `v${currentVersion}`,
+                            body: release.body || 'Bug fixes and improvements.',
+                            name: release.name || `Version ${currentVersion}`
+                        });
+                    } catch {
+                        resolve({ version: `v${currentVersion}`, body: 'Bug fixes and improvements.', name: `Version ${currentVersion}` });
+                    }
+                });
+            }).on('error', () => {
+                resolve({ version: `v${currentVersion}`, body: 'Bug fixes and improvements.', name: `Version ${currentVersion}` });
+            });
+        });
+        return releaseNotes;
+    } catch (e) {
+        logUpdate(`Post-update check error: ${e.message}`);
+        return null;
+    }
+});
+
+// -----------------------------------------------------------------------------
+// ERROR LOGGING & BUG REPORT IPC HANDLERS
+// -----------------------------------------------------------------------------
+
+// IPC: Renderer forwards frontend errors to the main log file
+ipcMain.on('log-renderer-error', (_event, errorData) => {
+    const { msg, url, line, col, stack } = errorData || {};
+    log.error(`[RENDERER] ${msg || 'Unknown error'}`, {
+        source: url ? `${url}:${line}:${col}` : 'unknown',
+        stack: stack || 'no stack'
+    });
+});
+
+// IPC: Return the log file path so the UI can show it
+ipcMain.handle('get-log-path', () => {
+    return log.transports.file.getFile().path;
+});
+
+// IPC: Open an external URL in the default browser
+ipcMain.on('open-external-url', (_event, url) => {
+    if (url && (url.startsWith('https://') || url.startsWith('http://'))) {
+        shell.openExternal(url);
+    }
+});
+
 
 // -----------------------------------------------------------------------------
 // 1. Splash Window
@@ -189,6 +380,15 @@ function createWindow() {
             return { action: 'deny' };
         }
         return { action: 'allow' };
+    });
+
+    // Renderer process crash detection
+    mainWindow.webContents.on('render-process-gone', (_event, details) => {
+        log.error(`[CRASH] Renderer process gone! Reason: ${details.reason}, exitCode: ${details.exitCode}`);
+    });
+
+    mainWindow.webContents.on('crashed', (_event, killed) => {
+        log.error(`[CRASH] Renderer crashed! Killed: ${killed}`);
     });
 
     // -------------------------------------------------------------------------
@@ -284,7 +484,7 @@ function startBackend() {
         }
 
         process.env.NODE_ENV = isDev ? 'development' : 'production';
-        process.env.USER_DATA_PATH = app.getPath('userData');
+        process.env.USER_DATA_PATH = userDataPath;
 
         // Start Server
         // We use 'require' so it runs in THIS process. 
@@ -296,7 +496,9 @@ function startBackend() {
         // For robustness, let's wait a second before showing main window to let DB connect.
         setTimeout(() => {
             createWindow();
-            setupAutoUpdater(); // Check for updates after app is ready
+            if (!isPortable) {
+                setupAutoUpdater(); // Check for updates after app is ready (skip in portable mode)
+            }
         }, 2500);
 
     } catch (err) {
@@ -384,6 +586,7 @@ ipcMain.handle('get-printers', async () => {
 // Scanner Handling (HID Discovery)
 ipcMain.handle('get-scanners', async () => {
     return new Promise((resolve) => {
+        // Get all HID devices that are OK, then aggressively filter out non-scanners
         const cmd = `powershell "Get-PnpDevice -Class HIDClass -Status OK | Select-Object -ExpandProperty FriendlyName"`;
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
@@ -391,17 +594,55 @@ ipcMain.handle('get-scanners', async () => {
                 resolve([]);
                 return;
             }
-            // Filter and clean output
+
+            // Exclusion list — common HID devices that are NOT barcode scanners
+            const excludePatterns = [
+                // Mice & Touchpads
+                /mouse/i, /touchpad/i, /trackpad/i, /pointing/i, /trackball/i, /touchscreen/i,
+                // Keyboards
+                /keyboard/i,
+                // Game controllers
+                /game/i, /xbox/i, /joystick/i, /gamepad/i, /controller/i,
+                // System/Internal devices
+                /system/i, /radio/i, /event filter/i, /portable device/i,
+                /converted/i, /consumer control/i, /vendor-defined/i,
+                /device control/i, /collection/i, /compliant/i,
+                // Audio & Media
+                /audio/i, /headset/i, /media/i, /volume/i, /speaker/i, /microphone/i,
+                // Camera/Webcam (not barcode scanner)
+                /webcam/i, /camera/i, /ir /i, /sensor/i,
+                // Fingerprint & Biometric
+                /fingerprint/i, /biometric/i,
+                // Power / Battery
+                /battery/i, /power/i, /ups/i, /wireless/i,
+                // Pen / Stylus
+                /pen/i, /stylus/i, /tablet/i, /wacom/i, /digitizer/i,
+                // Generic
+                /virtual/i, /remote/i
+            ];
+
+            // Inclusion patterns — known scanner brand keywords
+            const scannerBrands = [
+                /honeywell/i, /zebra/i, /datalogic/i, /symbol/i, /motorola/i,
+                /opticon/i, /intermec/i, /cognex/i, /sick/i, /keyence/i,
+                /unitech/i, /cino/i, /argox/i, /mindeo/i, /newland/i,
+                /barcode/i, /scanner/i, /reader/i, /scan/i, /pos/i, /wand/i
+            ];
+
             const lines = stdout.split('\r\n')
                 .map(l => l.trim())
-                .filter(l => l &&
-                    !l.includes('System Controller') &&
-                    !l.includes('Radio Controls') &&
-                    !l.includes('Event Filter') &&
-                    !l.includes('Portable Device Control') &&
-                    !l.includes('Converted')
-                );
-            resolve([...new Set(lines)]);
+                .filter(l => l.length > 0);
+
+            const filtered = lines.filter(device => {
+                // Always include if it matches a known scanner brand
+                if (scannerBrands.some(p => p.test(device))) return true;
+                // Exclude known non-scanner devices
+                if (excludePatterns.some(p => p.test(device))) return false;
+                // Include remaining unknown HID devices (could be scanners)
+                return true;
+            });
+
+            resolve([...new Set(filtered)]);
         });
     });
 });

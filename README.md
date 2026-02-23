@@ -1,59 +1,125 @@
-# GPTK Library Management System
+<div align="center">
+  <img src="assets/icons/College_icon.png" alt="College Logo" width="120"/>
+  <h1>GPTK Library Management System</h1>
+  <p>A modern, offline-first desktop application designed to digitize and automate the operations of the library at <b>Government Polytechnic, Kampli</b>.</p>
 
-The **GPTK Library Management System** is a state-of-the-art solution designed to digitize and automate the operations of the library at **Government Polytechnic, Kampli**. This desktop application replaces manual record-keeping with an efficient, digital system for cataloging, circulation, and resource tracking.
+  [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+  [![Electron Version](https://img.shields.io/badge/Electron-v40.0.0-9cf)](https://www.electronjs.org/)
+  [![React Version](https://img.shields.io/badge/React-v18-blue)](https://reactjs.org/)
+  [![SQLite](https://img.shields.io/badge/Database-SQLite3-003B57?logo=sqlite)](https://www.sqlite.org/)
+</div>
 
-## 🚀 Features
+---
 
-*   **Smart Catalog**: Efficient book tracking with ISBN scanning and auto-enrichment via Google Books/Open Library APIs.
-*   **Member Management**: Streamlined student and staff profiles with digital ID cards.
-*   **Circulation Desk**: Automates the issuance, return, and renewal of books.
-*   **Analytics Dashboard**: Real-time insights into library usage, fine collection, and inventory status.
-*   **Role-Based Access**: Secure authentication with distinct roles for Admins and Staff.
-*   **Multi-language Support**: Full support for **English** and **Kannada** interfaces.
-*   **System Health**: Built-in diagnostics for database integrity and system performance.
-*   **Audit Logging**: Comprehensive logs for all transaction and system events.
+## 📖 Overview
+
+The **GPTK Library Management System** replaces manual record-keeping with an efficient, digital system for cataloging, circulation, and resource tracking. Built specifically for institutional use, it features a dual-language interface (English and Kannada) and operates entirely locally without requiring a persistent internet connection (except for optional book metadata fetching).
+
+---
+
+## 🚀 Key Features
+
+*   📚 **Smart Catalog**: Efficient book tracking with ISBN scanning and auto-enrichment via Google Books/Open Library APIs.
+*   👥 **Member Management**: Streamlined student and staff profiles with integrated digital ID card generation.
+*   🔄 **Circulation Desk**: Automates the issuance, return, and renewal of books with automatic fine calculation.
+*   📊 **Analytics Dashboard**: Real-time visual insights into library usage, fine collection, and inventory status.
+*   🔐 **Role-Based Access**: Secure authentication (JWT + bcrypt) with distinct roles for Administrators and Library Staff.
+*   🌐 **Bilingual Interface**: Full native support for **English** and **Kannada (ಕನ್ನಡ)** interfaces.
+*   🏥 **System Health & Integrity**: Built-in diagnostics for database integrity, system performance, and automated backups.
+*   📝 **Audit Logging**: Comprehensive, tamper-proof logs for all transactions and system events.
+
+---
 
 ## 🛠️ Technology Stack
 
-*   **Frontend**: React.js, Tailwind CSS
-*   **Backend**: Node.js, Electron (IPC)
-*   **Database**: SQLite (`DB/lms.sqlite`)
-*   **Framework**: Electron (v40)
-*   **Tools**: `concurrently`, `electron-builder`
+| Architecture Layer | Technologies Used |
+| :--- | :--- |
+| **Frontend UI** | React.js (v18), Custom CSS (Glassmorphism), `react-i18next` |
+| **Backend API** | Node.js, Express.js |
+| **Desktop Shell** | Electron (v40) with IPC communication |
+| **Database** | SQLite 3 (Stored locally in `DB/lms.sqlite`) |
+| **Build Tools** | `electron-builder`, `concurrently`, npm workspaces |
 
-## 📦 Installation & Setup
+---
+
+## 📂 Project Structure
+
+```text
+GPTK-Library-Management-System/
+├── frontend/        # React application source code & UI components
+├── backend/         # Node.js Express server, SQLite models, and routes
+├── electron/        # Electron main process, IPC handlers, and preload scripts
+├── DB/              # SQLite database storage directory
+├── assets/          # Static assets (Icons, logos, default images)
+├── Docs/            # Project documentation and manuals
+└── build/           # Electron builder configurations and installer assets
+```
+
+---
+
+## 📦 Installation & Setup (Development)
 
 ### Prerequisites
-*   Node.js (v16 or higher recommended)
-*   npm or yarn
+*   [Node.js](https://nodejs.org/) (Latest LTS version recommended - v18+)
+*   npm (comes with Node.js)
+*   Git
 
-### Development
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/kotresh75/College-Project.git
-    cd College-Project
-    ```
+### 1. Clone the repository
+```bash
+git clone https://github.com/kotresh75/College-Project.git
+cd College-Project
+```
 
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    cd frontend
-    npm install
-    cd ..
-    ```
+### 2. Install dependencies
+The project uses NPM scripts to manage dependencies across all layers. Run this command in the root directory:
+```bash
+# This will install root, frontend, and backend dependencies automatically
+npm run postinstall 
+# Alternatively, just run: npm install
+```
 
-3.  **Run the application**:
-    ```bash
-    npm start
-    ```
-    This command will run the React frontend and Electron main process concurrently.
+### 3. Run the application
+To start the application in development mode (starts both the React dev server and the Electron shell):
+```bash
+npm start
+```
+*Note: Ensure no other application is using port `3000` or `17221` before starting.*
 
-### Build
-To create a production executable (Windows):
+---
+
+## 🏗️ Building for Production
+
+To create distributable installers for Windows, use the provided npm scripts. All built executables will be generated in the `Final_export` directory.
+
+**Build EXE Installer (NSIS) - Recommended**
 ```bash
 npm run build:exe
 ```
-The output files will be in the `Final_export` directory.
+
+**Build MSI Installer**
+```bash
+npm run build:msi
+```
+
+**Build Portable Version (No installation required)**
+```bash
+npm run build:portable
+```
+
+**Build All Windows Targets**
+```bash
+npm run build:all
+```
+
+---
+
+## 🔧 Troubleshooting
+
+*   **SQLite/Native Module Errors**: If you encounter issues with `sqlite3` or native modules during installation, try deleting the `node_modules` folders in the root, frontend, and backend, then reinstall. You may need Python and Visual Studio Build Tools installed for native compilation on Windows.
+*   **Port Conflicts**: If the app fails to start, check if ports `3000` (React) or `17221` (Express Backend) are already in use.
+*   **Database Lock**: Ensure multiple instances of the application are not running simultaneously, as SQLite locks the database file.
+
+---
 
 ## 👥 Project Team
 
@@ -67,4 +133,6 @@ The output files will be in the `Final_export` directory.
 *   **Sri. Prashanth H. A.** (Selection Grade-I Lecturer, Dept. of CS&E)
 
 ---
-© 2026 Dept of CS&E, GPT Kampli. All rights reserved.
+<div align="center">
+  <p>© 2026 Dept of CS&E, Government Polytechnic, Kampli. All rights reserved.</p>
+</div>

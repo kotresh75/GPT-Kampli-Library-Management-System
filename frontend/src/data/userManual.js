@@ -1309,6 +1309,96 @@ export function getUserManualData() {
             )
         },
         {
+            id: 'scanner-setup',
+            title: <Trans i18nKey="manual.scanner.title" />,
+            icon: <ScanLine size={16} />,
+            searchKeywords: ['barcode', 'scanner', 'usb', 'bluetooth', 'hid', 'keyboard mode', 'prefix', 'strip', 'configure', 'setup', 'hardware', 'peripheral'],
+            content: (
+                <div className="um-article">
+                    <h3><Trans i18nKey="manual.scanner.header" /></h3>
+                    <p><Trans i18nKey="manual.scanner.desc" components={{ 1: <strong /> }} /></p>
+
+                    <div className="um-callout tip">
+                        <Trans i18nKey="manual.scanner.tip_mode" components={{ 1: <strong /> }} />
+                    </div>
+
+                    <h4><Trans i18nKey="manual.scanner.types_title" /></h4>
+                    <p><Trans i18nKey="manual.scanner.types_desc" /></p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, margin: '15px 0' }}>
+                        <div className="um-card-sm">
+                            <h6><Trans i18nKey="manual.scanner.type_usb" /></h6>
+                            <p><Trans i18nKey="manual.scanner.type_usb_desc" /></p>
+                        </div>
+                        <div className="um-card-sm">
+                            <h6><Trans i18nKey="manual.scanner.type_bt" /></h6>
+                            <p><Trans i18nKey="manual.scanner.type_bt_desc" /></p>
+                        </div>
+                    </div>
+
+                    <h4><Trans i18nKey="manual.scanner.connect_title" /></h4>
+                    <div className="um-step-card">
+                        <h5><Trans i18nKey="manual.scanner.connect_steps" /></h5>
+                        <ol>
+                            <li><Trans i18nKey="manual.scanner.step1" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.scanner.step2" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.scanner.step3" components={{ 1: <strong />, 2: <kbd /> }} /></li>
+                            <li><Trans i18nKey="manual.scanner.step4" components={{ 1: <strong /> }} /></li>
+                        </ol>
+                    </div>
+
+                    <div className="um-content-image-wrapper" style={{ margin: '20px 0', textAlign: 'center' }}>
+                        <img
+                            src={ManualImages.settingsHardwareImg}
+                            alt="Hardware Settings"
+                            style={{
+                                maxWidth: '100%',
+                                borderRadius: '12px',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                            }}
+                        />
+                        <div className="um-caption"><Trans i18nKey="manual.scanner.fig_hardware" /></div>
+                    </div>
+
+                    <h4><Trans i18nKey="manual.scanner.config_title" /></h4>
+                    <p><Trans i18nKey="manual.scanner.config_desc" /></p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, margin: '15px 0' }}>
+                        <div className="um-card-sm">
+                            <h6><Trans i18nKey="manual.scanner.cfg_mode" /></h6>
+                            <p><Trans i18nKey="manual.scanner.cfg_mode_desc" /></p>
+                        </div>
+                        <div className="um-card-sm">
+                            <h6><Trans i18nKey="manual.scanner.cfg_prefix" /></h6>
+                            <p><Trans i18nKey="manual.scanner.cfg_prefix_desc" /></p>
+                        </div>
+                    </div>
+
+                    <h4><Trans i18nKey="manual.scanner.test_title" /></h4>
+                    <div className="um-step-card">
+                        <h5><Trans i18nKey="manual.scanner.test_steps" /></h5>
+                        <ol>
+                            <li><Trans i18nKey="manual.scanner.test1" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.scanner.test2" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.scanner.test3" components={{ 1: <strong /> }} /></li>
+                            <li><Trans i18nKey="manual.scanner.test4" components={{ 1: <strong /> }} /></li>
+                        </ol>
+                    </div>
+
+                    <h4><Trans i18nKey="manual.scanner.trouble_title" /></h4>
+                    <ul className="check-list">
+                        <li><Trans i18nKey="manual.scanner.trouble1" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.scanner.trouble2" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.scanner.trouble3" components={{ 1: <strong /> }} /></li>
+                        <li><Trans i18nKey="manual.scanner.trouble4" components={{ 1: <strong /> }} /></li>
+                    </ul>
+
+                    <div className="um-callout warning">
+                        <Trans i18nKey="manual.scanner.warn_kiosk" components={{ 1: <strong /> }} />
+                    </div>
+                </div>
+            )
+        },
+        {
             id: 'shortcuts',
             title: <Trans i18nKey="manual.shortcuts.title" />,
             icon: <Keyboard size={16} />,

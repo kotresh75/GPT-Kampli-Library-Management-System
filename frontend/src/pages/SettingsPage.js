@@ -5,7 +5,8 @@ import {
     Settings, Save, RefreshCw, Shield, Database,
     Mail, Globe, Palette, Server, Lock, AlertCircle, CheckCircle, Smartphone,
     Check, X, Trash2, Upload, UploadCloud, Download, Wifi, WifiOff, BookOpen,
-    Sun, Moon, Volume2, Eye, Printer, Key, AlertTriangle, User, Monitor, Search, Info
+    Sun, Moon, Volume2, Eye, Printer, Key, AlertTriangle, User, Monitor, Search, Info,
+    ScanLine, Zap, Clock, Bluetooth, Usb
 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import PasswordPromptModal from '../components/common/PasswordPromptModal';
@@ -208,37 +209,44 @@ const HardwareTab = ({ settings, handleChange, handleSave, onTestPrint, showNoti
     // Local state
     const [scanning, setScanning] = useState(false);
     const [testInput, setTestInput] = useState('');
-    const [lastScanned, setLastScanned] = useState(null);
+    const [scanHistory, setScanHistory] = useState([]); // Last 5 scans
     const [deviceStatus, setDeviceStatus] = useState({
         scanner: 'disconnected' // disconnected, connected, error
     });
     const [autoFocusMode, setAutoFocusMode] = useState(false);
     const testInputRef = useRef(null);
     const [availableScanners, setAvailableScanners] = useState([]);
+    const lastKeystroke = useRef(0);
+    const rapidKeyCount = useRef(0);
 
-    // Fetch System Hardware on Mount
-    useEffect(() => {
-        const fetchHardware = async () => {
-            if (window.electron) {
-                // Fetch Scanners (HID)
-                if (window.electron.getScanners) {
-                    try {
-                        const scanners = await window.electron.getScanners();
-                        const scannerOptions = scanners.map((s, i) => ({
-                            value: `hid_${i}`, // We treat them all as keyboard mode effectively
-                            label: `📷 ${s} (${t('settings.hardware.ready')})`
-                        }));
-                        setAvailableScanners(scannerOptions);
-                    } catch (e) { console.error(e); }
-                }
-            } else {
-                // Fallback for browser testing
-                setAvailableScanners([
-                    { value: 'hid_sim', label: '📷 Honeywell 1900 (Simulated)' }
-                ]);
+    // Fetch scanners from Electron
+    const fetchScanners = async () => {
+        if (window.electron?.getScanners) {
+            try {
+                const scanners = await window.electron.getScanners();
+                const scannerOptions = scanners.map((s, i) => ({
+                    value: `hid_${i}`,
+                    label: `📷 ${s} (${t('settings.hardware.ready')})`
+                }));
+                setAvailableScanners(scannerOptions);
+                return scannerOptions;
+            } catch (e) {
+                console.error(e);
+                return [];
             }
-        };
-        fetchHardware();
+        } else {
+            // Browser fallback for testing
+            const fallback = [
+                { value: 'hid_sim', label: '📷 Honeywell 1900 (Simulated)' }
+            ];
+            setAvailableScanners(fallback);
+            return fallback;
+        }
+    };
+
+    // Fetch on mount
+    useEffect(() => {
+        fetchScanners();
     }, []);
 
     // Auto-focus logic
@@ -254,15 +262,50 @@ const HardwareTab = ({ settings, handleChange, handleSave, onTestPrint, showNoti
         return () => clearInterval(interval);
     }, [autoFocusMode]);
 
-    // Handle "Enter" key from scanner
+    // Strip prefix
+    const getProcessedInput = (raw) => {
+        const val = raw || testInput;
+        if (!settings.app_hardware?.scannerPrefix || !val) return val;
+        if (val.startsWith(settings.app_hardware.scannerPrefix)) {
+            return val.substring(settings.app_hardware.scannerPrefix.length);
+        }
+        return val;
+    };
+
+    // Auto-detect scanner via rapid keystrokes
+    const handleTestInputChange = (e) => {
+        const val = e.target.value;
+        setTestInput(val);
+
+        const now = Date.now();
+        const timeSinceLast = now - lastKeystroke.current;
+        lastKeystroke.current = now;
+
+        // Barcode scanners type all characters within ~50ms intervals
+        if (timeSinceLast < 80 && val.length > 3) {
+            rapidKeyCount.current++;
+            // If 4+ rapid keystrokes detected, it's a scanner
+            if (rapidKeyCount.current >= 4 && deviceStatus.scanner !== 'connected') {
+                setDeviceStatus({ scanner: 'connected' });
+                showNotification(t('settings.hardware.diag_title'), "Scanner input detected!", "success");
+            }
+        } else {
+            rapidKeyCount.current = 0;
+        }
+    };
+
+    // Handle "Enter" key from scanner — stores last 5 scans
     const handleTestInputKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            setLastScanned({
+        if (e.key === 'Enter' && testInput.trim()) {
+            const newEntry = {
                 raw: testInput,
-                processed: getProcessedInput(),
-                timestamp: new Date().toLocaleTimeString()
-            });
+                processed: getProcessedInput(testInput),
+                timestamp: new Date().toLocaleTimeString('en-IN', { hour12: true })
+            };
+            setScanHistory(prev => [newEntry, ...prev].slice(0, 5)); // Keep last 5
             setTestInput('');
+            rapidKeyCount.current = 0;
+
             const area = document.getElementById('scan-feedback-area');
             if (area) {
                 area.animate([
@@ -273,103 +316,150 @@ const HardwareTab = ({ settings, handleChange, handleSave, onTestPrint, showNoti
         }
     };
 
-    // Simulate Device Scan
-    const handleScanDevices = () => {
+    // Real re-scan: fetches fresh HID list from Electron
+    const handleScanDevices = async () => {
         setScanning(true);
         setDeviceStatus({ scanner: 'checking' });
 
-        setTimeout(() => {
+        try {
+            const freshScanners = await fetchScanners();
+
+            setTimeout(() => {
+                setScanning(false);
+                const scannerConnected = freshScanners.length > 0;
+
+                setDeviceStatus({
+                    scanner: scannerConnected ? 'connected' : 'disconnected'
+                });
+
+                if (scannerConnected) {
+                    showNotification(t('settings.hardware.diag_title'), `${freshScanners.length} scanner(s) found`, "success");
+                } else {
+                    showNotification(t('settings.hardware.diag_title'), "No scanners detected. You can still use Keyboard Mode.", "warning");
+                }
+            }, 1000);
+        } catch (e) {
             setScanning(false);
-
-            // Assume scanner connected if we found any HID devices
-            const scannerConnected = availableScanners.length > 0;
-
-            setDeviceStatus({
-                scanner: scannerConnected ? 'connected' : 'disconnected'
-            });
-
-            if (scannerConnected) {
-                showNotification(t('settings.hardware.diag_title'), "Scanner Found", "success");
-            } else {
-                showNotification(t('settings.hardware.diag_title'), "No Scanner Found", "warning");
-            }
-        }, 1500);
-    };
-
-    const getProcessedInput = () => {
-        if (!settings.app_hardware?.scannerPrefix || !testInput) return testInput;
-        if (testInput.startsWith(settings.app_hardware.scannerPrefix)) {
-            return testInput.substring(settings.app_hardware.scannerPrefix.length);
+            setDeviceStatus({ scanner: 'disconnected' });
+            showNotification(t('settings.hardware.diag_title'), "Scan failed", "error");
         }
-        return testInput;
     };
 
-
-    // Prepare Scanner Options
-    // User Request: "should only available scanners only"
-    // Logic: If scanners detected, SHOW ONLY THEM. If not, show Keyboard Mode.
+    // Scanner Options — detected devices + keyboard fallback
     let finalScannerOptions = [];
     if (availableScanners.length > 0) {
-        finalScannerOptions = availableScanners;
+        finalScannerOptions = [
+            ...availableScanners,
+            { value: 'keyboard', label: `⌨️ ${t('settings.hardware.input_mode')} (${t('settings.hardware.ready')})` }
+        ];
     } else {
         finalScannerOptions = [
-            { value: 'keyboard', label: `⌨️ ${t('settings.hardware.input_mode')} (Recommended)` },
-            { value: 'serial', label: 'Legacy Serial Port (COM)' }
+            { value: 'keyboard', label: `⌨️ ${t('settings.hardware.input_mode')} (Recommended)` }
         ];
     }
 
     return (
         <div className="section-wrapper">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 className="settings-page-title">{t('settings.hardware.title')}</h2>
 
-                {/* Device Status Indicators */}
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <div className={`status-badge ${deviceStatus.scanner === 'connected' ? 'connected' : 'disconnected'} `} style={{ transition: 'all 0.3s' }}>
-                        <div className={`status-dot ${deviceStatus.scanner === 'checking' ? 'animate-ping' : ''}`}
-                            style={{ background: deviceStatus.scanner === 'connected' ? '#10B981' : '#EF4444' }} />
-                        {t('settings.hardware.scanner_status')}:
-                        <span style={{ marginLeft: '5px', fontWeight: 600 }}>
-                            {deviceStatus.scanner === 'checking' ? t('settings.hardware.checking') :
-                                deviceStatus.scanner === 'connected' ? t('settings.hardware.ready') : t('settings.hardware.not_found')}
+            {/* ═══ HERO HEADER ═══ */}
+            <div className="hw-hero">
+                <div className="hw-hero__left">
+                    <div className="hw-hero__icon-wrap">
+                        <ScanLine size={28} />
+                    </div>
+                    <div>
+                        <h2 className="hw-hero__title">{t('settings.hardware.title')}</h2>
+                        <p className="hw-hero__subtitle">USB & Bluetooth scanner configuration</p>
+                    </div>
+                </div>
+                <div className="hw-hero__right">
+                    <div className={`hw-status-pill ${deviceStatus.scanner === 'connected' ? 'hw-status-pill--ok' : deviceStatus.scanner === 'checking' ? 'hw-status-pill--checking' : 'hw-status-pill--off'}`}>
+                        <div className={`hw-status-pill__dot ${deviceStatus.scanner === 'checking' ? 'animate-ping' : ''}`} />
+                        {deviceStatus.scanner === 'checking' ? t('settings.hardware.checking') :
+                            deviceStatus.scanner === 'connected' ? t('settings.hardware.ready') : t('settings.hardware.not_found')}
+                    </div>
+                </div>
+            </div>
+
+            {/* ═══ CONNECTION OVERVIEW ═══ */}
+            <div className="hw-conn-grid">
+                {/* USB Card */}
+                <div className={`hw-conn-card ${availableScanners.length > 0 ? 'hw-conn-card--active' : ''}`}>
+                    <div className="hw-conn-card__icon-wrap hw-conn-card__icon-wrap--usb">
+                        <Usb size={20} />
+                    </div>
+                    <div className="hw-conn-card__body">
+                        <span className="hw-conn-card__label">USB Devices</span>
+                        <span className="hw-conn-card__value">{availableScanners.length} detected</span>
+                    </div>
+                    {availableScanners.length > 0 && <CheckCircle size={16} className="hw-conn-card__check" />}
+                </div>
+                {/* Bluetooth Card */}
+                <div className="hw-conn-card">
+                    <div className="hw-conn-card__icon-wrap hw-conn-card__icon-wrap--bt">
+                        <Bluetooth size={20} />
+                    </div>
+                    <div className="hw-conn-card__body">
+                        <span className="hw-conn-card__label">Bluetooth</span>
+                        <span className="hw-conn-card__value">Supported</span>
+                    </div>
+                    <CheckCircle size={16} className="hw-conn-card__check" />
+                </div>
+                {/* Scan Devices Button */}
+                <button
+                    className={`hw-conn-card hw-conn-card--action ${scanning ? 'hw-conn-card--scanning' : ''}`}
+                    onClick={handleScanDevices}
+                    disabled={scanning}
+                >
+                    <div className="hw-conn-card__icon-wrap hw-conn-card__icon-wrap--scan">
+                        <RefreshCw size={20} className={scanning ? 'animate-spin' : ''} />
+                    </div>
+                    <div className="hw-conn-card__body">
+                        <span className="hw-conn-card__label">{scanning ? t('settings.hardware.diagnosing') : t('settings.hardware.run_diag')}</span>
+                        <span className="hw-conn-card__value">Re-scan all ports</span>
+                    </div>
+                </button>
+            </div>
+
+            {/* ═══ DETECTED DEVICES ═══ */}
+            {availableScanners.length > 0 && (
+                <div className="hw-devices-card">
+                    <div className="hw-devices-card__header">
+                        <span className="hw-devices-card__title">
+                            <Monitor size={14} /> Detected Devices
                         </span>
+                        <span className="hw-devices-card__count">{availableScanners.length}</span>
+                    </div>
+                    <div className="hw-devices-card__list">
+                        {availableScanners.map((s, i) => (
+                            <div key={i} className="hw-device-row">
+                                <div className="hw-device-row__dot" />
+                                <span className="hw-device-row__name">{s.label}</span>
+                            </div>
+                        ))}
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Quick Actions */}
-            <div className="settings-card" style={{ background: 'linear-gradient(145deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.01) 100%)', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <h3 className="card-title" style={{ margin: 0, color: '#60A5FA' }}>{t('settings.hardware.diag_title')}</h3>
-                        <p className="form-hint" style={{ margin: '0.25rem 0 0 0' }}>
-                            {t('settings.hardware.diag_desc')}
-                        </p>
+            {/* ═══ SCANNER CONFIGURATION ═══ */}
+            <div className="settings-card hw-config-card">
+                <div className="hw-config-card__header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="hw-config-card__icon">
+                            <Zap size={18} />
+                        </div>
+                        <div>
+                            <h3 className="card-title" style={{ margin: 0 }}>{t('settings.hardware.scanner_title')}</h3>
+                            <p className="form-hint" style={{ margin: '2px 0 0' }}>Configure scanner input mode and prefix</p>
+                        </div>
                     </div>
-                    <button
-                        className="btn-secondary"
-                        onClick={handleScanDevices}
-                        disabled={scanning}
-                        style={{ background: scanning ? 'rgba(59, 130, 246, 0.1)' : 'transparent', borderColor: '#60A5FA', color: '#60A5FA' }}
-                    >
-                        {scanning ? (
-                            <><RefreshCw size={16} className="animate-spin" /> {t('settings.hardware.diagnosing')}</>
-                        ) : (
-                            <><RefreshCw size={16} /> {t('settings.hardware.run_diag')}</>
-                        )}
-                    </button>
-                </div>
-            </div>
-
-            {/* Barcode Scanner */}
-            <div className="settings-card">
-                <div className="card-header">
-                    <h3 className="card-title"><Smartphone size={18} /> {t('settings.hardware.scanner_title')}</h3>
-                    {deviceStatus.scanner === 'connected' && <span className="badge-success">Active</span>}
+                    {deviceStatus.scanner === 'connected' && (
+                        <span className="hw-active-badge"><CheckCircle size={12} /> Active</span>
+                    )}
                 </div>
 
-                <div className="scanner-grid">
-                    <div>
+                <div className="hw-config-grid">
+                    <div className="hw-config-field">
                         <label className="form-label">{t('settings.hardware.input_mode')}</label>
                         <GlassSelect
                             value={settings.app_hardware?.scannerMode}
@@ -377,70 +467,110 @@ const HardwareTab = ({ settings, handleChange, handleSave, onTestPrint, showNoti
                             options={finalScannerOptions}
                             icon={Smartphone}
                         />
-                        <p className="form-hint">Keyboard mode is compatible with 99% of USB scanners.</p>
+                        <p className="form-hint">Compatible with 99% of USB & Bluetooth scanners</p>
                     </div>
-                    <div>
+                    <div className="hw-config-field">
                         <label className="form-label">{t('settings.hardware.prefix_strip')}</label>
                         <input
-                            className="glass-input width-full"
+                            className="glass-input"
                             style={{ width: '100%' }}
                             placeholder="e.g. LIB-"
                             value={settings.app_hardware?.scannerPrefix || ''}
                             onChange={e => handleChange('app_hardware', 'scannerPrefix', e.target.value)}
                         />
-                        <p className="form-hint">Auto-remove 'LIB-' from 'LIB-12345'</p>
-                    </div>
-                </div>
-
-                {/* Interactive Scanner Test Area */}
-                <div className="test-area" id="scan-feedback-area" style={{ transition: 'background 0.3s' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                        <label className="form-label" style={{ color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Smartphone size={14} /> {t('settings.hardware.live_test')}
-                        </label>
-                        <label className="checkbox-item" style={{ fontSize: '0.8rem' }}>
-                            <input type="checkbox" checked={autoFocusMode} onChange={e => setAutoFocusMode(e.target.checked)} />
-                            <span>Auto-Focus Lock (Kiosk Mode)</span>
-                        </label>
-                    </div>
-
-                    <div className="scanner-grid">
-                        <div>
-                            <input
-                                ref={testInputRef}
-                                className="glass-input width-full"
-                                style={{ width: '100%', fontFamily: 'monospace', borderColor: autoFocusMode ? '#10B981' : undefined }}
-                                placeholder="Focus here and scan..."
-                                value={testInput}
-                                onChange={e => setTestInput(e.target.value)}
-                                onKeyDown={handleTestInputKeyDown}
-                            />
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
-                                <span className="form-hint">{t('settings.hardware.raw_input')}</span>
-                                {testInput && <span className="text-xs text-blue-400 cursor-pointer" onClick={() => setTestInput('')}>{t('settings.hardware.clear')}</span>}
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div className="arrow-icon" style={{ color: 'var(--text-secondary)' }}>➔</div>
-                        </div>
-                        <div>
-                            <div className="processed-output" style={{ background: lastScanned ? 'rgba(16, 185, 129, 0.1)' : undefined }}>
-                                {lastScanned ? (
-                                    <div className="animate-fade-in">
-                                        <div style={{ fontWeight: 'bold', color: '#10B981' }}>{lastScanned.processed}</div>
-                                        <div style={{ fontSize: '0.7rem', opacity: 0.7 }}>{lastScanned.timestamp}</div>
-                                    </div>
-                                ) : (
-                                    <span style={{ opacity: 0.5 }}>Waiting...</span>
-                                )}
-                            </div>
-                            <span className="form-hint">{t('settings.hardware.processed')}</span>
-                        </div>
+                        <p className="form-hint">Strips prefix from scanned codes automatically</p>
                     </div>
                 </div>
             </div>
 
-            {/* Save Button */}
+            {/* ═══ LIVE TEST AREA ═══ */}
+            <div className="hw-test-card" id="scan-feedback-area">
+                <div className="hw-test-card__header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div className="hw-test-card__icon">
+                            <ScanLine size={18} />
+                        </div>
+                        <div>
+                            <h3 className="card-title" style={{ margin: 0 }}>{t('settings.hardware.live_test')}</h3>
+                            <p className="form-hint" style={{ margin: '2px 0 0' }}>Focus the input field and scan a barcode</p>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        {scanHistory.length > 0 && (
+                            <span className="hw-scan-count-badge">{scanHistory.length} scan{scanHistory.length !== 1 ? 's' : ''}</span>
+                        )}
+                        <label className="hw-toggle">
+                            <input type="checkbox" checked={autoFocusMode} onChange={e => setAutoFocusMode(e.target.checked)} />
+                            <span className="hw-toggle__label">
+                                <Lock size={12} /> Kiosk Lock
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                {/* Pipeline: Input → Arrow → Output */}
+                <div className="hw-pipeline">
+                    <div className="hw-pipeline__input">
+                        <label className="hw-pipeline__label">{t('settings.hardware.raw_input')}</label>
+                        <input
+                            ref={testInputRef}
+                            className="hw-pipeline__field"
+                            style={{ borderColor: autoFocusMode ? '#10B981' : undefined }}
+                            placeholder="Focus here and scan..."
+                            value={testInput}
+                            onChange={handleTestInputChange}
+                            onKeyDown={handleTestInputKeyDown}
+                        />
+                        {testInput && (
+                            <button className="hw-pipeline__clear" onClick={() => setTestInput('')}>
+                                <X size={14} />
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="hw-pipeline__arrow">
+                        <div className="hw-pipeline__arrow-line" />
+                        <div className="hw-pipeline__arrow-head">▶</div>
+                    </div>
+
+                    <div className="hw-pipeline__output">
+                        <label className="hw-pipeline__label">{t('settings.hardware.processed')}</label>
+                        <div className={`hw-pipeline__result ${scanHistory.length > 0 ? 'hw-pipeline__result--active' : ''}`}>
+                            {scanHistory.length > 0 ? (
+                                <>
+                                    <span className="hw-pipeline__result-value">{scanHistory[0].processed}</span>
+                                    <span className="hw-pipeline__result-time"><Clock size={10} /> {scanHistory[0].timestamp}</span>
+                                </>
+                            ) : (
+                                <span className="hw-pipeline__result-empty">Waiting for scan…</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Scan History */}
+                {scanHistory.length > 1 && (
+                    <div className="hw-history">
+                        <div className="hw-history__header">
+                            <span className="hw-history__title"><Clock size={12} /> Scan History</span>
+                            <button className="hw-history__clear" onClick={() => setScanHistory([])}>Clear All</button>
+                        </div>
+                        <div className="hw-history__list">
+                            {scanHistory.slice(1).map((entry, i) => (
+                                <div key={i} className="hw-history__row">
+                                    <span className="hw-history__num">#{scanHistory.length - i - 1}</span>
+                                    <span className="hw-history__raw">{entry.raw}</span>
+                                    <span className="hw-history__sep">→</span>
+                                    <span className="hw-history__processed">{entry.processed}</span>
+                                    <span className="hw-history__time">{entry.timestamp}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ═══ SAVE ═══ */}
             <div className="action-footer">
                 <button
                     onClick={handleSave}

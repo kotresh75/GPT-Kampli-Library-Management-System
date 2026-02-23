@@ -1163,7 +1163,13 @@
                 "critical": "CRITICAL",
                 "online": "ONLINE",
                 "offline": "OFFLINE"
-            }
+            },
+            "bug_title": "Report a Bug",
+            "bug_desc": "Found something wrong? Report it on GitHub so we can fix it. Include the log file for faster diagnosis.",
+            "report_bug": "Report Bug on GitHub",
+            "copy_path": "Copy Path",
+            "copied": "Copied!",
+            "log_file": "Log File Location"
         }
     },
     "app": {
@@ -1657,6 +1663,43 @@
             "team": "Team: <1>Credits to the development team.</1>",
             "stack": "Tech Stack: <1>Information about technologies used.</1>",
             "fig_about": "Figure 18.2: Information Page"
+        },
+        "scanner": {
+            "title": "Barcode Scanner Setup",
+            "header": "How to Configure a Barcode Scanner",
+            "desc": "The <1>GPTK Library Management System</1> supports USB and Bluetooth barcode scanners in Keyboard (HID) mode. This guide will help you connect and configure your scanner for quick book issue, return, and catalog operations.",
+            "tip_mode": "<1>How it works:</1> Most barcode scanners operate in Keyboard Mode (HID) — they act like a keyboard and type the scanned barcode directly into any focused input field. No special drivers are needed.",
+            "types_title": "1. Supported Scanner Types",
+            "types_desc": "The application supports the following barcode scanner connections:",
+            "type_usb": "🔌 USB Wired Scanner",
+            "type_usb_desc": "Plug-and-play via USB. Most common and reliable option. Simply connect the scanner to any USB port — it will be detected automatically as an HID device.",
+            "type_bt": "📶 Bluetooth Scanner",
+            "type_bt_desc": "Wireless convenience. Pair the scanner via Windows Bluetooth settings first, then it works the same as a USB scanner in keyboard mode.",
+            "connect_title": "2. Connecting Your Scanner",
+            "connect_steps": "Step-by-Step Connection Guide:",
+            "step1": "<1>For USB scanners:</1> Plug the scanner into any available USB port on your computer. Windows will automatically recognize it as a keyboard device.",
+            "step2": "<1>For Bluetooth scanners:</1> Go to Windows Settings → Bluetooth & Devices → Add device. Put your scanner in pairing mode (check scanner manual) and select it from the list.",
+            "step3": "<1>Verify detection:</1> Open the app, go to Settings → Hardware & Peripherals, and click <2>Re-scan Devices</2>. Your scanner should appear in the Detected Devices list.",
+            "step4": "<1>Test the scanner:</1> Scroll down to the Live Test Area and scan any barcode. The scanned value should appear in the Raw Input field.",
+            "fig_hardware": "Figure 19.1: Hardware & Peripherals Settings Page",
+            "config_title": "3. Software Configuration",
+            "config_desc": "After connecting your scanner, configure these settings in the Hardware & Peripherals tab:",
+            "cfg_mode": "⌨️ Input Mode",
+            "cfg_mode_desc": "Set to 'Keyboard Mode (HID)'. This is the default and recommended mode. The scanner types the barcode characters directly into the active input field, just like a keyboard.",
+            "cfg_prefix": "✂️ Prefix Stripping",
+            "cfg_prefix_desc": "Some scanners add a prefix (e.g., 'AIM' or a special character) before the barcode data. Enter the prefix string here and the system will automatically remove it from scanned values.",
+            "test_title": "4. Testing Your Scanner",
+            "test_steps": "How to Verify Everything Works:",
+            "test1": "<1>Navigate:</1> Go to Settings → Hardware & Peripherals.",
+            "test2": "<1>Locate the Live Test Area:</1> Scroll down to find the test pipeline section.",
+            "test3": "<1>Scan a barcode:</1> Point your scanner at any barcode (book ISBN, student ID card, etc.) and pull the trigger. The Raw Input field will show the scanned text.",
+            "test4": "<1>Check Processed Output:</1> The Processed Output field shows the barcode after prefix stripping is applied. Confirm this matches the expected value.",
+            "trouble_title": "5. Troubleshooting",
+            "trouble1": "<1>Scanner not detected:</1> Try unplugging and re-plugging the USB cable, or re-pair the Bluetooth scanner. Then click 'Re-scan Devices'.",
+            "trouble2": "<1>Scanned value is wrong:</1> Check if your scanner is adding a prefix or suffix. Configure the Prefix Strip setting accordingly.",
+            "trouble3": "<1>Scanner doesn't type into fields:</1> Ensure the scanner is set to Keyboard/HID mode (check your scanner's user manual for configuration barcodes).",
+            "trouble4": "<1>Bluetooth scanner disconnects:</1> Ensure the scanner is charged and within range. Some scanners have a sleep timer — scan a barcode to wake them up.",
+            "warn_kiosk": "<1>Kiosk Mode:</1> If you enable Kiosk Mode in the test area, the cursor will remain locked in the scan input field. This is useful for dedicated scanning stations where the computer is only used for book check-in/check-out."
         },
         "shortcuts": {
             "title": "Keyboard Shortcuts",

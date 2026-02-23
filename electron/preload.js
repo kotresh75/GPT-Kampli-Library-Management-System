@@ -26,14 +26,20 @@ contextBridge.exposeInMainWorld(
     printToPDF: (content, options) => ipcRenderer.invoke('print-to-pdf', content, options),
     openExternal: (url) => ipcRenderer.send('open-external', url),
 
+    // Error Logging & Bug Report API
+    logError: (errorData) => ipcRenderer.send('log-renderer-error', errorData),
+    getLogPath: () => ipcRenderer.invoke('get-log-path'),
+    openExternalUrl: (url) => ipcRenderer.send('open-external-url', url),
+
     // Auto-Update API
-    onUpdateAvailable: (callback) => ipcRenderer.on('update-available', (_event, info) => callback(info)),
-    onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', (_event, info) => callback(info)),
-    onUpdateProgress: (callback) => ipcRenderer.on('update-download-progress', (_event, info) => callback(info)),
+    getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
+    onUpdateStatusChanged: (callback) => ipcRenderer.on('update-status-changed', (_event, state) => callback(state)),
+    checkPostUpdate: () => ipcRenderer.invoke('check-post-update'),
+    manualCheckUpdates: () => ipcRenderer.send('manual-check-updates'),
+    startDownload: () => ipcRenderer.send('start-download'),
+    cancelDownload: () => ipcRenderer.send('cancel-download'),
     installUpdate: () => ipcRenderer.send('install-update'),
     removeUpdateListeners: () => {
-        ipcRenderer.removeAllListeners('update-available');
-        ipcRenderer.removeAllListeners('update-downloaded');
-        ipcRenderer.removeAllListeners('update-download-progress');
+        ipcRenderer.removeAllListeners('update-status-changed');
     }
 });

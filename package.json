@@ -1,6 +1,6 @@
 {
   "name": "gptk-library-management-system",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "GPTK Library Management System",
   "main": "electron/main.js",
   "author": "GPTK",
@@ -9,6 +9,8 @@
     "build:frontend": "npm run build --prefix frontend",
     "build:exe": "npm run build:frontend && electron-builder --win nsis",
     "build:msi": "npm run build:frontend && electron-builder --win msi",
+    "build:portable": "npm run build:frontend && electron-builder --win portable",
+    "build:all": "npm run build:frontend && electron-builder --win",
     "postinstall": "npm install --prefix frontend --legacy-peer-deps && npm install --prefix backend"
   },
   "keywords": [],
@@ -23,6 +25,7 @@
     "wait-on": "^9.0.3"
   },
   "dependencies": {
+    "electron-log": "^5.4.3",
     "electron-updater": "^6.8.3",
     "i18next": "^25.8.0",
     "i18next-browser-languagedetector": "^8.2.0",
@@ -34,9 +37,13 @@
     "win": {
       "target": [
         "nsis",
-        "msi"
+        "msi",
+        "portable"
       ],
       "icon": "assets/icons/College_icon.ico"
+    },
+    "portable": {
+      "artifactName": "${productName} Portable ${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

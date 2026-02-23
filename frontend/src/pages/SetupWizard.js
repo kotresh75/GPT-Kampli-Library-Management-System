@@ -179,8 +179,8 @@ const TEXTS = {
             emailLabel: 'Email',
             languageLabel: 'Language',
             libraryLabel: 'Library',
-            redirecting: 'Redirecting to dashboard...',
-            goNow: 'Go to Dashboard'
+            redirecting: 'Redirecting to login...',
+            goNow: 'Go to Login'
         },
         next: 'Continue',
         back: 'Back',
@@ -246,8 +246,8 @@ const TEXTS = {
             emailLabel: 'ಇಮೇಲ್',
             languageLabel: 'ಭಾಷೆ',
             libraryLabel: 'ಗ್ರಂಥಾಲಯ',
-            redirecting: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಮರುನಿರ್ದೇಶಿಸಲಾಗುತ್ತಿದೆ...',
-            goNow: 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್‌ಗೆ ಹೋಗಿ'
+            redirecting: 'ಲಾಗಿನ್‌ಗೆ ಮರುನಿರ್ದೇಶಿಸಲಾಗುತ್ತಿದೆ...',
+            goNow: 'ಲಾಗಿನ್‌ಗೆ ಹೋಗಿ'
         },
         next: 'ಮುಂದುವರಿಸಿ',
         back: 'ಹಿಂದೆ',
@@ -264,7 +264,7 @@ const CONFETTI_COLORS = ['#667eea', '#764ba2', '#2ecc71', '#f1c40f', '#e74c3c', 
 const SetupWizard = () => {
     const navigate = useNavigate();
     const { theme, setTheme, fontScale, setFontScale } = usePreferences();
-    const { language, changeLanguage } = useLanguage();
+    const { language, setLanguage: changeLanguage } = useLanguage();
 
     const [currentStep, setCurrentStep] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -726,10 +726,9 @@ const LibraryStep = ({ t, form, setForm }) => (
                     <input
                         className="setup-wizard__input"
                         type="text"
-                        placeholder={t.libraryInfo.libraryPlaceholder}
                         value={form.name}
-                        onChange={e => setForm({ ...form, name: e.target.value })}
-                        autoFocus
+                        readOnly
+                        style={{ opacity: 0.7, cursor: 'default' }}
                     />
                 </div>
             </div>

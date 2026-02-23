@@ -26,6 +26,7 @@ const IssueTab = () => {
     const [inlineMessage, setInlineMessage] = useState(null);
     const [showIdCardModal, setShowIdCardModal] = useState(false);
     const [emailEvents, setEmailEvents] = useState(null);
+    const [scannerPrefix, setScannerPrefix] = useState('');
 
     // Fetch Email Event Settings
     useEffect(() => {
@@ -33,6 +34,7 @@ const IssueTab = () => {
             .then(res => res.json())
             .then(data => {
                 if (data.email_events) setEmailEvents(data.email_events);
+                if (data.app_hardware?.scannerPrefix) setScannerPrefix(data.app_hardware.scannerPrefix);
             })
             .catch(err => console.error("Failed to fetch settings:", err));
     }, []);
@@ -122,9 +124,17 @@ const IssueTab = () => {
     };
 
     // 2. Validate Selected/Scanned Student
+    // Strip scanner prefix if configured
+    const stripPrefix = (val) => {
+        if (scannerPrefix && val.startsWith(scannerPrefix)) {
+            return val.substring(scannerPrefix.length);
+        }
+        return val;
+    };
+
     const validateStudent = async (idOrRegNo) => {
         if (!idOrRegNo) return;
-        setLoadingStudent(true);
+        idOrRegNo = stripPrefix(idOrRegNo);
         setLoadingStudent(true);
         setAlerts([]);
         setStudent(null);
@@ -174,7 +184,7 @@ const IssueTab = () => {
     const handleBookAdd = async (valOrItem) => {
         let code = '';
         if (typeof valOrItem === 'string') {
-            code = valOrItem; // Raw scan
+            code = stripPrefix(valOrItem); // Raw scan — strip prefix
         } else {
             code = valOrItem.isbn; // Object from search
         }

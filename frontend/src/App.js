@@ -36,6 +36,22 @@ import TitleBar from './components/layout/TitleBar';
 import './styles/index.css';
 import './App.css';
 
+// ---------------------------------------------------------------------------
+// Global Frontend Error Forwarding — sends JS errors to electron-log file
+// ---------------------------------------------------------------------------
+if (window.electron?.logError) {
+  window.onerror = (msg, url, line, col, error) => {
+    window.electron.logError({ msg: String(msg), url, line, col, stack: error?.stack });
+  };
+  window.addEventListener('unhandledrejection', (event) => {
+    const reason = event.reason;
+    window.electron.logError({
+      msg: `Unhandled Promise Rejection: ${reason?.message || reason}`,
+      stack: reason?.stack
+    });
+  });
+}
+
 // --- Temporary Placeholder Components ---
 const DbStatusCheck = () => {
   const [status, setStatus] = React.useState('checking');

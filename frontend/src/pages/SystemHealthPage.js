@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Server, Database, Wifi, Cpu, HardDrive, RefreshCw, CheckCircle, AlertTriangle, XCircle, Zap, Box, Shield, HeartPulse, Gauge } from 'lucide-react';
+import { Activity, Server, Database, Wifi, Cpu, HardDrive, RefreshCw, CheckCircle, AlertTriangle, XCircle, Zap, Box, Shield, HeartPulse, Gauge, Bug, ExternalLink, Copy, FolderOpen } from 'lucide-react';
 
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
@@ -15,11 +15,20 @@ const SystemHealthPage = () => {
     const [loading, setLoading] = useState(true);
     const [checkingNet, setCheckingNet] = useState(false);
     const [healthScore, setHealthScore] = useState(0);
+    const [logPath, setLogPath] = useState('');
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         fetchHealth();
         const interval = setInterval(fetchHealth, 5000);
         return () => clearInterval(interval);
+    }, []);
+
+    // Fetch log file path on mount
+    useEffect(() => {
+        if (window.electron?.getLogPath) {
+            window.electron.getLogPath().then(p => setLogPath(p || ''));
+        }
     }, []);
 
     // Calculate Smart Health Score whenever health/connectivity changes
@@ -276,6 +285,63 @@ const SystemHealthPage = () => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            {/* Report Bug Card */}
+            <div className="glass-panel p-0 overflow-hidden mt-4">
+                <div className="p-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-gray-300 uppercase flex items-center gap-2">
+                        <Bug className="text-red-400" size={14} /> {t('sidebar.sys_health.bug_title') || 'Report a Bug'}
+                    </h3>
+                </div>
+                <div className="p-4">
+                    <p className="text-xs text-gray-400 mb-4">
+                        {t('sidebar.sys_health.bug_desc') || 'Found something wrong? Report it on GitHub so we can fix it. Include the log file for faster diagnosis.'}
+                    </p>
+
+                    {/* Log file path */}
+                    {logPath && (
+                        <div className="mb-4 flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                            <FolderOpen size={14} className="text-cyan-400 flex-shrink-0" />
+                            <span className="text-[11px] text-gray-300 font-mono truncate flex-1" title={logPath}>{logPath}</span>
+                            <button
+                                className="text-[10px] px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1 transition-all flex-shrink-0"
+                                onClick={() => {
+                                    navigator.clipboard.writeText(logPath);
+                                    setCopied(true);
+                                    setTimeout(() => setCopied(false), 2000);
+                                }}
+                            >
+                                {copied ? <CheckCircle size={10} /> : <Copy size={10} />}
+                                {copied ? (t('sidebar.sys_health.copied') || 'Copied!') : (t('sidebar.sys_health.copy_path') || 'Copy Path')}
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Action buttons */}
+                    <div className="flex gap-3">
+                        <button
+                            className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-medium flex items-center gap-2 transition-all"
+                            onClick={() => {
+                                const version = health?.process?.version || 'unknown';
+                                const platform = health?.system?.platform || 'unknown';
+                                const arch = health?.system?.arch || 'unknown';
+                                const body = encodeURIComponent(
+                                    `## Bug Report\n\n**App Version:** ${document.title || 'GPTK LMS'}\n**Node Version:** ${version}\n**OS:** ${platform} (${arch})\n\n### What happened?\n\nDescribe the issue here...\n\n### Steps to reproduce\n\n1. \n2. \n3. \n\n### Expected behavior\n\n\n### Log file\n\nAttach the log file from: \`${logPath}\`\n`
+                                );
+                                const url = `https://github.com/kotresh75/GPT-Kampli-Library-Management-System/issues/new?title=${encodeURIComponent('Bug: ')}&body=${body}&labels=bug`;
+                                if (window.electron?.openExternalUrl) {
+                                    window.electron.openExternalUrl(url);
+                                } else {
+                                    window.open(url, '_blank');
+                                }
+                            }}
+                        >
+                            <ExternalLink size={14} />
+                            {t('sidebar.sys_health.report_bug') || 'Report Bug on GitHub'}
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </div >
