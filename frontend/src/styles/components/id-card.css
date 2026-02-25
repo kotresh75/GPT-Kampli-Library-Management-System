@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&display=swap');
+/* Roboto Condensed is bundled locally via fonts.css */
 
 .id-card-container {
     font-family: 'Roboto Condensed', Arial, sans-serif;

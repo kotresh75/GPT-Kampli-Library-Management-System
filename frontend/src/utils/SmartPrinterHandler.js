@@ -8,7 +8,7 @@ import appLogo from '../assets/logo.png';
 
 const getPrintStyles = (paperSize) => {
     const baseStyles = `
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        /* Inter is bundled locally via /fonts/Inter/ (loaded by fonts.css) */
         body { font-family: 'Inter', sans-serif; color: #1e293b; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .print-container { width: 100%; max-width: 100%; box-sizing: border-box; }
         
@@ -154,7 +154,7 @@ const formatReceiptHtml = (transaction, paperSize) => {
     if (isThermal) {
         return `
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+            /* JetBrains Mono is bundled locally via /fonts/JetBrainsMono/ (loaded by fonts.css) */
             * { margin:0; padding:0; box-sizing:border-box; }
             body {
                 font-family: 'JetBrains Mono', 'Courier New', monospace;
@@ -292,7 +292,7 @@ const formatReceiptHtml = (transaction, paperSize) => {
     // ===== NORMAL PRINTER RECEIPT (A4 centered) =====
     return `
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        /* Inter is bundled locally via /fonts/Inter/ (loaded by fonts.css) */
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Inter', -apple-system, sans-serif;

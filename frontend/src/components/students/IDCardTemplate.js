@@ -17,7 +17,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, 
         },
         // Font loading for SVG export
         fontStyle: `
-            @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400&family=Roboto+Condensed:wght@400;700&display=swap');
+            /* Oswald & Roboto Condensed are bundled locally via fonts.css */
             .id-card-text { font-family: 'Roboto Condensed', 'Arial Narrow', Arial, sans-serif; }
         `,
         bgImg: {

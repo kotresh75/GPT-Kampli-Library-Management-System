@@ -33,6 +33,7 @@ import UserManualModal from './components/common/UserManualModal';
 import DatabaseSchemaModal from './components/common/DatabaseSchemaModal';
 import LockScreen from './components/common/LockScreen';
 import TitleBar from './components/layout/TitleBar';
+import useFontToggle from './hooks/useFontToggle';
 import './styles/index.css';
 import './App.css';
 
@@ -87,6 +88,12 @@ const SetupGuard = ({ children }) => {
   return children;
 };
 
+// Registers the Alt+F global font toggle shortcut
+const FontToggleInitializer = () => {
+  useFontToggle();
+  return null;
+};
+
 function App() {
   return (
     <PreferencesProvider>
@@ -97,6 +104,7 @@ function App() {
               <TutorialProvider>
                 <Router>
                   <div className="app-container">
+                    <FontToggleInitializer />
                     <TitleBar />
                     <div className="gradient-bg" />
                     <DbStatusCheck />

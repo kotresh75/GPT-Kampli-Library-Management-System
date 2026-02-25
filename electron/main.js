@@ -567,6 +567,17 @@ ipcMain.on('window-maximize', () => {
 });
 ipcMain.on('window-close', () => { if (mainWindow) mainWindow.close(); });
 
+// IPC: Toggle DevTools (triggered by Alt+H from renderer)
+ipcMain.on('open-devtools', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        if (mainWindow.webContents.isDevToolsOpened()) {
+            mainWindow.webContents.closeDevTools();
+        } else {
+            mainWindow.webContents.openDevTools();
+        }
+    }
+});
+
 // External Link Handling
 ipcMain.on('open-external', (event, url) => {
     shell.openExternal(url);

@@ -2,7 +2,7 @@
    8.0. Premium Glassmorphism Design System
    ========================================= */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+/* Outfit is bundled locally via fonts.css (imported in variables.css) */
 @import './styles/components/tables.css';
 @import './styles/components/glass-select.css';
 
@@ -59,7 +59,7 @@ html {
 }
 
 body {
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-family-base);
     background-color: var(--bg-color);
     margin: 0;
     padding: 0;

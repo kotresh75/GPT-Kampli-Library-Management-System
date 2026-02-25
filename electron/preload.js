@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld(
     printSilent: (content, printerName) => ipcRenderer.invoke('print-silent', content, printerName),
     printToPDF: (content, options) => ipcRenderer.invoke('print-to-pdf', content, options),
     openExternal: (url) => ipcRenderer.send('open-external', url),
+    openDevTools: () => ipcRenderer.send('open-devtools'),
 
     // Error Logging & Bug Report API
     logError: (errorData) => ipcRenderer.send('log-renderer-error', errorData),
