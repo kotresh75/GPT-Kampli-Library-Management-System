@@ -3,3 +3,74 @@
 https://github.com/user-attachments/assets/885cc7bb-7aa7-4c2c-baa2-093c817447df
 
 *If the video above does not play, you can [click here to view or download it directly](https://github.com/user-attachments/assets/885cc7bb-7aa7-4c2c-baa2-093c817447df).*
+
+---
+
+<details>
+<summary><b>📖 Video Transcript / ವಿಡಿಯೋದ ಲಿಪಿ (Click to expand)</b></summary>
+
+<br>
+
+### English Transcript
+
+Hello! In this video, we will see how to install the Library Management System on your Windows computer, step by step. This software is specially developed for the library of Government Polytechnic, Kampli. The entire process is very simple and takes only about 5 minutes. 
+
+First, go to our GitHub releases page — the link is provided in the description. In the Assets section, you'll see the GPTK Library Manager Setup installer file. Here, EXE, MSI, and Portable versions are also available. Let's download the EXE installer now. The download is about 90 MB. Depending on your internet speed, it may take a couple of minutes. 
+
+After the download is complete, double-click the installer file to start the installation. If a SmartScreen warning appears, don't worry. This is a standard warning for new applications — our software is completely safe. Click "More info", then click "Run anyway". 
+
+The installer welcome page will appear. Click "Next" to continue. Now choose who to install for — there are two options here. "Anyone who uses this computer" means all users of this PC, and "Only for me" means just the current user. Select "Only for me" and click "Next". 
+
+This page shows where the application will be installed. The default location is "Program Files". No need to change it. Leave it as default. To start the installation, click the "Install" button. The installer is now extracting the application files. This includes the Electron runtime, React frontend, Node.js backend, and the SQLite database engine. It usually takes 30 seconds to 1 minute. Please do not close this window. 
+
+Installation completed successfully! Desktop and Start Menu shortcuts have also been created. Make sure "Run GPTK Library Manager" is checked, then click "Finish". 
+
+The application will now open. Starting for the first time — in the background, the Node.js server and SQLite database are being initialized. A loading screen will appear. Please wait a few seconds. 
+
+Since this is a fresh installation, the Setup Wizard will open. There are five steps — Welcome, Language, Admin Account, Library Info, and Complete. The first page shows the Government Polytechnic Kampli logo, campus photo, and library mission. To begin setup, click the "Get Started" button. 
+
+The second step is Personalization. There are three options here. First, Language — English or Kannada. All menus, buttons, and messages in the application will appear in your chosen language. Second, Appearance — Light Mode or Dark Mode. Third, Text Size — Small, Medium, Large, or Extra Large. All these settings can be changed later anytime from the Settings page. 
+
+The third step is the most important — Admin Account creation. This account will be the primary administrator with full access — book management, student registration, staff management, backup, and settings control. Enter your full name, email address, and a strong password. The password must be at least six characters long. Remember this password — it will be used for your first login. Click "Continue". 
+
+The fourth step is Library Details. The library name is already pre-filled as "GPT Kampli Library". No need to change it. Verify that it's correct and click "Continue". 
+
+Setup is now complete! This page shows a summary of all the details you entered — admin name, email, selected language, and library name. Click "Go to Login" to proceed to the login page. Use the admin email and password you created during setup to log in. 
+
+After logging in, the Dashboard will open. From here, you can manage the book catalog, student registration, book issue and return, fine management, staff management, backup, and much more. 
+
+The Library Management System installation and setup is now complete. If you face any issues, go to the "System Health" page in the application and use the "Report Bug" button to report directly on GitHub. Thank you for watching! Government Polytechnic, Kampli — CS&E Department.
+
+---
+
+### ಕನ್ನಡ ಲಿಪಿ (Kannada Transcript)
+
+ನಮಸ್ಕಾರ, ಈ ವಿಡಿಯೋದಲ್ಲಿ ಗ್ರಂಥಾಲಯ ನಿರ್ವಹಣಾ ವ್ಯವಸ್ಥೆಯನ್ನು ನಿಮ್ಮ ವಿಂಡೋಸ್ ಕಂಪ್ಯೂಟರ್ನಲ್ಲಿ ಹೇಗೆ ಇನ್ಸ್ಟಾಲ್ ಮಾಡುವುದೆಂದು ಹಂತ ಹಂತವಾಗಿ ನೋಡೋಣ. ಈ ಸಾಫ್ಟ್ವೇರ್ ಸರ್ಕಾರಿ ಪಾಲಿಟೆಕ್ನಿಕ್ ಕಂಪ್ಲಿಯ ಗ್ರಂಥಾಲಯಕ್ಕಾಗಿ ವಿಶೇಷವಾಗಿ ಅಭಿವೃದ್ಧಿಪಡಿಸಲಾಗಿದೆ. ಈ ಪ್ರಕ್ರಿಯೆ ತುಂಬಾ ಸರಳವಾಗಿದ್ದು, ಕೇವಲ 5 ನಿಮಿಷ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ. 
+
+ಮೊದಲಿಗೆ ನಮ್ಮ GitHub ರಿಲೀಸ್ ಪುಟಕ್ಕೆ ಹೋಗಿ, ಲಿಂಕ್ ಈ ವಿವರಣೆಯಲ್ಲಿ ಕೊಡಲಾಗಿದೆ. Assets ವಿಭಾಗದಲ್ಲಿ GPTK ಲೈಬ್ರರಿ ಮ್ಯಾನೇಜರ್ ಸೆಟಪ್ ಎಂಬ ಇನ್ಸ್ಟಾಲ್ ಫೈಲ್ ಕಾಣಿಸುತ್ತದೆ. ಇಲ್ಲಿ EXE, MSI ಮತ್ತು Portable ಆವೃತ್ತಿ ಕೂಡ ಲಭ್ಯವಿದೆ. ನಾವು ಈಗ EXE ಇನ್ಸ್ಟಾಲರ್ ಅನ್ನು ಡೌನ್ಲೋಡ್ ಮಾಡೋಣ. ಡೌನ್ಲೋಡ್ ಸುಮಾರು 90 MB ಇದೆ. ನಿಮ್ಮ ಇಂಟರ್ನೆಟ್ ವೇಗಕ್ಕೆ ಅನುಗುಣವಾಗಿ ಒಂದೆರಡು ನಿಮಿಷ ತೆಗೆದುಕೊಳ್ಳಬಹುದು. 
+
+ಡೌನ್ಲೋಡ್ ಪೂರ್ಣವಾದ ನಂತರ ಇನ್ಸ್ಟಾಲ್ ಫೈಲ್ ಮೇಲೆ ಡಬಲ್ ಕ್ಲಿಕ್ ಮಾಡಿ ಇನ್ಸ್ಟಾಲೇಶನ್ ಪ್ರಾರಂಭಿಸಿ. SmartScreen ಎಚ್ಚರಿಕೆ ಕಾಣಿಸಿದರೆ ಚಿಂತಿಸಬೇಡಿ. ಇದು ಹೊಸ ಅಪ್ಲಿಕೇಶನ್ಗಳಿಗೆ ಸಾಮಾನ್ಯ ಎಚ್ಚರಿಕೆ, ನಮ್ಮ ಸಾಫ್ಟ್ವೇರ್ ಸುರಕ್ಷಿತವಾಗಿದೆ. "More info" ಕ್ಲಿಕ್ ಮಾಡಿ, ನಂತರ "Run anyway" ಕ್ಲಿಕ್ ಮಾಡಿ. 
+
+ಇನ್ಸ್ಟಾಲರ್ ಸ್ವಾಗತ ಪುಟ ಕಾಣಿಸುತ್ತದೆ. ಮುಂದುವರೆಯಲು "Next" ಕ್ಲಿಕ್ ಮಾಡಿ. ಈಗ ಯಾರಿಗಾಗಿ ಇನ್ಸ್ಟಾಲ್ ಮಾಡಬೇಕು ಎಂದು ಆಯ್ಕೆ ಮಾಡಿ. ಇಲ್ಲಿ ಎರಡು ಆಯ್ಕೆಗಳಿವೆ. "Anyone who uses this computer" ಅಂದರೆ ಈ ಕಂಪ್ಯೂಟರ್ ಬಳಸುವ ಎಲ್ಲರಿಗೂ, ಮತ್ತು "Only for me" ಅಂದರೆ ಕೇವಲ ನನಗೆ ಮಾತ್ರ. "Only for me" ಆಯ್ಕೆ ಮಾಡಿ, "Next" ಕ್ಲಿಕ್ ಮಾಡಿ. 
+
+ಈ ಪುಟದಲ್ಲಿ ಎಲ್ಲಿ ಇನ್ಸ್ಟಾಲ್ ಆಗಬೇಕು ಎಂದು ತೋರಿಸುತ್ತದೆ. ಡೀಫಾಲ್ಟ್ ಸ್ಥಳ "Program Files" ಆಗಿದೆ. ಬದಲಾಯಿಸುವ ಅಗತ್ಯವಿಲ್ಲ. ಡೀಫಾಲ್ಟ್ ಬಿಡಿ. ಅನುಸ್ಥಾಪನೆ ಪ್ರಾರಂಭಿಸಲು "Install" ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ. ಇನ್ಸ್ಟಾಲರ್ ಈಗ ಅಪ್ಲಿಕೇಶನ್ ಫೈಲ್ಗಳನ್ನು ಎಕ್ಸ್ಟ್ರ್ಯಾಕ್ಟ್ ಮಾಡುತ್ತಿದೆ. ಇದರಲ್ಲಿ Electron ರನ್ಟೈಮ್, React ಫ್ರಂಟೆಂಡ್, Node.js ಮತ್ತು SQLite ಡೇಟಾಬೇಸ್ ಎಂಜಿನ್ ಸೇರಿವೆ. ಸಾಮಾನ್ಯವಾಗಿ 30 ಸೆಕೆಂಡಿನಿಂದ 1 ನಿಮಿಷ ತೆಗೆದುಕೊಳ್ಳಬಹುದು. ದಯವಿಟ್ಟು ಈ ವಿಂಡೋ ಮುಚ್ಚಬೇಡಿ. 
+
+ಅನುಸ್ಥಾಪನೆ ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣವಾಗಿದೆ! ಡೆಸ್ಕ್ಟಾಪ್ ಮತ್ತು ಸ್ಟಾರ್ಟ್ ಮೆನುವಿನಲ್ಲಿ ಶಾರ್ಟ್ಕಟ್ ಕೂಡ ರಚನೆಯಾಗಿದೆ. "Run GPTK Library Manager" ಚೆಕ್ ಆಗಿರುವುದನ್ನು ಖಚಿತಪಡಿಸಿ, ನಂತರ "Finish" ಕ್ಲಿಕ್ ಮಾಡಿ. 
+
+ಅಪ್ಲಿಕೇಶನ್ ತೆರೆಯುತ್ತದೆ. ಮೊದಲ ಬಾರಿಗೆ ಪ್ರಾರಂಭವಾಗುತ್ತಿದೆ. ಹಿನ್ನೆಲೆಯಲ್ಲಿ Node.js ಸರ್ವರ್ ಮತ್ತು SQLite ಡೇಟಾಬೇಸ್ ಸಿದ್ಧಗೊಳ್ಳುತ್ತಿದೆ. ಲೋಡಿಂಗ್ ಸ್ಕ್ರೀನ್ ಕಾಣಿಸುತ್ತದೆ. ಕೆಲವು ಸೆಕೆಂಡ್ ಕಾಯಿರಿ. 
+
+ಇದು ಹೊಸ ಅನುಸ್ಥಾಪನೆಯಾಗಿರುವುದರಿಂದ ಸೆಟಪ್ ವಿಜಾರ್ಡ್ ತೆರೆಯುತ್ತದೆ. ಇಲ್ಲಿ ಐದು ಹಂತಗಳಿವೆ — ಸ್ವಾಗತ, ಭಾಷೆ, ಅಡ್ಮಿನ್ ಖಾತೆ, ಗ್ರಂಥಾಲಯ ಮಾಹಿತಿ, ಮತ್ತು ಪೂರ್ಣ. ಮೊದಲ ಪುಟದಲ್ಲಿ ಸರ್ಕಾರಿ ಪಾಲಿಟೆಕ್ನಿಕ್ ಕಂಪ್ಲಿಯ ಲೋಗೋ, ಕ್ಯಾಂಪಸ್ ಫೋಟೋ ಮತ್ತು ಗ್ರಂಥಾಲಯ ಮಿಷನ್ ಕಾಣಿಸುತ್ತದೆ. ಸೆಟಪ್ ಪ್ರಾರಂಭಿಸಲು "ಪ್ರಾರಂಭಿಸಿ" ಅಥವಾ "Get Started" ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ. 
+
+ಎರಡನೇ ಹಂತ — ವೈಯಕ್ತೀಕರಣ. ಇಲ್ಲಿ ಮೂರು ಆಯ್ಕೆಗಳಿವೆ. ಮೊದಲನೆಯದಾಗಿ ಭಾಷೆ — ಇಂಗ್ಲಿಷ್ ಅಥವಾ ಕನ್ನಡ. ಅಪ್ಲಿಕೇಶನ್ನ ಎಲ್ಲ ಮೆನು, ಬಟನ್ ಮತ್ತು ಸಂದೇಶಗಳು ನೀವು ಆಯ್ಕೆ ಮಾಡಿದ ಭಾಷೆಯಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ. ಎರಡನೆಯದಾಗಿ ನೋಟ — ಬೆಳಕು ಮೋಡ್ ಅಥವಾ ಡಾರ್ಕ್ ಮೋಡ್. ಮೂರನೆಯದಾಗಿ, ಅಕ್ಷರ ಗಾತ್ರ — ಸಣ್ಣ, ಮಧ್ಯಮ, ದೊಡ್ಡ ಅಥವಾ ಅತಿದೊಡ್ಡ. ಈ ಎಲ್ಲ ಸೆಟ್ಟಿಂಗ್ಗಳನ್ನು ನಂತರ ಸೆಟ್ಟಿಂಗ್ಸ್ ಪುಟದಲ್ಲಿ ಯಾವಾಗ ಬೇಕಾದರೂ ಬದಲಾಯಿಸಬಹುದು. 
+
+ಮೂರನೇ ಹಂತ ಅತ್ಯಂತ ಮುಖ್ಯ — ನಿರ್ವಾಹಕ ಖಾತೆ ರಚನೆ. ಈ ಖಾತೆಯು ಮುಖ್ಯ ನಿರ್ವಾಹಕವಾಗಿರುತ್ತದೆ. ಇವರಿಗೆ ಎಲ್ಲ ಅಧಿಕಾರ ಇರುತ್ತದೆ — ಪುಸ್ತಕಗಳ ನಿರ್ವಹಣೆ, ವಿದ್ಯಾರ್ಥಿ ನೋಂದಣಿ, ಸಿಬ್ಬಂದಿ ಸೇರ್ಪಡೆ, ಬ್ಯಾಕಪ್ ಮತ್ತು ಸೆಟ್ಟಿಂಗ್ಸ್ ನಿಯಂತ್ರಣ. ನಿಮ್ಮ ಪೂರ್ಣ ಹೆಸರು, ಈಮೇಲ್ ವಿಳಾಸ ಮತ್ತು ಬಲಿಷ್ಠ ಪಾಸ್ವರ್ಡ್ ನಮೂದಿಸಿ. ಪಾಸ್ವರ್ಡ್ ಕನಿಷ್ಠ ಆರು ಅಕ್ಷರಗಳು ಇರಬೇಕು. ಈ ಪಾಸ್ವರ್ಡ್ ನೆನಪಿಡಿ, ಇದೇ ಮೊದಲ ಲಾಗಿನ್ಗೆ ಬಳಕೆಯಾಗುತ್ತದೆ. "Continue" ಕ್ಲಿಕ್ ಮಾಡಿ. 
+
+ನಾಲ್ಕನೇ ಹಂತ — ಗ್ರಂಥಾಲಯ ವಿವರಗಳು. ಗ್ರಂಥಾಲಯ ಹೆಸರು ಈಗಾಗಲೇ "GPT Kampli Library" ಎಂದು ತುಂಬಿರುತ್ತದೆ. ಇದನ್ನು ಬದಲಾಯಿಸುವ ಅಗತ್ಯವಿಲ್ಲ. ಸರಿಯಾಗಿದೆಯೋ ಪರಿಶೀಲಿಸಿ, "Continue" ಕ್ಲಿಕ್ ಮಾಡಿ. 
+
+ಸೆಟಪ್ ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣವಾಗಿದೆ! ಈ ಪುಟದಲ್ಲಿ ನೀವು ನಮೂದಿಸಿದ ಎಲ್ಲ ವಿವರಗಳ ಸಾರಾಂಶ ಕಾಣಿಸುತ್ತದೆ — ನಿರ್ವಾಹಕರ ಹೆಸರು, ಈಮೇಲ್, ಆಯ್ಕೆ ಮಾಡಿದ ಭಾಷೆ, ಮತ್ತು ಗ್ರಂಥಾಲಯ ಹೆಸರು. ಲಾಗಿನ್ ಪುಟಕ್ಕೆ ಹೋಗಲು "Go to Login" ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ. ಸೆಟಪ್ನಲ್ಲಿ ಕ್ರಿಯೇಟ್ ಮಾಡಿದ ಅಡ್ಮಿನ್ ಈಮೇಲ್ ಮತ್ತು ಪಾಸ್ವರ್ಡ್ ಬಳಸಿ ಲಾಗಿನ್ ಮಾಡಿ. 
+
+ಲಾಗಿನ್ ಆದ ನಂತರ ಡ್ಯಾಶ್ಬೋರ್ಡ್ ತೆರೆಯುತ್ತದೆ. ಇಲ್ಲಿಂದ ನೀವು ಪುಸ್ತಕಗಳ ಕ್ಯಾಟಲಾಗ್, ವಿದ್ಯಾರ್ಥಿ ನೋಂದಣಿ, ಪುಸ್ತಕ ವಿತರಣೆ ಮತ್ತು ಹಿಂದಿರುಗಿಸುವಿಕೆ, ದಂಡ ನಿರ್ವಹಣೆ, ಸಿಬ್ಬಂದಿ ನಿರ್ವಹಣೆ, ಬ್ಯಾಕಪ್ ಮತ್ತು ಇನ್ನೂ ಹೆಚ್ಚಿನದನ್ನು ನಿರ್ವಹಿಸಬಹುದು. 
+
+ಗ್ರಂಥಾಲಯ ನಿರ್ವಹಣಾ ವ್ಯವಸ್ಥೆಯ ಸ್ಥಾಪನೆ ಮತ್ತು ಸೆಟಪ್ ಪೂರ್ಣವಾಗಿದೆ. ಯಾವುದೇ ಸಮಸ್ಯೆ ಬಂದರೆ ಅಪ್ಲಿಕೇಶನ್ನಲ್ಲಿ "System Health" ಪುಟಕ್ಕೆ ಹೋಗಿ, ಅಲ್ಲಿ "Report Bug" ಬಟನ್ ಮೂಲಕ ನೇರವಾಗಿ GitHub ನಲ್ಲಿ ವರದಿ ಮಾಡಬಹುದು. ವಿಡಿಯೋ ನೋಡಿದಕ್ಕೆ ಧನ್ಯವಾದಗಳು. ಸರ್ಕಾರಿ ಪಾಲಿಟೆಕ್ನಿಕ್ ಕಂಪ್ಲಿ — CS&E ವಿಭಾಗ.
+
+</details>
