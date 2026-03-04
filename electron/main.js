@@ -191,7 +191,7 @@ ipcMain.on('install-update', () => {
     const { Notification } = require('electron');
     if (Notification.isSupported()) {
         const toast = new Notification({
-            title: 'Updating GPTK Library Manager',
+            title: 'Updating GPT Kampli Library Manager',
             body: `Installing v${updateState.version}... The app will reopen automatically. Please don't turn off your computer.`,
             icon: path.join(__dirname, '../assets/icons/College_icon.ico'),
             silent: true

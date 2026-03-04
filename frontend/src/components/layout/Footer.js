@@ -6,7 +6,7 @@ const Footer = () => {
         <footer className="glass-footer">
             <div className="footer-content">
                 <span className="footer-copy">
-                    © {new Date().getFullYear()} GPTK Library Management System
+                    © {new Date().getFullYear()} GPT Kampli Library Management System
                 </span>
                 <span className="footer-dot">•</span>
                 <span className="footer-made">

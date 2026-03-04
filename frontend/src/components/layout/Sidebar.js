@@ -56,7 +56,7 @@ const Sidebar = ({ isCollapsed }) => {
             <div className="sidebar-brand">
                 <img src={logo} alt="Logo" className="sidebar-logo" />
                 <div className="brand-text">
-                    <span className="brand-title">GPTK LMS</span>
+                    <span className="brand-title">GPT Kampli LMS</span>
                 </div>
             </div>
 

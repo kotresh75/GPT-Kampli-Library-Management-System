@@ -157,7 +157,7 @@ const LockScreen = () => {
             </div>
 
             <div style={{ position: 'absolute', bottom: '2rem', fontSize: '0.8rem', color: '#64748b' }}>
-                GPTK Library Management System
+                GPT Kampli Library Management System
             </div>
         </div>
     );

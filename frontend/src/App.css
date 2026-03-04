@@ -66,6 +66,27 @@ body {
     color: var(--text-main);
     transition: all 0.5s ease;
     overflow-x: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+}
+
+/* Prevent link/image drag showing URLs */
+a,
+img {
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+
+/* Re-enable text selection for input elements */
+input,
+textarea,
+select,
+[contenteditable="true"],
+pre,
+code {
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 /* --- Animated Backgrounds --- */

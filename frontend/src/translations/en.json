@@ -255,7 +255,7 @@
         }
     },
     "landing": {
-        "welcome": "Welcome to GPTK Library",
+        "welcome": "Welcome to GPT Kampli Library",
         "subtitle": "Your Gateway to Knowledge",
         "description": "Access thousands of books, resources, and digital assets. Manage your library account seamlessly.",
         "access_portal": "Access Portal",
@@ -1177,7 +1177,7 @@
     },
     "about": {
         "title": "About Project",
-        "description": "The GPTK Library Management System is a state-of-the-art solution designed to digitize and automate the operations of Government Polytechnic libraries.",
+        "description": "The GPT Kampli Library Management System is a state-of-the-art solution designed to digitize and automate the operations of Government Polytechnic libraries.",
         "features": {
             "smart_catalog": {
                 "title": "Smart Catalog",
@@ -1206,7 +1206,7 @@
         "designed_for": "Designed & Developed for Government Polytechnic.",
         "overview": {
             "title": "1. Project Overview",
-            "p1": "The GPTK Library Management System is a comprehensive software solution designed to modernize the library operations of Government Polytechnic, Kampli. It aims to replace manual record-keeping with an efficient, digital system.",
+            "p1": "The GPT Kampli Library Management System is a comprehensive software solution designed to modernize the library operations of Government Polytechnic, Kampli. It aims to replace manual record-keeping with an efficient, digital system.",
             "p2": "The primary purpose of this system is to streamline the cataloging, circulation, and tracking of library resources. It solves the problems of time-consuming manual searches, error-prone fine calculations, and lack of real-time inventory status.",
             "p3": "Target users include Librarians, Staff, and Students."
         },
@@ -1257,8 +1257,8 @@
         "next": "Next",
         "intro": {
             "title": "Introduction",
-            "header": "Welcome to GPTK Library Management System",
-            "desc": "The <1>GPTK Library Management System (LMS)</1> is a state-of-the-art desktop application meticulously designed to digitize and automate the entire workflow of the Government Polytechnic Kampli library. Built for speed, reliability, and ease of use, it transforms traditional library operations into a seamless digital experience.",
+            "header": "Welcome to GPT Kampli Library Management System",
+            "desc": "The <1>GPT Kampli Library Management System (LMS)</1> is a state-of-the-art desktop application meticulously designed to digitize and automate the entire workflow of the Government Polytechnic Kampli library. Built for speed, reliability, and ease of use, it transforms traditional library operations into a seamless digital experience.",
             "tip_release": "<1>Release 1.0:</1> Now featuring a completely redesigned interface with dark mode support, enhanced reporting analytics, and automated student data imports.",
             "core_title": "Core Capabilities",
             "core_desc": "Designed to serve librarians, faculty, and students, the system integrates five key pillars of library management:",
@@ -1304,7 +1304,7 @@
         "setup": {
             "title": "Initial Setup",
             "header": "System Initialization & First-Run Wizard",
-            "desc": "Welcome to the GPTK Library Management System. Upon first launch, the application initiates a comprehensive <1>System Health Check</1> and guides you through the essential configuration steps to prepare the database for production use.",
+            "desc": "Welcome to the GPT Kampli Library Management System. Upon first launch, the application initiates a comprehensive <1>System Health Check</1> and guides you through the essential configuration steps to prepare the database for production use.",
             "tip_net": "<1>Pro Tip:</1> Ensure your system is connected to the local network if you plan to enable multi-terminal access immediately.",
             "db_title": "1. Database Configuration & Audit",
             "db_desc": "The system automatically detects the local environment and initializes the SQLite database. It verifies write permissions and creates the necessary directory structures for:",
@@ -1324,7 +1324,7 @@
         "dashboard": {
             "title": "The Dashboard",
             "header": "The Dashboard & Navigation Hub",
-            "desc": "The Dashboard serves as the command center of the GPTK Library Management System, offering a real-time panoramic view of library operations and instant access to all modules.",
+            "desc": "The Dashboard serves as the command center of the GPT Kampli Library Management System, offering a real-time panoramic view of library operations and instant access to all modules.",
             "sidebar_title": "1. Semantic Sidebar Navigation",
             "sidebar_desc": "Located on the left, the collateral sidebar is organized into logical clusters for intuitive workflow:",
             "core_mod": "<1>Core Modules:</1> Books (Catalog), Students (Members), Departments.",
@@ -1667,7 +1667,7 @@
         "scanner": {
             "title": "Barcode Scanner Setup",
             "header": "How to Configure a Barcode Scanner",
-            "desc": "The <1>GPTK Library Management System</1> supports USB and Bluetooth barcode scanners in Keyboard (HID) mode. This guide will help you connect and configure your scanner for quick book issue, return, and catalog operations.",
+            "desc": "The <1>GPT Kampli Library Management System</1> supports USB and Bluetooth barcode scanners in Keyboard (HID) mode. This guide will help you connect and configure your scanner for quick book issue, return, and catalog operations.",
             "tip_mode": "<1>How it works:</1> Most barcode scanners operate in Keyboard Mode (HID) — they act like a keyboard and type the scanned barcode directly into any focused input field. No special drivers are needed.",
             "types_title": "1. Supported Scanner Types",
             "types_desc": "The application supports the following barcode scanner connections:",

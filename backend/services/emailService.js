@@ -143,7 +143,7 @@ const sendEmail = async ({ to, subject, html, text, attachments = [] }) => {
         }
 
         const info = await transporter.sendMail({
-            from: `"${config.fromName || 'GPTK Library'}" <${config.user}>`,
+            from: `"${config.fromName || 'GPT Kampli Library'}" <${config.user}>`,
             to,
             subject,
             text,
@@ -169,14 +169,14 @@ const sendEmail = async ({ to, subject, html, text, attachments = [] }) => {
 const baseTemplate = (content, footerInfo = '') => `
 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
     <div style="background-color: #2563eb; color: white; padding: 20px; text-align: center;">
-        <h1 style="margin: 0; font-size: 24px;">GPTK Library</h1>
+        <h1 style="margin: 0; font-size: 24px;">GPT Kampli Library</h1>
         <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Govt Polytechnic, Kampli</p>
     </div>
     <div style="padding: 30px 20px; background-color: #f9fafb;">
         ${content}
     </div>
     <div style="background-color: #f3f4f6; padding: 15px; text-align: center; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb;">
-        <p style="margin: 5px 0;">&copy; ${getISTDate().getFullYear()} GPTK Library Management System</p>
+        <p style="margin: 5px 0;">&copy; ${getISTDate().getFullYear()} GPT Kampli Library Management System</p>
         ${footerInfo ? `<p style="margin: 5px 0;">${footerInfo}</p>` : ''}
     </div>
 </div>

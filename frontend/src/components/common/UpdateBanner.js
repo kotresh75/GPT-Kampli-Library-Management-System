@@ -232,7 +232,7 @@ const UpdateBanner = () => {
                 <div className="update-modal__body">
                     {status === 'available' && (
                         <div className="update-modal__info-text">
-                            <p>A new version of GPTK Library Manager is available. Download it now or later at your convenience.</p>
+                            <p>A new version of GPT Kampli Library Manager is available. Download it now or later at your convenience.</p>
                         </div>
                     )}
 
@@ -366,7 +366,7 @@ const UpdateBanner = () => {
                 <button
                     className="update-chip update-chip--updated"
                     onClick={() => setPostUpdate({ ...postUpdate })}
-                    title="GPTK Library Manager was updated — click for details"
+                    title="GPT Kampli Library Manager was updated — click for details"
                 >
                     <span className="update-chip__icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

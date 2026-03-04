@@ -53,8 +53,8 @@ const AboutPage = () => {
                 </header>
 
                 <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-                    <img src={logo} alt="GPTK LMS Logo" style={{ height: '80px', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />
-                    <h2 className="hero-title" style={{ fontSize: '2rem', marginBottom: '5px' }}>GPTK LMS</h2>
+                    <img src={logo} alt="GPT Kampli LMS Logo" style={{ height: '80px', marginBottom: '10px', display: 'block', margin: '0 auto 10px auto' }} />
+                    <h2 className="hero-title" style={{ fontSize: '2rem', marginBottom: '5px' }}>GPT Kampli LMS</h2>
                     <p className="subtitle" style={{ fontSize: '1.1rem', color: 'var(--text-secondary)' }}>{t('app.subtitle') || "Library Management System"}</p>
                 </div>
 
@@ -63,7 +63,7 @@ const AboutPage = () => {
                     {/* 1. Project Overview */}
                     <div style={{ marginBottom: '30px' }}>
                         <h3 className="settings-page-title" style={{ marginTop: 0 }}>{t('about.overview.title') || "1. Project Overview"}</h3>
-                        <p style={{ lineHeight: '1.6', marginBottom: '10px', fontSize: '0.95rem' }}>{t('about.overview.p1') || "The GPTK Library Management System is a comprehensive software solution designed to modernize the library operations of Government Polytechnic, Kampli."}</p>
+                        <p style={{ lineHeight: '1.6', marginBottom: '10px', fontSize: '0.95rem' }}>{t('about.overview.p1') || "The GPT Kampli Library Management System is a comprehensive software solution designed to modernize the library operations of Government Polytechnic, Kampli."}</p>
                         <p style={{ lineHeight: '1.6', marginBottom: '10px', fontSize: '0.95rem' }}>{t('about.overview.p2') || "The primary purpose of this system is to streamline the cataloging, circulation, and tracking of library resources. It solves the problems of time-consuming manual searches and tracking."}</p>
                         <p style={{ lineHeight: '1.6', fontSize: '0.95rem' }}>{t('about.overview.p3') || "Target users include Librarians, Staff, and Students."}</p>
                     </div>

@@ -56,7 +56,7 @@ const TitleBar = () => {
                 <div className="titlebar-icon">
                     <img src={logo} alt="App Icon" />
                 </div>
-                <div className="titlebar-title">GPTK Library Manager</div>
+                <div className="titlebar-title">GPT Kampli Library Manager</div>
                 <div className="titlebar-datetime">{dateTime}</div>
             </div>
 

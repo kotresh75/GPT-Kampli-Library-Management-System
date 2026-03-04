@@ -481,7 +481,7 @@ function seedSystemSettings() {
             const newId = () => uuidv4();
 
             insert.run(newId(), 'server.port', '17221', 'network', 'Port for the internal API server');
-            insert.run(newId(), 'app.header_title', 'GPTK Library', 'ui', 'Title in App Header');
+            insert.run(newId(), 'app.header_title', 'GPT Kampli Library', 'ui', 'Title in App Header');
             insert.run(newId(), 'circ.fine_per_day', '1.00', 'circulation', 'Fine per overdue day');
             insert.finalize();
         }
