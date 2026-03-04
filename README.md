@@ -120,7 +120,7 @@ The `Documentation/` folder contains essential guides and resources:
 - [⚙️ Installation Guide](Documentation/Installation%20Guide.md) — Detailed setup instructions
 - [📦 Release Notes (v1.0.0)](Documentation/RELEASE_NOTES_v1.0.0.md) — Features and changelog
 - [🔄 Update Guide](Documentation/Update%20Guide.md) — Instructions for updating the app
-- [🎬 Installation Demo Video](Documentation/Gptk%20Lms%20Demo1.mp4) — Step-by-step video guide for setting up the application
+- [🎬 Installation Demo Video](Documentation/Demo_Video.md) — Step-by-step video guide for setting up the application
 
 ---
 
