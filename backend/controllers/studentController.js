@@ -138,7 +138,6 @@ exports.updateStudent = (req, res) => {
 };
 
 // DELETE /api/students/:id (Permanent Delete)
-// DELETE /api/students/:id (Permanent Delete)
 exports.deleteStudent = (req, res) => {
     const { id } = req.params;
 

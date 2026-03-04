@@ -109,9 +109,9 @@ exports.getAuditStats = async (req, res) => {
         };
 
         const [totalToday, securityAlerts, adminActions, totalCount] = await Promise.all([
-            getCount("date(timestamp) = date('now')"),
-            getCount("module = 'Security' AND date(timestamp) > date('now', '-30 days')"),
-            getCount("actor_role = 'Admin' AND date(timestamp) = date('now')"),
+            getCount("date(timestamp) = date('now', '+05:30')"),
+            getCount("module = 'Security' AND date(timestamp) > date('now', '+05:30', '-30 days')"),
+            getCount("actor_role = 'Admin' AND date(timestamp) = date('now', '+05:30')"),
             getCount("1=1")
         ]);
 

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type, Globe, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, Sun, Moon, Type, Globe, ArrowLeft, X } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useUser } from '../context/UserContext';
@@ -11,12 +11,45 @@ import InteractiveBG from '../components/common/InteractiveBG';
 
 import StatusModal from '../components/common/StatusModal';
 
+const RECENT_LOGINS_KEY = 'recent_logins';
+const MAX_RECENT = 5;
+
+/** Read recent logins from localStorage */
+const getRecentLogins = () => {
+    try {
+        const raw = localStorage.getItem(RECENT_LOGINS_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+};
+
+/** Save a user to the recent logins list (deduped, max 5, most recent first) */
+const saveRecentLogin = (user) => {
+    const list = getRecentLogins().filter(u => u.email !== user.email);
+    list.unshift({
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profile_icon: user.profile_icon || null
+    });
+    localStorage.setItem(RECENT_LOGINS_KEY, JSON.stringify(list.slice(0, MAX_RECENT)));
+};
+
+/** Remove one account from the list */
+const removeRecentLogin = (email) => {
+    const list = getRecentLogins().filter(u => u.email !== email);
+    localStorage.setItem(RECENT_LOGINS_KEY, JSON.stringify(list));
+    return list;
+};
+
 const LoginPage = () => {
     const navigate = useNavigate();
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
     const { t, language, toggleLanguage } = useLanguage();
     const { login } = useUser();
     const [showWarning, setShowWarning] = useState(false);
+    const passwordRef = useRef(null);
 
     // Map numeric scale to labels
     const SCALE_MAP = { 85: 'S', 100: 'M', 115: 'L', 130: 'XL' };
@@ -44,6 +77,12 @@ const LoginPage = () => {
     const [fieldError, setFieldError] = useState(''); // 'email' or 'password'
     const [shake, setShake] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [recentLogins, setRecentLogins] = useState([]);
+
+    // Load recent logins on mount
+    useEffect(() => {
+        setRecentLogins(getRecentLogins());
+    }, []);
 
     const handleChange = (e) => {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -54,6 +93,23 @@ const LoginPage = () => {
     const triggerShake = () => {
         setShake(true);
         setTimeout(() => setShake(false), 500);
+    };
+
+    /** Click a recent account chip — fill email, focus password */
+    const handleSelectRecent = (account) => {
+        setCredentials(prev => ({ ...prev, email: account.email, password: '' }));
+        setError('');
+        setFieldError('');
+        // Focus password input after a tick (state needs to settle)
+        setTimeout(() => {
+            if (passwordRef.current) passwordRef.current.focus();
+        }, 50);
+    };
+
+    /** Remove a recent account */
+    const handleRemoveRecent = (e, email) => {
+        e.stopPropagation(); // Don't trigger chip click
+        setRecentLogins(removeRecentLogin(email));
     };
 
     const handleSubmit = async (e) => {
@@ -68,6 +124,9 @@ const LoginPage = () => {
             // Success
             const { token, user } = response.data;
             login(user, token);
+
+            // Save to recent logins list
+            saveRecentLogin(user);
 
             navigate('/dashboard');
         } catch (err) {
@@ -85,15 +144,18 @@ const LoginPage = () => {
                 } else if (error_code === 'ERR_USER_NOT_FOUND') {
                     setFieldError('email');
                 }
-
-                // If specific error code available, we can append it or use it for specialized UI if needed
-                // setError(`${message} (${error_code || 'ERR_AUTH'})`);
             } else {
                 setError('Server unreachable. Check connection.');
             }
         } finally {
             setLoading(false);
         }
+    };
+
+    /** Get initials for avatar fallback */
+    const getInitials = (name) => {
+        if (!name) return '?';
+        return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
     };
 
     return (
@@ -126,75 +188,116 @@ const LoginPage = () => {
                 </button>
             </div>
 
-            <div className="login-card glass-panel bounce-in">
+            {/* Login Row: Form + Recent Panel side by side */}
+            <div className="login-row">
+                <div className="login-card glass-panel bounce-in">
 
-                <LogoParticles
-                    logoSrc={logo}
-                    title={t('auth.welcome_back')}
-                    subtitle={t('auth.sign_in_subtitle')}
-                    compact
-                />
+                    <LogoParticles
+                        logoSrc={logo}
+                        title={t('auth.welcome_back')}
+                        subtitle={t('auth.sign_in_subtitle')}
+                        compact
+                    />
 
-                <form onSubmit={handleSubmit} className="login-form">
+                    <form onSubmit={handleSubmit} className="login-form">
 
-                    <div className={`input-group ${fieldError === 'email' ? 'error-glow' : ''} ${shake && fieldError === 'email' ? 'shake-animation' : ''}`}>
-                        <Mail className={`input-icon ${fieldError === 'email' ? 'text-red-400' : ''}`} size={20} />
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder={t('auth.email_placeholder')}
-                            value={credentials.email}
-                            onChange={handleChange}
-                            required
-                            autoFocus
-                        />
-                    </div>
-
-                    <div className={`input-group ${fieldError === 'password' ? 'error-glow' : ''} ${shake && fieldError === 'password' ? 'shake-animation' : ''}`}>
-                        <Lock className={`input-icon ${fieldError === 'password' ? 'text-red-400' : ''}`} size={20} />
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            name="password"
-                            placeholder={t('auth.password_placeholder')}
-                            value={credentials.password}
-                            onChange={handleChange}
-                            required
-                        />
-                        <button
-                            type="button"
-                            className="toggle-eye"
-                            onClick={() => setShowPassword(!showPassword)}
-                            tabIndex="-1"
-                        >
-                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                    </div>
-
-                    {error && (
-                        <div className={`error-banner ${shake && !fieldError ? 'shake-animation' : ''}`}>
-                            <div className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                                {error}
-                            </div>
+                        <div className={`input-group ${fieldError === 'email' ? 'error-glow' : ''} ${shake && fieldError === 'email' ? 'shake-animation' : ''}`}>
+                            <Mail className={`input-icon ${fieldError === 'email' ? 'text-red-400' : ''}`} size={20} />
+                            <input
+                                type="email"
+                                name="email"
+                                placeholder={t('auth.email_placeholder')}
+                                value={credentials.email}
+                                onChange={handleChange}
+                                required
+                                autoFocus={recentLogins.length === 0}
+                            />
                         </div>
-                    )}
 
-                    <button type="submit" className="login-btn primary-glass-btn" disabled={loading}>
-                        {loading ? <div className="spinner-sm"></div> : (
-                            <>
-                                <span>{t('auth.sign_in_btn')}</span>
-                                <LogIn size={20} className="ml-2" />
-                            </>
+                        <div className={`input-group ${fieldError === 'password' ? 'error-glow' : ''} ${shake && fieldError === 'password' ? 'shake-animation' : ''}`}>
+                            <Lock className={`input-icon ${fieldError === 'password' ? 'text-red-400' : ''}`} size={20} />
+                            <input
+                                ref={passwordRef}
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                placeholder={t('auth.password_placeholder')}
+                                value={credentials.password}
+                                onChange={handleChange}
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="toggle-eye"
+                                onClick={() => setShowPassword(!showPassword)}
+                                tabIndex="-1"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
+
+                        {error && (
+                            <div className={`error-banner ${shake && !fieldError ? 'shake-animation' : ''}`}>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                                    {error}
+                                </div>
+                            </div>
                         )}
-                    </button>
 
-                    <div className="forgot-password">
-                        <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }}>
-                            {t('auth.forgot_password')}
-                        </a>
+                        <button type="submit" className="login-btn primary-glass-btn" disabled={loading}>
+                            {loading ? <div className="spinner-sm"></div> : (
+                                <>
+                                    <span>{t('auth.sign_in_btn')}</span>
+                                    <LogIn size={20} className="ml-2" />
+                                </>
+                            )}
+                        </button>
+
+                        <div className="forgot-password">
+                            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }}>
+                                {t('auth.forgot_password')}
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+
+                {recentLogins.length > 0 && (
+                    <div className="recent-logins-panel glass-panel bounce-in">
+                        <div className="recent-logins-header">Recent</div>
+                        <div className="recent-logins">
+                            {recentLogins.map((account) => (
+                                <button
+                                    key={account.email}
+                                    type="button"
+                                    className={`recent-login-chip ${credentials.email === account.email ? 'active' : ''}`}
+                                    onClick={() => handleSelectRecent(account)}
+                                    title={account.email}
+                                >
+                                    <div className="chip-avatar">
+                                        {account.profile_icon ? (
+                                            <img src={account.profile_icon} alt="" />
+                                        ) : (
+                                            <span>{getInitials(account.name)}</span>
+                                        )}
+                                    </div>
+                                    <div className="chip-info">
+                                        <span className="chip-name">{account.name}</span>
+                                        <span className="chip-role">{account.role}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="chip-remove"
+                                        onClick={(e) => handleRemoveRecent(e, account.email)}
+                                        title="Remove"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </button>
+                            ))}
+                        </div>
                     </div>
-
-                </form>
+                )}
             </div>
 
             <StatusModal
@@ -209,3 +312,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

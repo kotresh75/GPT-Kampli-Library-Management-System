@@ -34,7 +34,7 @@ export const TutorialProvider = ({ children }) => {
     // Global F1 Key Listener
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.key === '`' || e.code === 'Backquote') {
+            if (e.altKey && (e.key === '`' || e.code === 'Backquote')) {
                 e.preventDefault();
                 openManual(contextSectionId);
             }

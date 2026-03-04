@@ -1606,7 +1606,7 @@ const EmailTab = ({ settings, handleChange, handleSave, testingEmail, handleTest
                 {/* SMTP Configuration */}
                 {settings.email_config?.provider === 'smtp' && (
                     <div className="scanner-grid" style={{ marginTop: '1rem' }}>
-                        <input placeholder={t('settings.email.host')} className="glass-input" value={settings.email_config?.host || ''} onChange={e => handleChange('email_config', 'host', e.target.value)} />
+                        <input placeholder={t('settings.email.host')} className="glass-input" value={settings.email_config?.host || ''} onChange={e => { let v = e.target.value; if (v === 'smpt.gmail.com') v = 'smtp.gmail.com'; handleChange('email_config', 'host', v); }} />
                         <input placeholder={t('settings.email.port')} type="number" className="glass-input" value={settings.email_config?.port || ''} onChange={e => handleChange('email_config', 'port', e.target.value)} />
                         <input placeholder={t('settings.email.username')} className="glass-input" value={settings.email_config?.user || ''} onChange={e => handleChange('email_config', 'user', e.target.value)} />
                         <input type="password" placeholder={t('settings.email.password')} className="glass-input" value={settings.email_config?.pass || ''} onChange={e => handleChange('email_config', 'pass', e.target.value)} />

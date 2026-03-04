@@ -35,7 +35,7 @@ exports.getCirculationStats = async (req, res) => {
         const periodReturnsSql = `SELECT COUNT(*) as count FROM transaction_logs WHERE action_type = 'RETURN' AND timestamp >= date('now', '${dateMod}')`;
 
         // Overdue Items: Snapshot (Currently overdue)
-        const overdueSql = "SELECT COUNT(*) as count FROM circulation WHERE date(due_date) < date('now')";
+        const overdueSql = "SELECT COUNT(*) as count FROM circulation WHERE date(due_date) < date('now', '+05:30')";
 
         const activeIssued = await runQuery(activeIssuesSql);
         const periodReturns = await runQuery(periodReturnsSql);
@@ -236,7 +236,7 @@ exports.getDailySummary = async (req, res) => {
 
         // 5. Snapshots (Quick Stats)
         const activeIssuesSnap = await runQuery("SELECT COUNT(*) as count FROM circulation");
-        const overdueSnap = await runQuery("SELECT COUNT(*) as count FROM circulation WHERE date(due_date) < date('now')");
+        const overdueSnap = await runQuery("SELECT COUNT(*) as count FROM circulation WHERE date(due_date) < date('now', '+05:30')");
         const totalBooksSnap = await runQuery("SELECT COUNT(*) as count FROM book_copies"); // Total Volumes
         const totalMembersSnap = await runQuery("SELECT COUNT(*) as count FROM students"); // Total Students
 

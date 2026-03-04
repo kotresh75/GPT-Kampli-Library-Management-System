@@ -338,7 +338,7 @@ exports.sendDailySummary = async (admin, stats) => {
         return false;
     }
 
-    const subject = `📊 Daily Library Summary - ${new Date().toLocaleDateString()}`;
+    const subject = `📊 Daily Library Summary - ${getISTDate().toLocaleDateString()}`;
 
     const bodyContent = `
         <h2 style="color: #2563eb; margin-top: 0;">Daily Library Summary</h2>

@@ -11,7 +11,7 @@ cron.schedule('0 8 * * *', () => {
 });
 
 const checkOverdueNotices = () => {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = getISTDate().toISOString().split('T')[0]; // IST date
 
     db.get("SELECT value FROM system_settings WHERE key = 'last_overdue_notice_sent'", (err, row) => {
         if (err) {

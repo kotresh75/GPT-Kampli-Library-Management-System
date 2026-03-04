@@ -302,7 +302,6 @@ exports.returnBook = async (req, res) => {
     // condition: 'Good', 'Damaged', 'Lost'
 
     try {
-        // 1. Fetch Active Loan
         // 1. Fetch Active Loan (with Title)
         const loan = await new Promise((resolve, reject) => {
             db.get(`
@@ -347,13 +346,6 @@ exports.returnBook = async (req, res) => {
 
         let fineAmount = 0;
         let fineRemark = '';
-
-        if (isOverdue) {
-            // Fines apply immediately (Grace Period removed as per request)
-            const effectiveOverdueDays = diffDays;
-            fineAmount += (effectiveOverdueDays * dailyFineRate);
-            fineRemark += `Overdue by ${effectiveOverdueDays} days (Rate: ₹${dailyFineRate}/day). `;
-        }
 
         // Handle Condition & Custom Fine
         let copyStatus = 'Available';

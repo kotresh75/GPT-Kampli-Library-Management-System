@@ -17,7 +17,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, 
         },
         // Font loading for SVG export
         fontStyle: `
-            /* Oswald & Roboto Condensed are bundled locally via fonts.css */
+            /* Oswald & Roboto Condensed are bundled locally via fonts.css. Arial Narrow is a close fallback for Oswald. */
             .id-card-text { font-family: 'Roboto Condensed', 'Arial Narrow', Arial, sans-serif; }
         `,
         bgImg: {
@@ -62,13 +62,13 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, 
         },
         collegeName: {
             color: '#fffa00',
-            fontSize: '18px',
-            fontWeight: 400, // Regular (Thicker than 300)
-            fontFamily: "'Oswald', sans-serif",
+            fontSize: '15px',
+            fontWeight: 400,
+            fontFamily: "'Oswald', 'Arial Narrow', Arial, sans-serif",
             marginTop: '2px',
-            letterSpacing: '3px', // Increased spacing
+            letterSpacing: '1px',
             textTransform: 'uppercase',
-            lineHeight: 1,
+            lineHeight: 1.2,
             textShadow: '1px 1px 2px rgba(0, 0, 0, 0.5)',
             whiteSpace: 'nowrap'
         },

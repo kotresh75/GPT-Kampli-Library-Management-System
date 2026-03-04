@@ -12,7 +12,4 @@ router.put('/copy/:id', bookController.updateCopyStatus);
 router.post('/:isbn/add-copies', bookController.addCopies);
 router.delete('/copy/:id', bookController.deleteCopy);
 
-// Bulk Import
-router.post('/bulk', bookController.bulkUploadBooks);
-
 module.exports = router;

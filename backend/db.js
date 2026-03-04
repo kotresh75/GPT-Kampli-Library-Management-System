@@ -42,11 +42,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 initializeTables();
 
                 // DATA REPAIR: Fix missing IDs for copies created before the fix
-                db.run("UPDATE book_copies SET id = lower(hex(randomblob(16))) WHERE id IS NULL", (err) => {
+                db.run("UPDATE book_copies SET id = lower(hex(randomblob(16))) WHERE id IS NULL", function (err) {
                     if (!err && this.changes > 0) console.log("Fixed missing IDs for book_copies");
                 });
                 // DATA REPAIR: Fix missing IDs for books created before the fix
-                db.run("UPDATE books SET id = lower(hex(randomblob(16))) WHERE id IS NULL", (err) => {
+                db.run("UPDATE books SET id = lower(hex(randomblob(16))) WHERE id IS NULL", function (err) {
                     if (!err && this.changes > 0) console.log("Fixed missing IDs for books");
                 });
 
@@ -80,7 +80,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 // SCHEMA MIGRATION: Add cover_image to books if not exists
                 db.run("ALTER TABLE books ADD COLUMN cover_image TEXT", (err) => {
                     // DATA MIGRATION: Copy old url to new column if successful or if column exists
-                    db.run("UPDATE books SET cover_image = cover_image_url WHERE cover_image IS NULL AND cover_image_url IS NOT NULL", (err) => {
+                    db.run("UPDATE books SET cover_image = cover_image_url WHERE cover_image IS NULL AND cover_image_url IS NOT NULL", function (err) {
                         if (!err && this.changes > 0) console.log("Migrated cover_image_url to cover_image");
                     });
                 });
@@ -152,7 +152,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
                             UPDATE audit_logs 
                             SET actor_email = (SELECT email FROM admins WHERE admins.id = audit_logs.actor_id)
                             WHERE actor_role = 'Admin' AND actor_email IS NULL
-                        `, (err) => {
+                        `, function (err) {
                             if (!err && this.changes > 0) console.log("Backfilled actor_email for Admins in audit_logs");
                         });
 
@@ -161,7 +161,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
                             UPDATE audit_logs 
                             SET actor_email = (SELECT email FROM staff WHERE staff.id = audit_logs.actor_id)
                             WHERE (actor_role = 'Staff' OR actor_role = 'System') AND actor_email IS NULL
-                        `, (err) => {
+                        `, function (err) {
                             if (!err && this.changes > 0) console.log("Backfilled actor_email for Staff in audit_logs");
                         });
 
@@ -170,7 +170,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
                             UPDATE audit_logs 
                             SET actor_email = 'system@library.com'
                             WHERE actor_id = 'SYSTEM' AND actor_email IS NULL
-                        `, (err) => {
+                        `, function (err) {
                             if (!err && this.changes > 0) console.log("Backfilled actor_email for SYSTEM actions");
                         });
                     }
@@ -224,9 +224,9 @@ function initializeTables() {
             password_hash TEXT NOT NULL,
             status TEXT CHECK(status IN ('Active', 'Disabled', 'Deleted')),
             profile_icon TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT DEFAULT (datetime('now', '+05:30')),
             last_login TEXT,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            updated_at TEXT DEFAULT (datetime('now', '+05:30'))
         )`);
 
         // 5.3 admins
@@ -239,9 +239,9 @@ function initializeTables() {
             status TEXT CHECK(status IN ('Active', 'Disabled')),
             profile_icon TEXT,
             is_root INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT DEFAULT (datetime('now', '+05:30')),
             last_login TEXT,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            updated_at TEXT DEFAULT (datetime('now', '+05:30'))
         )`);
 
         // 5.4 books
@@ -291,7 +291,7 @@ function initializeTables() {
             due_date TEXT,
             last_renewed_date TEXT,
             renewal_count INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT DEFAULT (datetime('now', '+05:30')),
             FOREIGN KEY (student_id) REFERENCES students(id),
             FOREIGN KEY (copy_id) REFERENCES book_copies(id)
         )`);
@@ -434,11 +434,7 @@ function initializeTables() {
 
         console.log("Database tables initialized successfully.");
 
-        // Migration: Add shelf_location column if missing
-        db.run("ALTER TABLE books ADD COLUMN shelf_location TEXT", (err) => {
-            if (!err) console.log("Migration: Added shelf_location column to books table.");
-            // Ignore error if column already exists
-        });
+        // Note: shelf_location migration removed (duplicate of line 71)
 
 
         // Seed Default Settings & System User (Admin is created via Setup Page)
@@ -481,7 +477,8 @@ function seedSystemSettings() {
             console.log("Seeding default system settings (No .env)...");
             const insert = db.prepare("INSERT INTO system_settings (id, key, value, category, description) VALUES (?, ?, ?, ?, ?)");
             // Simple mock UUID for seed
-            const newId = () => Math.random().toString(36).substr(2, 9);
+            const { v4: uuidv4 } = require('uuid');
+            const newId = () => uuidv4();
 
             insert.run(newId(), 'server.port', '17221', 'network', 'Port for the internal API server');
             insert.run(newId(), 'app.header_title', 'GPTK Library', 'ui', 'Title in App Header');
@@ -508,7 +505,8 @@ function ensureDefaultPolicies() {
     const check = db.prepare("SELECT id FROM system_settings WHERE key = ?");
 
     // Simple mock UUID
-    const newId = () => Math.random().toString(36).substr(2, 9);
+    const { v4: uuidv4 } = require('uuid');
+    const newId = () => uuidv4();
 
     db.serialize(() => {
         defaultPolicies.forEach(policy => {

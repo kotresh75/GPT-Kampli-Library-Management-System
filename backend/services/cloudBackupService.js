@@ -5,6 +5,9 @@ const { v4: uuidv4 } = require('uuid');
 
 // Helper to get SQLite data
 const getTableData = (tableName) => {
+    if (!tables.includes(tableName)) {
+        return Promise.reject(new Error(`Invalid table name: ${tableName}`));
+    }
     return new Promise((resolve, reject) => {
         db.all(`SELECT * FROM ${tableName}`, [], (err, rows) => {
             if (err) reject(err);

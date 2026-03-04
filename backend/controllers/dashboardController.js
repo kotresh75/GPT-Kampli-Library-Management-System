@@ -22,9 +22,9 @@ exports.getStats = async (req, res) => {
             getCount("SELECT count(*) as count FROM books"),
             getCount("SELECT count(*) as count FROM students"),
             // Use transaction_logs for today's issues
-            getCount("SELECT count(*) as count FROM transaction_logs WHERE action_type = 'ISSUE' AND date(timestamp) = date('now')"),
+            getCount("SELECT count(*) as count FROM transaction_logs WHERE action_type = 'ISSUE' AND date(timestamp) = date('now', '+05:30')"),
             // Use circulation for active overdue loans
-            getCount("SELECT count(*) as count FROM circulation WHERE date(due_date) < date('now')"),
+            getCount("SELECT count(*) as count FROM circulation WHERE date(due_date) < date('now', '+05:30')"),
             getCount("SELECT sum(amount) as total FROM fines WHERE is_paid = 1"),
             getCount("SELECT count(*) as count FROM book_copies WHERE status = 'Lost'")
         ]);
@@ -143,7 +143,7 @@ exports.getDetails = (req, res) => {
             JOIN books b ON bc.book_isbn = b.isbn
             JOIN students s ON tl.student_id = s.id
             WHERE tl.action_type = 'ISSUE' 
-            AND date(tl.timestamp) = date('now')
+            AND date(tl.timestamp) = date('now', '+05:30')
             ORDER BY tl.timestamp DESC
         `;
     } else if (type === 'overdue') {
@@ -154,7 +154,7 @@ exports.getDetails = (req, res) => {
             JOIN book_copies bc ON c.copy_id = bc.id
             JOIN books b ON bc.book_isbn = b.isbn
             JOIN students s ON c.student_id = s.id
-            WHERE date(c.due_date) < date('now')
+            WHERE date(c.due_date) < date('now', '+05:30')
             ORDER BY c.due_date ASC
         `;
     } else if (type === 'lost_damaged') {

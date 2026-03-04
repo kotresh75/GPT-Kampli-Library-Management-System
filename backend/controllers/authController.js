@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 const auditService = require('../services/auditService');
-const { getISTISOWithOffset } = require('../utils/dateUtils');
+const { getISTISOWithOffset, getSQLiteISTTimestamp } = require('../utils/dateUtils');
 
 // SECRET should eventually check system_settings, but for now we fallback
 const JWT_SECRET = 'gptk_lms_secret_temporary_key';
@@ -202,82 +202,103 @@ exports.requestPasswordReset = (req, res) => {
         // 2. Audit Request
         auditService.log(email, 'PASSWORD_RESET_REQUEST', 'Auth', `Password reset requested for ${email}`, { ip: req.ip });
 
-        // 3. Check if user exists (Admins only for now, can extend to Staff)
-        db.get("SELECT id FROM admins WHERE email = ?", [email], (err, user) => {
+        // 3. Check if user exists (Check Admins first, then Staff)
+        db.get("SELECT id, 'admins' as user_table FROM admins WHERE email = ?", [email], (err, admin) => {
             if (err) return res.status(500).json({ message: 'Database error' });
-            if (!user) return res.status(404).json({ message: 'Email not found in our records.' });
 
-            // Generate 6-digit OTP
-            const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const expiresAt = getISTISOWithOffset(new Date(Date.now() + 10 * 60000)); // 10 mins
+            if (admin) {
+                // Admin found — proceed with OTP
+                return generateAndSendOTP(email, 'admins', config, req, res);
+            }
 
-            // Store OTP
-            db.run("INSERT OR REPLACE INTO password_resets (email, otp, expires_at) VALUES (?, ?, ?)",
-                [email, otp, expiresAt],
-                async (err) => {
-                    if (err) return res.status(500).json({ message: 'Failed to generate OTP' });
+            // Not in admins — check staff
+            db.get("SELECT id, 'staff' as user_table FROM staff WHERE email = ?", [email], (err, staff) => {
+                if (err) return res.status(500).json({ message: 'Database error' });
+                if (!staff) return res.status(404).json({ message: 'Email not found in our records.' });
 
-                    // Send Email using already fetched config
-                    // Connectivity Check
-                    const dns = require('dns').promises;
-                    let isOnline = true;
-                    try {
-                        await dns.lookup('google.com');
-                    } catch (e) {
-                        isOnline = false;
-                    }
-
-                    if (!isOnline) {
-                        return res.status(503).json({
-                            message: 'System is offline. Cannot send OTP.',
-                            error_code: 'ERR_NETWORK_OFFLINE'
-                        });
-                    }
-
-                    try {
-                        let emailSent = false;
-                        if (config.provider === 'smtp') {
-                            const host = config.host === 'smpt.gmail.com' ? 'smtp.gmail.com' : config.host;
-
-                            const transporter = nodemailer.createTransport({
-                                host: host,
-                                port: parseInt(config.port) || 587,
-                                secure: config.secure || config.port === 465,
-                                auth: { user: config.user, pass: config.pass }
-                            });
-
-                            const mailOptions = {
-                                from: `"${config.fromName || 'GPTK Library'}" <${config.user}>`,
-                                to: email,
-                                subject: 'Password Reset OTP - GPTK Library',
-                                text: `Your OTP for password reset is: ${otp}\n\nThis code expires in 10 minutes.`,
-                                html: `
-                                    <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
-                                        <h2 style="color: #3b82f6;">Password Reset Request</h2>
-                                        <p>Your OTP for password reset is:</p>
-                                        <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
-                                            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1f2937;">${otp}</span>
-                                        </div>
-                                        <p style="color: #6b7280;">This code expires in 10 minutes.</p>
-                                    </div>
-                                `
-                            };
-
-                            await transporter.sendMail(mailOptions);
-                            emailSent = true;
-                        }
-
-                        res.json({ message: 'OTP sent to your email.', emailSent });
-
-                    } catch (emailErr) {
-                        console.error('[Email] Failed to send OTP:', emailErr.message);
-                        res.status(500).json({ message: 'Failed to send email. Check server logs.' });
-                    }
-                }
-            );
+                // Staff found — proceed with OTP
+                return generateAndSendOTP(email, 'staff', config, req, res);
+            });
         });
     });
 };
+
+// Helper function to generate OTP and send email
+function generateAndSendOTP(email, userTable, config, req, res) {
+    const nodemailer = require('nodemailer');
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // Store expiry as plain IST string: 'YYYY-MM-DD HH:MM:SS' — simple string comparison works
+    const now = new Date();
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const futureIST = new Date(now.getTime() + istOffset + 10 * 60000);
+    const expiresAt = futureIST.toISOString().replace('T', ' ').substring(0, 19); // IST timestamp
+
+    // Store OTP (include user_table for resetPassword to know which table to update)
+    db.run("INSERT OR REPLACE INTO password_resets (email, otp, expires_at) VALUES (?, ?, ?)",
+        [email, otp, expiresAt],
+        async (err) => {
+            if (err) return res.status(500).json({ message: 'Failed to generate OTP' });
+
+            // Send Email using already fetched config
+            // Connectivity Check
+            const dns = require('dns').promises;
+            let isOnline = true;
+            try {
+                await dns.lookup('google.com');
+            } catch (e) {
+                isOnline = false;
+            }
+
+            if (!isOnline) {
+                return res.status(503).json({
+                    message: 'System is offline. Cannot send OTP.',
+                    error_code: 'ERR_NETWORK_OFFLINE'
+                });
+            }
+
+            try {
+                let emailSent = false;
+                if (config.provider === 'smtp') {
+                    const host = config.host === 'smpt.gmail.com' ? 'smtp.gmail.com' : config.host;
+
+                    const transporter = nodemailer.createTransport({
+                        host: host,
+                        port: parseInt(config.port) || 587,
+                        secure: config.secure || config.port === 465,
+                        auth: { user: config.user, pass: config.pass }
+                    });
+
+                    const mailOptions = {
+                        from: `"${config.fromName || 'GPTK Library'}" <${config.user}>`,
+                        to: email,
+                        subject: 'Password Reset OTP - GPTK Library',
+                        text: `Your OTP for password reset is: ${otp}\n\nThis code expires in 10 minutes.`,
+                        html: `
+                            <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+                                <h2 style="color: #3b82f6;">Password Reset Request</h2>
+                                <p>Your OTP for password reset is:</p>
+                                <div style="background: #f3f4f6; padding: 20px; text-align: center; border-radius: 8px; margin: 20px 0;">
+                                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1f2937;">${otp}</span>
+                                </div>
+                                <p style="color: #6b7280;">This code expires in 10 minutes.</p>
+                            </div>
+                        `
+                    };
+
+                    await transporter.sendMail(mailOptions);
+                    emailSent = true;
+                }
+
+                res.json({ message: 'OTP sent to your email.', emailSent });
+
+            } catch (emailErr) {
+                console.error('[Email] Failed to send OTP:', emailErr.message);
+                res.status(500).json({ message: 'Failed to send email. Check server logs.' });
+            }
+        }
+    );
+}
 
 
 exports.verifyOTP = (req, res) => {
@@ -287,7 +308,7 @@ exports.verifyOTP = (req, res) => {
         if (err) return res.status(500).json({ message: 'Database error' });
         if (!record) return res.status(400).json({ message: 'Invalid OTP' });
 
-        if (new Date(record.expires_at) < new Date()) {
+        if (record.expires_at < getSQLiteISTTimestamp()) {
             return res.status(400).json({ message: 'OTP expired' });
         }
 
@@ -301,7 +322,7 @@ exports.resetPassword = (req, res) => {
     // Double check OTP validity
     db.get("SELECT * FROM password_resets WHERE email = ? AND otp = ?", [email, otp], (err, record) => {
         if (err) return res.status(500).json({ message: 'Database error' });
-        if (!record || new Date(record.expires_at) < new Date()) {
+        if (!record || record.expires_at < getSQLiteISTTimestamp()) {
             return res.status(400).json({ message: 'Invalid or expired OTP request' });
         }
 
@@ -310,17 +331,26 @@ exports.resetPassword = (req, res) => {
         bcrypt.hash(newPassword, saltRounds, (err, hash) => {
             if (err) return res.status(500).json({ message: 'Encryption failed' });
 
-            // Update Admin Password
-            db.run("UPDATE admins SET password_hash = ? WHERE email = ?", [hash, email], (err) => {
+            // Try updating in admins first, then staff
+            db.run("UPDATE admins SET password_hash = ? WHERE email = ?", [hash, email], function (err) {
                 if (err) return res.status(500).json({ message: 'Failed to update password' });
 
-                // Clear OTP
-                db.run("DELETE FROM password_resets WHERE email = ?", [email]);
+                if (this.changes === 0) {
+                    // Not found in admins — try staff table
+                    db.run("UPDATE staff SET password_hash = ? WHERE email = ?", [hash, email], function (err) {
+                        if (err) return res.status(500).json({ message: 'Failed to update password' });
 
-                // Audit Reset Success
-                auditService.log(email, 'PASSWORD_RESET_SUCCESS', 'Auth', `Password successfully reset for ${email}`, { ip: req.ip });
-
-                res.json({ message: 'Password updated successfully. Please login.' });
+                        // Clear OTP
+                        db.run("DELETE FROM password_resets WHERE email = ?", [email]);
+                        auditService.log(email, 'PASSWORD_RESET_SUCCESS', 'Auth', `Password successfully reset for ${email} (Staff)`, { ip: req.ip });
+                        res.json({ message: 'Password updated successfully. Please login.' });
+                    });
+                } else {
+                    // Updated in admins
+                    db.run("DELETE FROM password_resets WHERE email = ?", [email]);
+                    auditService.log(email, 'PASSWORD_RESET_SUCCESS', 'Auth', `Password successfully reset for ${email} (Admin)`, { ip: req.ip });
+                    res.json({ message: 'Password updated successfully. Please login.' });
+                }
             });
         });
     });

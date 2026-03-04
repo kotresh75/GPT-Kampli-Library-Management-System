@@ -8,9 +8,7 @@ coverage/
 
 # Production build output
 dist/
-dist/
 frontend/build/
-out/
 out/
 
 # Misc

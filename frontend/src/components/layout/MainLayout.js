@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Footer from './Footer';
@@ -33,6 +33,11 @@ const MainLayout = () => {
 
         return () => observer.disconnect();
     }, [location.pathname]); // Re-observe on route change
+
+    // Auth Guard: Redirect to login if not authenticated
+    if (!localStorage.getItem('auth_token')) {
+        return <Navigate to="/login" replace />;
+    }
 
     const toggleSidebar = () => {
         setIsSidebarCollapsed(!isSidebarCollapsed);

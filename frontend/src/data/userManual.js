@@ -1410,7 +1410,7 @@ export function getUserManualData() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 20, textAlign: 'center' }}>
                             <div className="um-mock-col">
                                 <div className="um-mock-label"><Trans i18nKey="manual.shortcuts.help" /></div>
-                                <div style={{ fontSize: '1.5rem' }}><span className="um-kbd" style={{ fontSize: '1.2rem', padding: '4px 10px' }}>`</span></div>
+                                <div style={{ fontSize: '1.5rem' }}><span className="um-kbd" style={{ fontSize: '1.2rem', padding: '4px 10px' }}>alt+`(backtick)</span></div>
                             </div>
                             <div className="um-mock-col">
                                 <div className="um-mock-label"><Trans i18nKey="manual.shortcuts.issue" /></div>

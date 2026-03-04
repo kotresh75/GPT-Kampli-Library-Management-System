@@ -20,7 +20,6 @@ exports.getAdmins = (req, res) => {
 };
 
 // GET /api/admins/:id
-// GET /api/admins/:id
 exports.getAdminById = (req, res) => {
     const { id } = req.params;
     db.get("SELECT id, name, email, phone, status, last_login, created_at, profile_icon, is_root FROM admins WHERE id = ?", [id], (err, row) => {
@@ -303,7 +302,7 @@ exports.broadcastMessage = async (req, res) => {
                     SELECT DISTINCT s.full_name as name, s.email 
                     FROM students s
                     INNER JOIN circulation c ON s.id = c.student_id
-                    WHERE s.status = 'Active' AND date(c.due_date) < date('now')
+                    WHERE s.status = 'Active' AND date(c.due_date) < date('now', '+05:30')
                 `, [], (err, rows) => err ? reject(err) : resolve(rows || []));
             });
             recipients = [...recipients, ...overdueStudents];
