@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, Server, Database, Wifi, Cpu, HardDrive, RefreshCw, CheckCircle, AlertTriangle, XCircle, Zap, Box, Shield, HeartPulse, Gauge, Bug, ExternalLink, Copy, FolderOpen } from 'lucide-react';
+import { Activity, Server, Database, Wifi, Cpu, HardDrive, RefreshCw, CheckCircle, AlertTriangle, XCircle, Zap, Box, Shield, HeartPulse, Gauge, Bug, ExternalLink, Copy, FolderOpen, Clock, Monitor, Layers, MemoryStick, Hash, GitBranch, MessageSquare, FileText, ChevronRight, Terminal, Info } from 'lucide-react';
 
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
@@ -251,83 +251,485 @@ const SystemHealthPage = () => {
                 </div>
             </div>
 
-            {/* Compact Details Table */}
+            {/* ═══════════════════════════════════════
+                SYSTEM PARAMETERS — REDESIGNED
+               ═══════════════════════════════════════ */}
             <div className="glass-panel p-0 overflow-hidden">
-                <div className="p-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-gray-300 uppercase flex items-center gap-2">
-                        <Shield className="text-cyan-400" size={14} /> {t('sidebar.sys_health.system_params') || 'System Parameters'}
-                    </h3>
-                    <span className="text-[10px] text-gray-500 font-mono">
-                        Node: {health.process?.version} • Uptime: {formatUptime(health.system.uptime)}
-                    </span>
+                {/* Section Header */}
+                <div style={{
+                    padding: '16px 20px',
+                    borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    background: 'linear-gradient(135deg, rgba(6,182,212,0.08) 0%, rgba(139,92,246,0.06) 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                            width: '32px', height: '32px', borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #06b6d4, #8b5cf6)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(6,182,212,0.3)'
+                        }}>
+                            <Shield size={16} color="white" />
+                        </div>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main, #e5e7eb)' }}>
+                                {t('sidebar.sys_health.system_params') || 'System Parameters'}
+                            </h3>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', marginTop: '2px' }}>
+                                Runtime environment & infrastructure details
+                            </p>
+                        </div>
+                    </div>
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        fontSize: '0.7rem', color: 'var(--text-secondary, #6b7280)', fontFamily: 'monospace'
+                    }}>
+                        <div style={{
+                            width: '6px', height: '6px', borderRadius: '50%',
+                            background: '#10b981', boxShadow: '0 0 8px rgba(16,185,129,0.5)',
+                            animation: 'pulse 2s infinite'
+                        }} />
+                        Live Monitoring
+                    </div>
                 </div>
 
-                <table className="w-full text-sm">
-                    <tbody>
-                        <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="p-3 text-gray-400 text-xs w-1/3 flex items-center gap-2"><Server size={14} /> {t('sidebar.sys_health.host') || 'Host Platform'}</td>
-                            <td className="p-3 font-mono text-gray-300 text-xs">{health.system.platform} ({health.system.arch})</td>
-                            <td className="p-3 text-right"><span className="text-[10px] text-green-400 bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">Active</span></td>
-                        </tr>
-                        <tr className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="p-3 text-gray-400 text-xs w-1/3 flex items-center gap-2"><Database size={14} /> {t('sidebar.sys_health.db') || 'Database'}</td>
-                            <td className="p-3 font-mono text-gray-300 text-xs">SQLite ({health.database.size})</td>
-                            <td className="p-3 text-right">
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${health.database.status === 'Connected' ? 'text-green-400 bg-green-500/10 border-green-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'}`}>
-                                    {health.database.status}
-                                </span>
-                            </td>
-                        </tr>
-                        <tr className="hover:bg-white/5 transition-colors">
-                            <td className="p-3 text-gray-400 text-xs w-1/3 flex items-center gap-2"><Box size={14} /> {t('sidebar.sys_health.app_mem') || 'App Memory'}</td>
-                            <td className="p-3 font-mono text-gray-300 text-xs">{health.process?.memory ? formatBytes(health.process.memory.rss) : 'N/A'} (RSS)</td>
-                            <td className="p-3 text-right"><span className="text-[10px] text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">Running</span></td>
-                        </tr>
-                    </tbody>
-                </table>
+                {/* Parameter Cards Grid */}
+                <div style={{
+                    padding: '16px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px'
+                }}>
+                    {/* Host Platform Card */}
+                    <div style={{
+                        background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                        border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
+                        borderRadius: '12px', padding: '14px',
+                        display: 'flex', flexDirection: 'column', gap: '10px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: '3px solid #06b6d4'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{
+                                width: '30px', height: '30px', borderRadius: '8px',
+                                background: 'rgba(6,182,212,0.12)', color: '#06b6d4',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Monitor size={15} />
+                            </div>
+                            <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px',
+                                borderRadius: '10px', background: 'rgba(16,185,129,0.1)',
+                                color: '#10b981', border: '1px solid rgba(16,185,129,0.2)'
+                            }}>Active</span>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>
+                                {t('sidebar.sys_health.host') || 'Host Platform'}
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)', textTransform: 'capitalize' }}>
+                                {health.system.platform}
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)' }}>
+                                {health.system.arch}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Database Card */}
+                    <div style={{
+                        background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                        border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
+                        borderRadius: '12px', padding: '14px',
+                        display: 'flex', flexDirection: 'column', gap: '10px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: '3px solid #8b5cf6'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{
+                                width: '30px', height: '30px', borderRadius: '8px',
+                                background: 'rgba(139,92,246,0.12)', color: '#8b5cf6',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Database size={15} />
+                            </div>
+                            <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px',
+                                borderRadius: '10px',
+                                background: health.database.status === 'Connected' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
+                                color: health.database.status === 'Connected' ? '#10b981' : '#ef4444',
+                                border: `1px solid ${health.database.status === 'Connected' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`
+                            }}>{health.database.status}</span>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>
+                                {t('sidebar.sys_health.db') || 'Database'}
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)' }}>
+                                SQLite
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)' }}>
+                                Size: {health.database.size}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* CPU Model Card */}
+                    <div style={{
+                        background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                        border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
+                        borderRadius: '12px', padding: '14px',
+                        display: 'flex', flexDirection: 'column', gap: '10px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: '3px solid #3b82f6'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{
+                                width: '30px', height: '30px', borderRadius: '8px',
+                                background: 'rgba(59,130,246,0.12)', color: '#3b82f6',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Cpu size={15} />
+                            </div>
+                            <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px',
+                                borderRadius: '10px', background: 'rgba(59,130,246,0.1)',
+                                color: '#60a5fa', border: '1px solid rgba(59,130,246,0.2)'
+                            }}>{health.system.cpuLoad}%</span>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>
+                                Processor
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)' }} title={health.system.cpuModel}>
+                                {health.system.cpuModel?.length > 30 ? health.system.cpuModel.substring(0, 30) + '…' : health.system.cpuModel}
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)' }}>
+                                Load: {health.system.cpuLoad}%
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Node Runtime Card */}
+                    <div style={{
+                        background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                        border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
+                        borderRadius: '12px', padding: '14px',
+                        display: 'flex', flexDirection: 'column', gap: '10px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: '3px solid #10b981'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{
+                                width: '30px', height: '30px', borderRadius: '8px',
+                                background: 'rgba(16,185,129,0.12)', color: '#10b981',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Terminal size={15} />
+                            </div>
+                            <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px',
+                                borderRadius: '10px', background: 'rgba(16,185,129,0.1)',
+                                color: '#10b981', border: '1px solid rgba(16,185,129,0.2)'
+                            }}>Running</span>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>
+                                Node Runtime
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)' }}>
+                                {health.process?.version || 'N/A'}
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)' }}>
+                                PID: {health.process?.pid || '—'}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* System Uptime Card */}
+                    <div style={{
+                        background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                        border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
+                        borderRadius: '12px', padding: '14px',
+                        display: 'flex', flexDirection: 'column', gap: '10px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: '3px solid #f59e0b'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{
+                                width: '30px', height: '30px', borderRadius: '8px',
+                                background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Clock size={15} />
+                            </div>
+                            <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px',
+                                borderRadius: '10px', background: 'rgba(245,158,11,0.1)',
+                                color: '#f59e0b', border: '1px solid rgba(245,158,11,0.2)'
+                            }}>Uptime</span>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>
+                                System Uptime
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)' }}>
+                                {formatUptime(health.system.uptime)}
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)' }}>
+                                App: {formatUptime(health.process?.uptime || 0)}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* App Memory Card */}
+                    <div style={{
+                        background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                        border: '1px solid var(--glass-border, rgba(255,255,255,0.06))',
+                        borderRadius: '12px', padding: '14px',
+                        display: 'flex', flexDirection: 'column', gap: '10px',
+                        transition: 'all 0.2s ease',
+                        borderLeft: '3px solid #ec4899'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{
+                                width: '30px', height: '30px', borderRadius: '8px',
+                                background: 'rgba(236,72,153,0.12)', color: '#ec4899',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <Layers size={15} />
+                            </div>
+                            <span style={{
+                                fontSize: '0.65rem', fontWeight: 600, padding: '2px 8px',
+                                borderRadius: '10px', background: 'rgba(236,72,153,0.1)',
+                                color: '#ec4899', border: '1px solid rgba(236,72,153,0.2)'
+                            }}>Live</span>
+                        </div>
+                        <div>
+                            <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>
+                                {t('sidebar.sys_health.app_mem') || 'App Memory'}
+                            </p>
+                            <p style={{ margin: '4px 0 0', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)' }}>
+                                {health.process?.memory ? formatBytes(health.process.memory.rss) : 'N/A'}
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)' }}>
+                                Heap: {health.process?.memory ? formatBytes(health.process.memory.heapUsed) : '—'} / {health.process?.memory ? formatBytes(health.process.memory.heapTotal) : '—'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Disk Path Footer */}
+                {health.database.path && (
+                    <div style={{
+                        padding: '10px 20px',
+                        borderTop: '1px solid rgba(255,255,255,0.04)',
+                        background: 'rgba(0,0,0,0.1)',
+                        display: 'flex', alignItems: 'center', gap: '8px',
+                        fontSize: '0.68rem', fontFamily: 'monospace', color: 'var(--text-secondary, #6b7280)'
+                    }}>
+                        <Database size={12} style={{ opacity: 0.5, flexShrink: 0 }} />
+                        <span style={{ opacity: 0.6, flexShrink: 0 }}>DB Path:</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={health.database.path}>
+                            {health.database.path}
+                        </span>
+                    </div>
+                )}
             </div>
 
-            {/* Report Bug Card */}
+            {/* ═══════════════════════════════════════
+                REPORT A BUG — REDESIGNED
+               ═══════════════════════════════════════ */}
             <div className="glass-panel p-0 overflow-hidden mt-4">
-                <div className="p-3 border-b border-white/5 bg-white/5 flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-gray-300 uppercase flex items-center gap-2">
-                        <Bug className="text-red-400" size={14} /> {t('sidebar.sys_health.bug_title') || 'Report a Bug'}
-                    </h3>
+                {/* Gradient Banner Header */}
+                <div style={{
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, rgba(239,68,68,0.12) 0%, rgba(249,115,22,0.08) 50%, rgba(234,179,8,0.06) 100%)',
+                    borderBottom: '1px solid rgba(239,68,68,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{
+                            width: '40px', height: '40px', borderRadius: '12px',
+                            background: 'linear-gradient(135deg, #ef4444, #f97316)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 4px 16px rgba(239,68,68,0.3)'
+                        }}>
+                            <Bug size={20} color="white" />
+                        </div>
+                        <div>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--text-main, #e5e7eb)' }}>
+                                {t('sidebar.sys_health.bug_title') || 'Report a Bug'}
+                            </h3>
+                            <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-secondary, #9ca3af)' }}>
+                                Help us improve by reporting issues on GitHub
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={() => {
+                            const url = 'https://github.com/kotresh75/GPT-Kampli-Library-Management-System';
+                            if (window.electron?.openExternalUrl) {
+                                window.electron.openExternalUrl(url);
+                            } else {
+                                window.open(url, '_blank');
+                            }
+                        }}
+                        style={{
+                            fontSize: '0.7rem', color: '#f97316', fontWeight: 600,
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                            padding: '4px 10px', borderRadius: '20px', cursor: 'pointer',
+                            background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <ExternalLink size={12} /> Open Source
+                    </button>
                 </div>
-                <div className="p-4">
-                    <p className="text-xs text-gray-400 mb-4">
-                        {t('sidebar.sys_health.bug_desc') || 'Found something wrong? Report it on GitHub so we can fix it. Include the log file for faster diagnosis.'}
-                    </p>
+
+                <div style={{ padding: '20px' }}>
+                    {/* Step-by-Step Instructions */}
+                    <div style={{
+                        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px',
+                        marginBottom: '20px'
+                    }}>
+                        {[
+                            { step: 1, icon: FileText, title: 'Describe the Issue', desc: 'Write what happened and when', color: '#ef4444' },
+                            { step: 2, icon: FolderOpen, title: 'Attach Log File', desc: 'Copy the log path below', color: '#f59e0b' },
+                            { step: 3, icon: ExternalLink, title: 'Submit on GitHub', desc: 'Click the button to report', color: '#10b981' }
+                        ].map(({ step, icon: Icon, title, desc, color }) => (
+                            <div key={step} style={{
+                                display: 'flex', alignItems: 'flex-start', gap: '10px',
+                                padding: '14px', borderRadius: '10px',
+                                background: 'var(--glass-bg, rgba(255,255,255,0.02))',
+                                border: '1px solid var(--glass-border, rgba(255,255,255,0.06))'
+                            }}>
+                                <div style={{
+                                    width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+                                    background: `${color}15`, color: color,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.75rem', fontWeight: 700
+                                }}>
+                                    {step}
+                                </div>
+                                <div>
+                                    <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-main, #e5e7eb)' }}>
+                                        {title}
+                                    </p>
+                                    <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: 'var(--text-secondary, #9ca3af)' }}>
+                                        {desc}
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Auto-populated System Snapshot */}
+                    <div style={{
+                        padding: '14px', borderRadius: '10px', marginBottom: '16px',
+                        background: 'rgba(59,130,246,0.04)',
+                        border: '1px solid rgba(59,130,246,0.12)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                            <Info size={13} style={{ color: '#60a5fa' }} />
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                System Snapshot (Auto-included in report)
+                            </span>
+                        </div>
+                        <div style={{
+                            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px 20px',
+                            fontSize: '0.72rem', fontFamily: 'monospace'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <span style={{ color: 'var(--text-secondary, #9ca3af)' }}>OS</span>
+                                <span style={{ color: 'var(--text-main, #e5e7eb)', textTransform: 'capitalize' }}>{health.system.platform} ({health.system.arch})</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <span style={{ color: 'var(--text-secondary, #9ca3af)' }}>Node</span>
+                                <span style={{ color: 'var(--text-main, #e5e7eb)' }}>{health.process?.version || '—'}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <span style={{ color: 'var(--text-secondary, #9ca3af)' }}>CPU</span>
+                                <span style={{ color: 'var(--text-main, #e5e7eb)' }}>{health.system.cpuLoad}%</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                                <span style={{ color: 'var(--text-secondary, #9ca3af)' }}>Memory</span>
+                                <span style={{ color: 'var(--text-main, #e5e7eb)' }}>{health.system.memory.usage}%</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
+                                <span style={{ color: 'var(--text-secondary, #9ca3af)' }}>DB</span>
+                                <span style={{ color: 'var(--text-main, #e5e7eb)' }}>{health.database.status}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
+                                <span style={{ color: 'var(--text-secondary, #9ca3af)' }}>Health</span>
+                                <span style={{ color: healthScore >= 70 ? '#10b981' : healthScore >= 50 ? '#f59e0b' : '#ef4444', fontWeight: 600 }}>
+                                    {healthScore}/100
+                                </span>
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Log file path */}
                     {logPath && (
-                        <div className="mb-4 flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2 border border-white/10">
-                            <FolderOpen size={14} className="text-cyan-400 flex-shrink-0" />
-                            <span className="text-[11px] text-gray-300 font-mono truncate flex-1" title={logPath}>{logPath}</span>
+                        <div style={{
+                            marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px',
+                            padding: '12px 14px', borderRadius: '10px',
+                            background: 'rgba(6,182,212,0.05)',
+                            border: '1px solid rgba(6,182,212,0.15)'
+                        }}>
+                            <div style={{
+                                width: '28px', height: '28px', borderRadius: '8px', flexShrink: 0,
+                                background: 'rgba(6,182,212,0.12)', color: '#06b6d4',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}>
+                                <FolderOpen size={14} />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ margin: 0, fontSize: '0.7rem', color: 'var(--text-secondary, #9ca3af)', fontWeight: 500 }}>Log File Location</p>
+                                <p style={{
+                                    margin: '2px 0 0', fontSize: '0.72rem', fontFamily: 'monospace',
+                                    color: 'var(--text-main, #d1d5db)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+                                }} title={logPath}>{logPath}</p>
+                            </div>
                             <button
-                                className="text-[10px] px-2 py-1 rounded bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center gap-1 transition-all flex-shrink-0"
+                                style={{
+                                    fontSize: '0.7rem', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer',
+                                    background: 'rgba(6,182,212,0.1)', color: '#06b6d4', fontWeight: 600,
+                                    border: '1px solid rgba(6,182,212,0.25)',
+                                    display: 'flex', alignItems: 'center', gap: '5px',
+                                    transition: 'all 0.2s ease', flexShrink: 0
+                                }}
                                 onClick={() => {
                                     navigator.clipboard.writeText(logPath);
                                     setCopied(true);
                                     setTimeout(() => setCopied(false), 2000);
                                 }}
                             >
-                                {copied ? <CheckCircle size={10} /> : <Copy size={10} />}
+                                {copied ? <CheckCircle size={12} /> : <Copy size={12} />}
                                 {copied ? (t('sidebar.sys_health.copied') || 'Copied!') : (t('sidebar.sys_health.copy_path') || 'Copy Path')}
                             </button>
                         </div>
                     )}
 
-                    {/* Action buttons */}
-                    <div className="flex gap-3">
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '10px' }}>
                         <button
-                            className="px-4 py-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-medium flex items-center gap-2 transition-all"
+                            style={{
+                                flex: 1, padding: '12px 16px', borderRadius: '10px', cursor: 'pointer',
+                                background: 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(249,115,22,0.1) 100%)',
+                                color: '#f87171', fontWeight: 600, fontSize: '0.82rem',
+                                border: '1px solid rgba(239,68,68,0.25)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                transition: 'all 0.2s ease'
+                            }}
                             onClick={() => {
                                 const version = health?.process?.version || 'unknown';
                                 const platform = health?.system?.platform || 'unknown';
                                 const arch = health?.system?.arch || 'unknown';
                                 const body = encodeURIComponent(
-                                    `## Bug Report\n\n**App Version:** ${document.title || 'GPTK LMS'}\n**Node Version:** ${version}\n**OS:** ${platform} (${arch})\n\n### What happened?\n\nDescribe the issue here...\n\n### Steps to reproduce\n\n1. \n2. \n3. \n\n### Expected behavior\n\n\n### Log file\n\nAttach the log file from: \`${logPath}\`\n`
+                                    `## Bug Report\n\n**App Version:** ${document.title || 'GPTK LMS'}\n**Node Version:** ${version}\n**OS:** ${platform} (${arch})\n**Health Score:** ${healthScore}/100\n**CPU Load:** ${health?.system?.cpuLoad || '—'}%\n**Memory Usage:** ${health?.system?.memory?.usage || '—'}%\n**Database:** ${health?.database?.status || '—'} (${health?.database?.size || '—'})\n\n### What happened?\n\nDescribe the issue here...\n\n### Steps to reproduce\n\n1. \n2. \n3. \n\n### Expected behavior\n\n\n### Log file\n\nAttach the log file from: \`${logPath}\`\n`
                                 );
                                 const url = `https://github.com/kotresh75/GPT-Kampli-Library-Management-System/issues/new?title=${encodeURIComponent('Bug: ')}&body=${body}&labels=bug`;
                                 if (window.electron?.openExternalUrl) {
@@ -337,8 +739,30 @@ const SystemHealthPage = () => {
                                 }
                             }}
                         >
-                            <ExternalLink size={14} />
+                            <Bug size={16} />
                             {t('sidebar.sys_health.report_bug') || 'Report Bug on GitHub'}
+                            <ChevronRight size={14} style={{ opacity: 0.6 }} />
+                        </button>
+                        <button
+                            style={{
+                                padding: '12px 16px', borderRadius: '10px', cursor: 'pointer',
+                                background: 'var(--glass-bg, rgba(255,255,255,0.03))',
+                                color: 'var(--text-secondary, #9ca3af)', fontWeight: 600, fontSize: '0.82rem',
+                                border: '1px solid var(--glass-border, rgba(255,255,255,0.08))',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onClick={() => {
+                                const url = 'https://github.com/kotresh75/GPT-Kampli-Library-Management-System/issues';
+                                if (window.electron?.openExternalUrl) {
+                                    window.electron.openExternalUrl(url);
+                                } else {
+                                    window.open(url, '_blank');
+                                }
+                            }}
+                        >
+                            <MessageSquare size={16} />
+                            View Issues
                         </button>
                     </div>
                 </div>

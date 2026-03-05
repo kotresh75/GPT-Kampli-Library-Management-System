@@ -137,6 +137,9 @@ cron.schedule('0 0 * * *', async () => {
 
                     console.log('[Cron] Starting Auto-Backup to Cloud...');
                     await cloudBackupService.performCloudBackup();
+                    // Mark today's backup date
+                    const today = getISTDate().toISOString().split('T')[0];
+                    db.run("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('last_cloud_backup_date', ?)", [today]);
                 }
             } catch (e) {
                 console.error('[Cron] Error parsing backup config:', e);
@@ -145,10 +148,70 @@ cron.schedule('0 0 * * *', async () => {
     });
 });
 
+// Startup Check: Cloud Backup (if not already backed up today)
+const checkCloudBackupOnStartup = async () => {
+    const today = getISTDate().toISOString().split('T')[0]; // IST date
+
+    db.get("SELECT value FROM system_settings WHERE key = 'last_cloud_backup_date'", async (err, row) => {
+        if (err) {
+            console.error('[Cron] Error checking last backup date:', err);
+            return;
+        }
+
+        const lastBackupDate = row ? row.value : null;
+
+        if (lastBackupDate === today) {
+            console.log('[Cron] Cloud backup already done today. Skipping startup backup.');
+            return;
+        }
+
+        // Read backup config
+        db.get("SELECT value FROM system_settings WHERE key = 'backup_config'", async (configErr, configRow) => {
+            if (configErr || !configRow) {
+                return; // No config or error — skip silently
+            }
+
+            try {
+                const config = JSON.parse(configRow.value);
+
+                if (!config.autoBackup || !config.connectionUri) {
+                    return; // Auto-backup not enabled
+                }
+
+                if (config.frequency === 'on_close') {
+                    console.log('[Cron] Backup frequency set to "on_close". Skipping startup backup.');
+                    return;
+                }
+
+                if (config.frequency === 'weekly') {
+                    const day = getISTDate().getDay(); // 0 = Sunday
+                    if (day !== 0) {
+                        console.log('[Cron] Weekly backup active. Today is not Sunday. Skipping startup backup.');
+                        return;
+                    }
+                }
+
+                console.log('[Cron] No backup done today. Starting Cloud Backup on startup...');
+                const cloudBackupService = require('./cloudBackupService');
+                await cloudBackupService.performCloudBackup();
+
+                // Mark today's backup
+                db.run("INSERT OR REPLACE INTO system_settings (key, value) VALUES ('last_cloud_backup_date', ?)", [today]);
+                console.log('[Cron] Startup cloud backup completed.');
+
+            } catch (e) {
+                console.error('[Cron] Error during startup backup check:', e);
+            }
+        });
+    });
+};
+
 module.exports = {
     init: () => {
         console.log('[Cron] Service Initialized');
         // Check for overdue notices on startup (Run once per day)
         checkOverdueNotices();
+        // Check for cloud backup on startup (Run once per day)
+        checkCloudBackupOnStartup();
     }
 };

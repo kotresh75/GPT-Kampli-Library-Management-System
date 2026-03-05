@@ -153,17 +153,24 @@
 }
 
 .unsaved-alert {
-    background: rgba(234, 179, 8, 0.1);
-    border: 1px solid rgba(234, 179, 8, 0.3);
+    background: rgba(234, 179, 8, 0.15);
+    border: 1px solid rgba(234, 179, 8, 0.4);
     border-radius: 0.5rem;
     padding: 0.75rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-size: 0.75rem;
+    font-weight: 600;
     color: #fde047;
     animation: pulse 2s infinite;
     margin-top: auto;
+}
+
+body[data-theme='light'] .unsaved-alert {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: rgba(180, 83, 9, 0.4);
+    color: #92400e;
 }
 
 /* ============================

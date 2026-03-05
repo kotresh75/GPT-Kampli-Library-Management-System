@@ -175,7 +175,7 @@ body[data-theme='dark'] .gradient-bg::after {
 
 /* --- Typography & Elements --- */
 .hero-title {
-    font-size: 3rem;
+    font-size: var(--font-size-5xl);
     font-weight: 700;
     margin-bottom: 0.5rem;
     background: var(--text-gradient);
@@ -191,7 +191,7 @@ body[data-theme='dark'] .gradient-bg::after {
     border: none;
     padding: 16px 48px;
     border-radius: 50px;
-    font-size: 1.1rem;
+    font-size: var(--font-size-base);
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
@@ -319,7 +319,7 @@ body[data-theme='dark'] .gradient-bg::after {
 
 
 .lang-code {
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
@@ -358,12 +358,12 @@ body[data-theme='dark'] .gradient-bg::after {
 
 .brand-name {
     font-weight: 700;
-    font-size: 1.2rem;
+    font-size: var(--font-size-lg);
     letter-spacing: 0.5px;
 }
 
 .brand-tagline {
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
     color: var(--text-secondary);
     letter-spacing: 1px;
     text-transform: uppercase;
@@ -375,7 +375,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .hero-title {
-    font-size: 3.5rem;
+    font-size: var(--font-size-5xl);
     /* Larger impact */
     font-weight: 800;
     margin: 0;
@@ -384,7 +384,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .hero-subtitle-gradient {
-    font-size: 2rem;
+    font-size: var(--font-size-2xl);
     font-weight: 300;
     margin: 0;
     background: var(--text-gradient);
@@ -395,7 +395,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .hero-description {
-    font-size: 1.15rem;
+    font-size: var(--font-size-lg);
     color: var(--text-main);
     opacity: 0.85;
     line-height: 1.6;
@@ -413,7 +413,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .login-hint {
-    font-size: 0.8rem;
+    font-size: var(--font-size-sm);
     color: var(--text-secondary);
     opacity: 0.8;
 }
@@ -429,7 +429,7 @@ body[data-theme='dark'] .gradient-bg::after {
     display: flex;
     justify-content: center;
     gap: 1.5rem;
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     font-weight: 500;
     margin-bottom: 0.5rem;
     color: var(--text-main);
@@ -437,7 +437,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .copyright {
-    font-size: 0.75rem;
+    font-size: var(--font-size-xs);
     opacity: 0.6;
 }
 
@@ -538,7 +538,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .login-title {
-    font-size: 1.8rem;
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     margin: 0;
     background: var(--text-gradient);
@@ -548,7 +548,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .login-subtitle {
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     color: var(--text-secondary);
     margin-top: 0.5rem;
 }
@@ -580,7 +580,7 @@ body[data-theme='dark'] .gradient-bg::after {
     border: 1px solid var(--glass-border);
     border-radius: 12px;
     color: var(--text-main);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     font-family: inherit;
     transition: all 0.3s;
     box-sizing: border-box;
@@ -629,7 +629,7 @@ body[data-theme='dark'] .gradient-bg::after {
     color: #ff4757;
     padding: 10px;
     border-radius: 8px;
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
     text-align: center;
     border: 1px solid rgba(255, 71, 87, 0.3);
     animation: shake 0.4s ease-in-out;
@@ -678,7 +678,7 @@ body[data-theme='dark'] .gradient-bg::after {
 
 .forgot-password a {
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: var(--font-size-sm);
     text-decoration: none;
     transition: color 0.2s;
 }
@@ -1140,7 +1140,7 @@ body[data-theme='dark'] .gradient-bg::after {
 }
 
 .login-title {
-    font-size: 1.8rem;
+    font-size: var(--font-size-2xl);
     font-weight: 700;
     background: var(--text-gradient);
     background-clip: text;
@@ -1158,7 +1158,7 @@ body[data-theme='dark'] .gradient-bg::after {
     border: 1px solid var(--glass-border);
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-main);
-    font-size: 1rem;
+    font-size: var(--font-size-base);
     outline: none;
     transition: all 0.3s;
 }

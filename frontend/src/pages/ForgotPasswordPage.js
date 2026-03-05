@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { KeyRound, Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { KeyRound, Mail, CheckCircle, AlertCircle, Type } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
 import { useLanguage } from '../context/LanguageContext';
 import InteractiveBG from '../components/common/InteractiveBG';
@@ -16,8 +16,20 @@ const ForgotPasswordPage = () => {
     const [error, setError] = useState('');
 
     const navigate = useNavigate();
-    const { theme } = usePreferences();
+    const { theme, fontScale, setFontScale } = usePreferences();
     const { t, language } = useLanguage();
+
+    // Map numeric scale to labels
+    const SCALE_MAP = { 85: 'S', 100: 'M', 115: 'L', 130: 'XL' };
+
+    // Helper to cycle font sizes
+    const cycleFontSize = () => {
+        const scales = [85, 100, 115, 130];
+        let currentIdx = scales.indexOf(fontScale);
+        if (currentIdx === -1) currentIdx = 1;
+        const nextIndex = (currentIdx + 1) % scales.length;
+        setFontScale(scales[nextIndex]);
+    };
 
     const handleEmailSubmit = async (e) => {
         e.preventDefault();
@@ -106,6 +118,13 @@ const ForgotPasswordPage = () => {
             <InteractiveBG />
 
             <div className="login-card glass-panel bounce-in">
+                {/* Font Size Toggle */}
+                <div className="login-controls">
+                    <button className="icon-btn" onClick={cycleFontSize} title={t('change_font_size') || 'Change Font Size'}>
+                        <Type size={18} />
+                        <span className="lang-code">{SCALE_MAP[fontScale] || 'M'}</span>
+                    </button>
+                </div>
                 <div className="text-center mb-8">
                     <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
                         <KeyRound size={32} className="text-accent" />
