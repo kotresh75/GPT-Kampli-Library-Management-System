@@ -6,6 +6,7 @@ import GlassSelect from '../components/common/GlassSelect';
 import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
+import API_BASE from '../config/apiConfig';
 
 const PolicyPage = () => {
     const { t } = useLanguage();
@@ -34,7 +35,7 @@ const PolicyPage = () => {
 
     const fetchSettings = async () => {
         try {
-            const res = await fetch('http://localhost:17221/api/settings/app');
+            const res = await fetch(`${API_BASE}/api/settings/app`);
             const data = await res.json();
             setSettings(data);
         } catch (e) {
@@ -56,7 +57,7 @@ const PolicyPage = () => {
     const fetchPolicies = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:17221/api/policy');
+            const res = await fetch(`${API_BASE}/api/policy`);
             const data = await res.json();
             setPolicies(data);
         } catch (err) {
@@ -95,7 +96,7 @@ const PolicyPage = () => {
         const adminId = user ? user.id : null;
 
         try {
-            const res = await fetch('http://localhost:17221/api/policy', {
+            const res = await fetch(`${API_BASE}/api/policy`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

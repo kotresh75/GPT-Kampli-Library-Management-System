@@ -6,6 +6,7 @@ import ConfirmationModal from '../common/ConfirmationModal';
 import StatusModal from '../common/StatusModal';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
+import API_BASE from '../../config/apiConfig';
 
 const PERMISSIONS_LIST = [
     { id: 'CATALOG', label: 'Catalog Access', description: 'Can manage book inventory (add/edit books)' },
@@ -61,7 +62,7 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
 
     useEffect(() => {
         setMounted(true);
-        fetch('http://localhost:17221/api/utils/icons')
+        fetch(`${API_BASE}/api/utils/icons`)
             .then(res => res.json())
             .then(data => setIcons(Array.isArray(data) ? data : []))
             .catch(err => console.error("Failed to fetch icons", err));
@@ -144,8 +145,8 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
         try {
             const token = localStorage.getItem('auth_token');
             const url = isEdit
-                ? `http://localhost:17221/api/staff/${staff.id}`
-                : `http://localhost:17221/api/staff`;
+                ? `${API_BASE}/api/staff/${staff.id}`
+                : `${API_BASE}/api/staff`;
 
             const method = isEdit ? 'PUT' : 'POST';
 
@@ -185,7 +186,7 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
         setConfirmConfig({ show: false, action: null });
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:17221/api/staff/${staff.id}/reset-password`, {
+            const res = await fetch(`${API_BASE}/api/staff/${staff.id}/reset-password`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

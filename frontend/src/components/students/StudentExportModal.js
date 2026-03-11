@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Download, FileText, FileSpreadsheet, Layers, CheckCircle2, Filter } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import API_BASE from '../../config/apiConfig';
 
 const StudentExportModal = ({ onClose, onExport, totalStudents, selectedCount, filteredCount, data = [], columns = [], onFetchAll, selectedIds }) => {
     const { t } = useLanguage();
@@ -13,7 +14,7 @@ const StudentExportModal = ({ onClose, onExport, totalStudents, selectedCount, f
     const [settings, setSettings] = useState({});
 
     useEffect(() => {
-        fetch('http://localhost:17221/api/settings/app')
+        fetch(`${API_BASE}/api/settings/app`)
             .then(res => res.json())
             .then(data => setSettings(data))
             .catch(() => { });

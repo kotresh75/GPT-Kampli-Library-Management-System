@@ -1,4 +1,4 @@
-﻿/* =========================================
+/* =========================================
    8.0. Premium Glassmorphism Design System
    ========================================= */
 
@@ -11,6 +11,7 @@
     --bg-color: #f0f4f8;
     /* Stylish Aurora Gradient for Light Mode */
     --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-bg-solid: rgba(255, 255, 255, 0.95);
     /* More opaque for better readability */
     --glass-border: rgba(0, 0, 0, 0.08);
     /* Darker border for contrast on light bg */
@@ -45,6 +46,7 @@ html {
     --bg-color: #0f0c29;
     /* Deep Blue/Purple Gradient for Dark Mode */
     --glass-bg: rgba(16, 22, 36, 0.6);
+    --glass-bg-solid: rgba(16, 22, 36, 0.92);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 
@@ -107,34 +109,32 @@ code {
     content: '';
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.6;
-    animation: floatOrb 10s infinite alternate ease-in-out;
+    opacity: 0.5;
+    /* Removed: filter blur(80px) and animation floatOrb */
 }
 
 /* Light Mode Orbs */
 body[data-theme='light'] .gradient-bg::before {
-    width: 50vw;
-    height: 50vw;
-    background: #FF9A9E;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, #FF9A9E 0%, transparent 70%);
     top: -10%;
     left: -10%;
 }
 
 body[data-theme='light'] .gradient-bg::after {
-    width: 40vw;
-    height: 40vw;
-    background: #FECFEF;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, #FECFEF 0%, transparent 70%);
     bottom: -10%;
     right: -10%;
-    animation-delay: -5s;
 }
 
 /* Dark Mode Orbs */
 body[data-theme='dark'] .gradient-bg::before {
     width: 60vw;
     height: 60vw;
-    background: #240b36;
+    background: radial-gradient(circle, #240b36 0%, transparent 70%);
     /* Deep Purple */
     top: -20%;
     left: -10%;
@@ -143,7 +143,7 @@ body[data-theme='dark'] .gradient-bg::before {
 body[data-theme='dark'] .gradient-bg::after {
     width: 50vw;
     height: 50vw;
-    background: #0f0c29;
+    background: radial-gradient(circle, #0f0c29 0%, transparent 70%);
     /* Deep Blue */
     bottom: -20%;
     right: -10%;

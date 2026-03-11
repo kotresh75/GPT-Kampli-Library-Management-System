@@ -4,6 +4,7 @@ import { X, Save, BookOpen, Lock } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
+import API_BASE from '../../config/apiConfig';
 
 const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
     const { t } = useLanguage();
@@ -26,7 +27,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
 
     // 2. Fetch Departments & Layout Delay
     useEffect(() => {
-        fetch('http://localhost:17221/api/departments')
+        fetch(`${API_BASE}/api/departments`)
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(console.error);
@@ -51,7 +52,7 @@ const SmartEditBookModal = ({ book, onClose, onUpdated }) => {
         setError('');
 
         try {
-            const res = await fetch(`http://localhost:17221/api/books/${book.isbn}`, {
+            const res = await fetch(`${API_BASE}/api/books/${book.isbn}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

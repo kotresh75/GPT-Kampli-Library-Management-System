@@ -27,7 +27,7 @@ exports.testConnection = async (uri) => {
     try {
         client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
         await client.connect();
-        await client.db().command({ ping: 1 });
+        await client.db('GPT_Kampli_Manager').command({ ping: 1 });
         return { success: true, message: "Connected successfully" };
     } catch (error) {
         throw new Error(`Connection failed: ${error.message}`);
@@ -36,10 +36,11 @@ exports.testConnection = async (uri) => {
     }
 };
 
-exports.performCloudBackup = async () => {
+exports.performCloudBackup = async (options = {}) => {
     let client;
     try {
-        console.log('[CloudBackup] Starting backup process...');
+        const forceFull = options.forceFull === true;
+        console.log(`[CloudBackup] Starting ${forceFull ? 'FULL ' : ''}backup process...`);
 
         // 1. Get Config
         const config = await new Promise((resolve, reject) => {
@@ -67,7 +68,7 @@ exports.performCloudBackup = async () => {
         // 3. Connect to MongoDB
         client = new MongoClient(config.connectionUri);
         await client.connect();
-        const mongoDb = client.db(); // Uses DB from URI or default
+        const mongoDb = client.db('GPT_Kampli_Manager'); // Using specified DB name
 
         console.log('[CloudBackup] Connected to MongoDB Atlas.');
 
@@ -78,17 +79,17 @@ exports.performCloudBackup = async () => {
 
         let tablesToBackup = [];
 
-        if (dirtyTables.length > 0) {
+        if (forceFull) {
+            console.log('[CloudBackup] Manual override: Performing FULL backup of all tables.');
+            tablesToBackup = tables;
+        } else if (dirtyTables.length > 0) {
             console.log(`[CloudBackup] Smart Backup: Only syncing modified tables: ${dirtyTables.join(', ')}`);
             // Validate tables exist in schema
             tablesToBackup = tables.filter(t => dirtyTables.includes(t));
         } else {
-            // Fallback: If no specific tables tracked (shouldn't happen with new hook), sync all
-            // Or if user forced backup manually via Settings Page (we should probably sync all then)
-            // But for 'on_close' automation, this branch might mean "nothing to sync" if isDirty() check passed?
-            // Safer to sync ALL if we are here and unsure.
-            console.log('[CloudBackup] No specific dirty tables found. Performing FULL backup.');
-            tablesToBackup = tables;
+            console.log('[CloudBackup] No dirty tables found. Smart Backup skipping.');
+            // Only back up tables if explicitly asked, else do nothing to save bandwidth
+            return { success: true, message: "No new changes to backup", totalRecords: 0, skipped: true };
         }
 
         let totalRecords = 0;
@@ -100,6 +101,13 @@ exports.performCloudBackup = async () => {
             // If rows is empty, we just clear collection. Correct.
 
             const collection = mongoDb.collection(table);
+            
+            // Check if collection exists, if not, create it
+            const collections = await mongoDb.listCollections({ name: table }).toArray();
+            if (collections.length === 0) {
+                await mongoDb.createCollection(table);
+            }
+            
             await collection.deleteMany({});
 
             if (rows && rows.length > 0) {
@@ -152,7 +160,7 @@ exports.restoreFromCloud = async () => {
         // 2. Connect to MongoDB
         client = new MongoClient(config.connectionUri);
         await client.connect();
-        const mongoDb = client.db();
+        const mongoDb = client.db('GPT_Kampli_Manager');
 
         console.log('[CloudRestore] Connected to MongoDB Atlas. Fetching data...');
 

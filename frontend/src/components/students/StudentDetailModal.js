@@ -4,6 +4,7 @@ import { X, User, BookOpen, DollarSign, Calendar, Mail, Phone, MapPin, AlertCirc
 import TransactionDetailsModal from '../common/TransactionDetailsModal';
 import IDCardPreviewModal from './IDCardPreviewModal'; // Updated import
 import '../../styles/components/smart-book-detail.css'; // Reusing the shared smart styling
+import API_BASE from '../../config/apiConfig';
 
 const StudentDetailModal = ({ student, onClose }) => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -20,13 +21,13 @@ const StudentDetailModal = ({ student, onClose }) => {
     useEffect(() => {
         if (student?.id) {
             // Loans
-            fetch(`http://localhost:17221/api/circulation/loans/${student.id}`)
+            fetch(`${API_BASE}/api/circulation/loans/${student.id}`)
                 .then(res => res.json())
                 .then(data => setLoans(Array.isArray(data) ? data : []))
                 .catch(console.error);
 
             // Fines
-            fetch(`http://localhost:17221/api/fines/student/${student.id}`)
+            fetch(`${API_BASE}/api/fines/student/${student.id}`)
                 .then(res => res.json())
                 .then(data => setFines(Array.isArray(data) ? data : []))
                 .catch(console.error);
@@ -35,7 +36,7 @@ const StudentDetailModal = ({ student, onClose }) => {
 
     useEffect(() => {
         if (activeTab === 'circulation' && student?.id) {
-            const url = `http://localhost:17221/api/circulation/history?student_id=${student.id}&limit=100`;
+            const url = `${API_BASE}/api/circulation/history?student_id=${student.id}&limit=100`;
             console.log("Fetching student history:", url);
             setLoading(true);
             const token = localStorage.getItem('auth_token');
@@ -57,7 +58,7 @@ const StudentDetailModal = ({ student, onClose }) => {
     const [maxLoans, setMaxLoans] = useState(5);
 
     useEffect(() => {
-        fetch('http://localhost:17221/api/policy')
+        fetch(`${API_BASE}/api/policy`)
             .then(res => res.json())
             .then(data => {
                 if (data.policy_borrowing?.student?.maxBooks) {

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-book-detail.css';
+import API_BASE from '../../config/apiConfig';
 
 const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
     const { t } = useLanguage();
@@ -24,7 +25,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
         if (activeTab === 'circulation' && book?.isbn) {
             setLoadingHolders(true);
             const token = localStorage.getItem('auth_token');
-            fetch(`http://localhost:17221/api/circulation/holders/${book.isbn}`, {
+            fetch(`${API_BASE}/api/circulation/holders/${book.isbn}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.json())
@@ -43,7 +44,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
             setLoadingHistory(true);
             const token = localStorage.getItem('auth_token');
             // Using isbn param for strict filtering
-            fetch(`http://localhost:17221/api/circulation/history?isbn=${encodeURIComponent(book.isbn)}&limit=50`, {
+            fetch(`${API_BASE}/api/circulation/history?isbn=${encodeURIComponent(book.isbn)}&limit=50`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
                 .then(res => res.json())

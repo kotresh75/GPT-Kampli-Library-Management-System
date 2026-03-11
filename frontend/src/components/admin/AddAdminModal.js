@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Save, User, Mail, Phone, Shield, AlertCircle, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
+import API_BASE from '../../config/apiConfig';
 
 const TOTAL_ICONS = 15;
 
@@ -22,7 +23,7 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        fetch('http://localhost:17221/api/utils/icons')
+        fetch(`${API_BASE}/api/utils/icons`)
             .then(res => res.json())
             .then(data => setIcons(Array.isArray(data) ? data : []))
             .catch(err => console.error("Failed to fetch icons", err));
@@ -53,8 +54,8 @@ const AddAdminModal = ({ admin, onClose, onSave }) => {
 
         try {
             const url = isEdit
-                ? `http://localhost:17221/api/admins/${admin.id}`
-                : `http://localhost:17221/api/admins`;
+                ? `${API_BASE}/api/admins/${admin.id}`
+                : `${API_BASE}/api/admins`;
             const method = isEdit ? 'PUT' : 'POST';
             const token = localStorage.getItem('auth_token');
 

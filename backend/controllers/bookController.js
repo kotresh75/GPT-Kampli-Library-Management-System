@@ -437,3 +437,80 @@ exports.bulkUploadBooks = (req, res) => {
         });
     });
 };
+
+// POST /api/books/bulk-delete — Bulk delete with pre-validation
+exports.bulkDeleteBooks = (req, res) => {
+    const { isbns } = req.body;
+    if (!isbns || !Array.isArray(isbns) || isbns.length === 0) {
+        return res.status(400).json({ error: "Invalid payload: Expected array of ISBNs" });
+    }
+
+    const placeholders = isbns.map(() => '?').join(',');
+
+    db.serialize(() => {
+        // 1. PRE-CHECK: Find ALL books that have issued copies
+        db.all(
+            `SELECT bc.book_isbn, COUNT(*) as issued_count 
+             FROM book_copies bc 
+             WHERE bc.book_isbn IN (${placeholders}) AND bc.status = 'Issued' 
+             GROUP BY bc.book_isbn`,
+            isbns,
+            (err, issuedRows) => {
+                if (err) return res.status(500).json({ error: err.message });
+
+                if (issuedRows && issuedRows.length > 0) {
+                    const blockedList = issuedRows.map(r => `${r.book_isbn} (${r.issued_count} issued)`).join(', ');
+                    return res.status(400).json({
+                        error: `Cannot delete: ${issuedRows.length} book(s) have issued copies — ${blockedList}`
+                    });
+                }
+
+                // 2. PRE-CHECK: Verify all ISBNs exist
+                db.all(
+                    `SELECT isbn FROM books WHERE isbn IN (${placeholders})`,
+                    isbns,
+                    (err, existingBooks) => {
+                        if (err) return res.status(500).json({ error: err.message });
+
+                        if (!existingBooks || existingBooks.length === 0) {
+                            return res.status(404).json({ error: "No matching books found." });
+                        }
+
+                        const existingIsbns = existingBooks.map(b => b.isbn);
+                        const existingPlaceholders = existingIsbns.map(() => '?').join(',');
+
+                        // 3. Cascade: Update transaction logs with suffix
+                        db.run(
+                            `UPDATE transaction_logs SET book_title = book_title || ' (Deleted)' WHERE book_isbn IN (${existingPlaceholders})`,
+                            existingIsbns,
+                            (err) => {
+                                if (err) console.error("Failed to update transaction logs suffix:", err);
+
+                                // 4. Delete copies
+                                db.run(
+                                    `DELETE FROM book_copies WHERE book_isbn IN (${existingPlaceholders})`,
+                                    existingIsbns,
+                                    (err) => {
+                                        if (err) return res.status(500).json({ error: "Failed to delete copies: " + err.message });
+
+                                        // 5. Delete books
+                                        db.run(
+                                            `DELETE FROM books WHERE isbn IN (${existingPlaceholders})`,
+                                            existingIsbns,
+                                            function (err) {
+                                                if (err) return res.status(500).json({ error: "Failed to delete books: " + err.message });
+
+                                                socketService.emit('book_update', { type: 'BULK_DELETE', count: this.changes });
+                                                res.json({ message: `${this.changes} book(s) deleted successfully. History preserved with suffix.` });
+                                            }
+                                        );
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+            }
+        );
+    });
+};

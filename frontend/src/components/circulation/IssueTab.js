@@ -7,6 +7,7 @@ import IDCardTemplate from '../students/IDCardTemplate';
 import cardBgUrl from '../../ID Template/id_bg.png';
 import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 import { useLanguage } from '../../context/LanguageContext';
+import API_BASE from '../../config/apiConfig';
 
 const IssueTab = () => {
     const { t } = useLanguage();
@@ -30,7 +31,7 @@ const IssueTab = () => {
 
     // Fetch Email Event Settings
     useEffect(() => {
-        fetch('http://localhost:17221/api/settings/app')
+        fetch(`${API_BASE}/api/settings/app`)
             .then(res => res.json())
             .then(data => {
                 if (data.email_events) setEmailEvents(data.email_events);
@@ -58,13 +59,13 @@ const IssueTab = () => {
             }
             try {
                 // Fetch Principal Signature
-                const principalRes = await fetch('http://localhost:17221/api/settings/principal-signature');
+                const principalRes = await fetch(`${API_BASE}/api/settings/principal-signature`);
                 const principalData = await principalRes.json();
 
                 // Fetch Department for HOD signature
                 let hodSignature = null;
                 if (student.dept_id) {
-                    const deptRes = await fetch(`http://localhost:17221/api/departments/${student.dept_id}`);
+                    const deptRes = await fetch(`${API_BASE}/api/departments/${student.dept_id}`);
                     if (deptRes.ok) {
                         const deptData = await deptRes.json();
                         hodSignature = deptData.hod_signature;
@@ -117,7 +118,7 @@ const IssueTab = () => {
     // 1. Search Students for Dropdown
     const searchStudents = async (query) => {
         const token = localStorage.getItem('auth_token');
-        const res = await fetch(`http://localhost:17221/api/circulation/search/students?q=${query}`, {
+        const res = await fetch(`${API_BASE}/api/circulation/search/students?q=${query}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         return await res.json();
@@ -142,7 +143,7 @@ const IssueTab = () => {
 
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:17221/api/circulation/validate-borrower/${idOrRegNo}`, {
+            const res = await fetch(`${API_BASE}/api/circulation/validate-borrower/${idOrRegNo}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -173,7 +174,7 @@ const IssueTab = () => {
     // 1. Search Books for Dropdown
     const searchBooks = async (query) => {
         const token = localStorage.getItem('auth_token');
-        const res = await fetch(`http://localhost:17221/api/circulation/search/books?q=${query}`, {
+        const res = await fetch(`${API_BASE}/api/circulation/search/books?q=${query}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -193,7 +194,7 @@ const IssueTab = () => {
 
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:17221/api/circulation/resolve-scan`, {
+            const res = await fetch(`${API_BASE}/api/circulation/resolve-scan`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -242,7 +243,7 @@ const IssueTab = () => {
 
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:17221/api/circulation/issue`, {
+            const res = await fetch(`${API_BASE}/api/circulation/issue`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

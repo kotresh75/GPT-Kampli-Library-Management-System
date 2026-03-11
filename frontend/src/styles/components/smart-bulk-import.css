@@ -441,3 +441,35 @@ th:hover .apply-all-btn {
     display: flex;
     gap: 12px;
 }
+
+/* ===================
+   EXPANDABLE INPUT CELL (Excel-like)
+   =================== */
+.expandable-cell {
+    position: relative;
+    width: 100%;
+}
+
+.expandable-cell input {
+    transition: width 0.15s ease, box-shadow 0.15s ease;
+}
+
+.expandable-cell.expanded input {
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), 0 0 0 2px var(--primary-color, #63b3ed);
+    background: var(--input-bg-focus, var(--bg-color));
+}
+
+/* Hidden span used to measure text width */
+.expandable-cell-measurer {
+    position: absolute;
+    visibility: hidden;
+    height: 0;
+    overflow: hidden;
+    white-space: pre;
+    font-size: inherit;
+    font-family: inherit;
+    padding: 0 var(--space-4, 16px);
+    pointer-events: none;
+}

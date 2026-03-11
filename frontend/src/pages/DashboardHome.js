@@ -15,6 +15,7 @@ import StatsCard from '../components/dashboard/StatsCard';
 import ChartWidget from '../components/dashboard/ChartWidget';
 import RecentAuditTable from '../components/dashboard/RecentAuditTable';
 import DashboardDetailModal from '../components/dashboard/DashboardDetailModal';
+import API_BASE from '../config/apiConfig';
 
 const DashboardHome = () => {
     const navigate = useNavigate();
@@ -45,9 +46,9 @@ const DashboardHome = () => {
         setLoading(true);
         try {
             const [statsRes, chartsRes, logsRes] = await Promise.all([
-                axios.get('http://localhost:17221/api/dashboard/stats'),
-                axios.get('http://localhost:17221/api/dashboard/charts'),
-                axios.get('http://localhost:17221/api/dashboard/logs')
+                axios.get(`${API_BASE}/api/dashboard/stats`),
+                axios.get(`${API_BASE}/api/dashboard/charts`),
+                axios.get(`${API_BASE}/api/dashboard/logs`)
             ]);
 
             setStats(statsRes.data);

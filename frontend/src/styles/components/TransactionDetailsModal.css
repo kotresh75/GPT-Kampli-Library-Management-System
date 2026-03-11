@@ -12,9 +12,7 @@
     align-items: center;
     justify-content: center;
     padding: var(--space-4);
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.75); /* Darkened to counteract missing blur */
     animation: txnFadeIn 0.2s ease;
 }
 
@@ -25,9 +23,7 @@
     max-height: 90vh;
     display: flex;
     flex-direction: column;
-    background: var(--glass-bg);
-    backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
-    -webkit-backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
+    background: var(--glass-bg-solid);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-2xl);
     box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.4);

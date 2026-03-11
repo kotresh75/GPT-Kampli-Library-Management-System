@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld(
     getLogPath: () => ipcRenderer.invoke('get-log-path'),
     openExternalUrl: (url) => ipcRenderer.send('open-external-url', url),
 
+    // Performance Widget API
+    getSystemMetrics: () => ipcRenderer.invoke('get-system-metrics'),
+
     // Auto-Update API
     getUpdateStatus: () => ipcRenderer.invoke('get-update-status'),
     onUpdateStatusChanged: (callback) => ipcRenderer.on('update-status-changed', (_event, state) => callback(state)),

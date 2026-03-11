@@ -12,6 +12,7 @@ import { useSocket } from '../context/SocketContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
 import { useUser } from '../context/UserContext';
+import API_BASE from '../config/apiConfig';
 
 const StaffManager = () => {
     const { t } = useLanguage();
@@ -53,7 +54,7 @@ const StaffManager = () => {
                 status: filterStatus
             }).toString();
 
-            const res = await fetch(`http://localhost:17221/api/staff?${query}`, {
+            const res = await fetch(`${API_BASE}/api/staff?${query}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -84,7 +85,7 @@ const StaffManager = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('auth_token');
-                const res = await fetch(`http://localhost:17221/api/staff/stats`, {
+                const res = await fetch(`${API_BASE}/api/staff/stats`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -141,7 +142,7 @@ const StaffManager = () => {
             const token = localStorage.getItem('auth_token');
             let res;
             if (action === 'toggle_status') {
-                res = await fetch(`http://localhost:17221/api/staff/${data.id}/status`, {
+                res = await fetch(`${API_BASE}/api/staff/${data.id}/status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -150,7 +151,7 @@ const StaffManager = () => {
                     body: JSON.stringify({ status: data.newStatus })
                 });
             } else if (action === 'delete') {
-                res = await fetch(`http://localhost:17221/api/staff/${data.id}`, {
+                res = await fetch(`${API_BASE}/api/staff/${data.id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -373,7 +374,7 @@ const StaffManager = () => {
                         // If editing self, update context
                         if (editingStaff && editingStaff.id === currentUser?.id) {
                             // Fetch fresh data for self
-                            fetch(`http://localhost:17221/api/staff/${currentUser.id}`, {
+                            fetch(`${API_BASE}/api/staff/${currentUser.id}`, {
                                 headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                             })
                                 .then(res => res.json())

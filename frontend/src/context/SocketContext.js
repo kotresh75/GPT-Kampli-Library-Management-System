@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
+import API_BASE from '../config/apiConfig';
 
 const SocketContext = createContext();
 
@@ -10,7 +11,7 @@ export const SocketProvider = ({ children }) => {
         // Connect to backend
         // Assuming backend is on port 17221
         // In production, this should be an env var
-        const newSocket = io('http://localhost:17221');
+        const newSocket = io(API_BASE);
 
         newSocket.on('connect', () => {
             console.log('[Socket] Connected to backend');

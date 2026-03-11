@@ -12,7 +12,7 @@ const LS_KEY = 'gptk_font_toggle';
  */
 const applyFont = (fontStack) => {
     document.documentElement.style.setProperty('--font-family-base', fontStack);
-    document.body.style.fontFamily = fontStack;
+    document.body.style.setProperty('font-family', fontStack, 'important');
 };
 
 /**
@@ -49,6 +49,12 @@ const useFontToggle = () => {
                 if (window.electron?.openDevTools) {
                     window.electron.openDevTools();
                 }
+            }
+
+            // Alt+G — Toggle Performance Widget
+            if (e.altKey && e.key.toLowerCase() === 'g') {
+                e.preventDefault();
+                window.dispatchEvent(new CustomEvent('toggle-perf-widget'));
             }
         };
 

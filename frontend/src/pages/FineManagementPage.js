@@ -6,6 +6,7 @@ import ReceiptPreviewModal from '../components/finance/ReceiptPreviewModal';
 import ConfirmationModal from '../components/common/ConfirmationModal'; // Assuming exists
 import { useSocket } from '../context/SocketContext';
 import '../styles/components/tables.css';
+import API_BASE from '../config/apiConfig';
 
 const FineManagementPage = () => {
     const [activeTab, setActiveTab] = useState('pending');
@@ -31,8 +32,8 @@ const FineManagementPage = () => {
             // Mapping tabs to status: pending -> Unpaid, history -> Paid/Waived
             const status = activeTab === 'pending' ? 'Unpaid' : '';
             const url = status
-                ? `http://localhost:17221/api/fines?status=${status}`
-                : `http://localhost:17221/api/fines`; // History fetches all or just paid/waived
+                ? `${API_BASE}/api/fines?status=${status}`
+                : `${API_BASE}/api/fines`; // History fetches all or just paid/waived
 
             const res = await fetch(url);
             const data = await res.json();
@@ -79,7 +80,7 @@ const FineManagementPage = () => {
         // Group logic or simple single student validation could be here
         // For MVP, just send IDs.
         try {
-            const res = await fetch('http://localhost:17221/api/fines/collect', {
+            const res = await fetch(`${API_BASE}/api/fines/collect`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -120,7 +121,7 @@ const FineManagementPage = () => {
         if (!reason) return;
 
         try {
-            const res = await fetch('http://localhost:17221/api/fines/waive', {
+            const res = await fetch(`${API_BASE}/api/fines/waive`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

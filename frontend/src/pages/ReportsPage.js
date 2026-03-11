@@ -16,6 +16,7 @@ import { useTutorial } from '../context/TutorialContext';
 import ReportExportModal from '../components/reports/ReportExportModal';
 import { generatePrintContent } from '../utils/SmartPrinterHandler';
 import PdfPreviewModal from '../components/common/PdfPreviewModal';
+import API_BASE from '../config/apiConfig';
 
 
 const SmartReportsPage = () => {
@@ -61,10 +62,10 @@ const SmartReportsPage = () => {
         try {
             // Fetch ALL 4 endpoints in parallel
             const [summaryRes, circRes, finRes, invRes] = await Promise.all([
-                fetch(`http://localhost:17221/api/reports/summary?period=${period}`),
-                fetch(`http://localhost:17221/api/reports/circulation?period=${period}`),
-                fetch(`http://localhost:17221/api/reports/financial?period=${period}`),
-                fetch(`http://localhost:17221/api/reports/inventory?period=${period}`)
+                fetch(`${API_BASE}/api/reports/summary?period=${period}`),
+                fetch(`${API_BASE}/api/reports/circulation?period=${period}`),
+                fetch(`${API_BASE}/api/reports/financial?period=${period}`),
+                fetch(`${API_BASE}/api/reports/inventory?period=${period}`)
             ]);
 
             const summary = await summaryRes.json();
@@ -193,10 +194,10 @@ const SmartReportsPage = () => {
     const fetchReportDataForPeriod = async (selectedPeriod) => {
         const apiPeriod = selectedPeriod === 'today' ? '1days' : selectedPeriod;
         const [summaryRes, circRes, finRes, invRes] = await Promise.all([
-            fetch(`http://localhost:17221/api/reports/summary?period=${apiPeriod}`),
-            fetch(`http://localhost:17221/api/reports/circulation?period=${apiPeriod}`),
-            fetch(`http://localhost:17221/api/reports/financial?period=${apiPeriod}`),
-            fetch(`http://localhost:17221/api/reports/inventory?period=${apiPeriod}`)
+            fetch(`${API_BASE}/api/reports/summary?period=${apiPeriod}`),
+            fetch(`${API_BASE}/api/reports/circulation?period=${apiPeriod}`),
+            fetch(`${API_BASE}/api/reports/financial?period=${apiPeriod}`),
+            fetch(`${API_BASE}/api/reports/inventory?period=${apiPeriod}`)
         ]);
         return {
             summary: await summaryRes.json(),

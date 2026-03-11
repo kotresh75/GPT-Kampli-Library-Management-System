@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Book, User, Calendar, Clock, AlertTriangle, AlertCircle } from 'lucide-react';
+import API_BASE from '../../config/apiConfig';
 
 const DashboardDetailModal = ({ type, onClose }) => {
     const [data, setData] = useState([]);
@@ -10,7 +11,7 @@ const DashboardDetailModal = ({ type, onClose }) => {
     useEffect(() => {
         if (!type) return;
 
-        let endpoint = `http://localhost:17221/api/dashboard/details?type=${type}`;
+        let endpoint = `${API_BASE}/api/dashboard/details?type=${type}`;
         let modalTitle = '';
 
         switch (type) {

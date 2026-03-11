@@ -9,6 +9,7 @@ import logo from '../assets/logo.png';
 import LogoParticles from '../components/common/LogoParticles';
 import StatusModal from '../components/common/StatusModal';
 import InteractiveBG from '../components/common/InteractiveBG';
+import API_BASE from '../config/apiConfig';
 
 const SetupPage = () => {
     const navigate = useNavigate();
@@ -40,7 +41,7 @@ const SetupPage = () => {
 
     // On mount, verify that setup is actually needed
     useEffect(() => {
-        axios.get('http://localhost:17221/api/auth/setup-status')
+        axios.get(`${API_BASE}/api/auth/setup-status`)
             .then(res => {
                 if (!res.data.needsSetup) {
                     navigate('/login', { replace: true });
@@ -67,7 +68,7 @@ const SetupPage = () => {
 
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:17221/api/auth/setup', {
+            const response = await axios.post(`${API_BASE}/api/auth/setup`, {
                 name: form.name.trim(),
                 email: form.email.trim(),
                 password: form.password

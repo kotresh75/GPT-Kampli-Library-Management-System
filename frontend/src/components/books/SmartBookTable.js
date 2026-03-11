@@ -284,7 +284,7 @@ const SmartBookTable = ({
                     </thead>
                     <tbody>
                         {paginatedBooks.map((book) => (
-                            <tr key={book.isbn} className="hover:bg-white/5 transition-colors group">
+                            <tr key={book.isbn} className="hover:bg-white/5">
                                 <td>
                                     <input
                                         type="checkbox"
@@ -294,7 +294,7 @@ const SmartBookTable = ({
                                     />
                                 </td>
                                 <td>
-                                    <div className="w-10 h-14 bg-gray-800 rounded overflow-hidden border border-white/10 shadow-sm relative group-hover:scale-110 transition-transform">
+                                    <div className="w-10 h-14 bg-gray-800 rounded overflow-hidden border border-white/10 shadow-sm relative">
                                         {book.cover_image_url ? (
                                             <img src={book.cover_image_url} alt="" className="w-full h-full object-cover" />
                                         ) : (
@@ -323,7 +323,7 @@ const SmartBookTable = ({
                                     {getAvailabilityBadge(book.available_copies, book.total_copies)}
                                 </td>
                                 <td>
-                                    <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity whitespace-nowrap shrink-0">
+                                    <div className="flex justify-end gap-2 whitespace-nowrap shrink-0">
                                         <button
                                             onClick={() => onView && onView(book)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"

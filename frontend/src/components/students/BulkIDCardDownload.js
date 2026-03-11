@@ -8,6 +8,7 @@ import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 import IDCardTemplate from './IDCardTemplate';
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
+import API_BASE from '../../config/apiConfig';
 
 // ── PDF Preview Modal ──
 const PDFPreviewModal = ({ pdfBlobUrl, fileName, onClose }) => {
@@ -134,7 +135,7 @@ const BulkIDCardDownload = () => {
     useEffect(() => {
         const fetchDepartments = async () => {
             try {
-                const res = await fetch('http://localhost:17221/api/departments');
+                const res = await fetch(`${API_BASE}/api/departments`);
                 const data = await res.json();
                 setDepartments(data);
             } catch (e) {
@@ -152,7 +153,7 @@ const BulkIDCardDownload = () => {
             if (selectedDept) params.append('department', selectedDept);
             if (selectedSem) params.append('semester', selectedSem);
 
-            const res = await fetch(`http://localhost:17221/api/students/id-cards?${params.toString()}`);
+            const res = await fetch(`${API_BASE}/api/students/id-cards?${params.toString()}`);
             const data = await res.json();
             setStudentCount(data.total || 0);
         } catch (e) {
@@ -171,7 +172,7 @@ const BulkIDCardDownload = () => {
     const fetchSignatures = async (deptId) => {
         if (sigCacheRef.current.principal === null) {
             try {
-                const res = await fetch('http://localhost:17221/api/settings/principal-signature');
+                const res = await fetch(`${API_BASE}/api/settings/principal-signature`);
                 const data = await res.json();
                 sigCacheRef.current.principal = data.signature || undefined;
             } catch {
@@ -180,7 +181,7 @@ const BulkIDCardDownload = () => {
         }
         if (deptId && !(deptId in sigCacheRef.current.hod)) {
             try {
-                const res = await fetch(`http://localhost:17221/api/departments/${deptId}`);
+                const res = await fetch(`${API_BASE}/api/departments/${deptId}`);
                 if (res.ok) {
                     const data = await res.json();
                     sigCacheRef.current.hod[deptId] = data.hod_signature || undefined;
@@ -290,7 +291,7 @@ const BulkIDCardDownload = () => {
             if (selectedDept) params.append('department', selectedDept);
             if (selectedSem) params.append('semester', selectedSem);
 
-            const res = await fetch(`http://localhost:17221/api/students/id-cards?${params.toString()}`);
+            const res = await fetch(`${API_BASE}/api/students/id-cards?${params.toString()}`);
             const data = await res.json();
             const students = data.data || [];
 

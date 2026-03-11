@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, CheckCircle, AlertTriangle, ArrowRight, ShieldAlert, Download, RefreshCw } from 'lucide-react';
+import API_BASE from '../../config/apiConfig';
 
 const PromotionModal = ({ onClose, onPromoteComplete }) => {
     const [step, setStep] = useState(1); // 1: Intro/Scan, 2: Review/Defaulters, 3: Confirm/Success
@@ -13,7 +14,7 @@ const PromotionModal = ({ onClose, onPromoteComplete }) => {
         setLoading(true);
         setError('');
         try {
-            const res = await fetch('http://localhost:17221/api/students/promotion-scan', { method: 'POST' });
+            const res = await fetch(`${API_BASE}/api/students/promotion-scan`, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
                 setScanResult(data);
@@ -36,7 +37,7 @@ const PromotionModal = ({ onClose, onPromoteComplete }) => {
             // Collect IDs of defaulters to exclude
             const excludeIds = scanResult?.liabilities?.map(s => s.id) || [];
 
-            const res = await fetch('http://localhost:17221/api/students/promote', {
+            const res = await fetch(`${API_BASE}/api/students/promote`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ exclude_ids: excludeIds })

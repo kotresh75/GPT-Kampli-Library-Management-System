@@ -6,9 +6,7 @@
    BASE GLASS SURFACE
    =================== */
 .glass-surface {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
+    background: var(--glass-bg-solid);
     border: 1px solid var(--glass-border);
     box-shadow: var(--glass-shadow);
 }
@@ -17,9 +15,7 @@
    GLASS PANEL
    =================== */
 .glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
+    background: var(--glass-bg-solid);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-2xl);
     box-shadow: var(--glass-shadow);
@@ -277,26 +273,24 @@
     content: '';
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
-    opacity: 0.6;
-    animation: floatOrb 10s infinite alternate ease-in-out;
+    opacity: 0.5;
+    /* Removed: filter blur(80px) and animation floatOrb */
 }
 
 .gradient-bg::before {
-    width: 50vw;
-    height: 50vw;
-    background: var(--orb-color-1);
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, var(--orb-color-1) 0%, transparent 70%);
     top: -10%;
     left: -10%;
 }
 
 .gradient-bg::after {
-    width: 40vw;
-    height: 40vw;
-    background: var(--orb-color-2);
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, var(--orb-color-2) 0%, transparent 70%);
     bottom: -10%;
     right: -10%;
-    animation-delay: -5s;
 }
 
 /* ===================

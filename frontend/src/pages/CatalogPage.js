@@ -12,8 +12,10 @@ import SmartBulkImportModal from '../components/common/SmartBulkImportModal';
 import ExportModal from '../components/books/ExportModal';
 import SmartBookDetailModal from '../components/books/SmartBookDetailModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import StatusModal from '../components/common/StatusModal';
 import SmartBookTable from '../components/books/SmartBookTable';
 import PdfPreviewModal from '../components/common/PdfPreviewModal';
+import API_BASE from '../config/apiConfig';
 
 const CatalogPage = () => {
     const socket = useSocket();
@@ -64,6 +66,15 @@ const CatalogPage = () => {
     const [selectedBook, setSelectedBook] = useState(null);
     const [autoFillProgress, setAutoFillProgress] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [statusModal, setStatusModal] = useState({ isOpen: false, type: 'success', title: '', message: '' });
+
+    const showSuccess = (title, message) => {
+        setStatusModal({ isOpen: true, type: 'success', title, message });
+    };
+
+    const showError = (title, message) => {
+        setStatusModal({ isOpen: true, type: 'error', title, message });
+    };
 
     // Use window-level state for background auto-fill so it persists across navigation
 
@@ -94,7 +105,7 @@ const CatalogPage = () => {
 
     // Fetch Departments
     useEffect(() => {
-        fetch('http://localhost:17221/api/departments')
+        fetch(`${API_BASE}/api/departments`)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
@@ -116,7 +127,7 @@ const CatalogPage = () => {
             // Removed status query param
             const query = new URLSearchParams({ search, department: category, sort: sortBy }).toString();
             // TODO: Pagination support on backend would be ideal for infinite scroll
-            const res = await fetch(`http://localhost:17221/api/books?${query}`);
+            const res = await fetch(`${API_BASE}/api/books?${query}`);
             const data = await res.json();
             if (Array.isArray(data)) {
                 setBooks(data);
@@ -154,7 +165,7 @@ const CatalogPage = () => {
     const fetchTotalCount = async () => {
         try {
             // Fetch all books to get count. If backend supported /count endpoint it would be better.
-            const res = await fetch(`http://localhost:17221/api/books?limit=100000`);
+            const res = await fetch(`${API_BASE}/api/books?limit=100000`);
             const data = await res.json();
             const allBooks = Array.isArray(data) ? data : (data.data || []);
             setTotalBooksCount(allBooks.length);
@@ -186,32 +197,29 @@ const CatalogPage = () => {
     const executeBulkDelete = async () => {
         setIsDeleting(true);
         try {
-            for (const id of selectedIds) {
-                // Standard DELETE endpoint is now Safe Hard Delete
-                const url = `http://localhost:17221/api/books/${id}`;
+            const res = await fetch(`${API_BASE}/api/books/bulk-delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isbns: Array.from(selectedIds) })
+            });
+            const result = await res.json();
 
-                const res = await fetch(url, { method: 'DELETE' });
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(data.error || "Failed to delete");
-                }
+            if (res.ok) {
+                setIsDeleting(false);
+                setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                setSelectedIds(new Set());
+                fetchBooks();
+                setTimeout(() => showSuccess('Deleted', result.message || 'Books deleted successfully.'), 100);
+            } else {
+                setIsDeleting(false);
+                setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                setTimeout(() => showError('Deletion Failed', result.error || 'Failed to delete books.'), 100);
             }
-            fetchBooks();
-            setSelectedIds(new Set());
+        } catch (error) {
+            console.error('Bulk delete failed:', error);
             setIsDeleting(false);
             setConfirmationModal(prev => ({ ...prev, isOpen: false }));
-        } catch (error) {
-            console.error("Bulk delete failed:", error);
-            setIsDeleting(false);
-            setConfirmationModal(prev => ({
-                ...prev,
-                isOpen: true,
-                title: 'Error',
-                message: error.message || 'Failed to delete books. Please try again.',
-                isDanger: true,
-                confirmText: 'Close',
-                onConfirm: () => setConfirmationModal(p => ({ ...p, isOpen: false }))
-            }));
+            setTimeout(() => showError('Network Error', 'Failed to connect to server.'), 100);
         }
     };
 
@@ -345,17 +353,28 @@ const CatalogPage = () => {
                             onConfirm: async () => {
                                 setIsDeleting(true);
                                 try {
-                                    const res = await fetch(`http://localhost:17221/api/books/${book.isbn}`, { method: 'DELETE' });
-                                    if (!res.ok) throw new Error("Failed to delete");
-                                    fetchBooks();
-                                    setIsDeleting(false);
-                                    setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                                    const res = await fetch(`${API_BASE}/api/books/bulk-delete`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ isbns: [book.isbn] })
+                                    });
+                                    const result = await res.json();
+
+                                    if (res.ok) {
+                                        setIsDeleting(false);
+                                        setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                                        fetchBooks();
+                                        setTimeout(() => showSuccess('Deleted', result.message || 'Book deleted successfully.'), 100);
+                                    } else {
+                                        setIsDeleting(false);
+                                        setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                                        setTimeout(() => showError('Deletion Failed', result.error || 'Failed to delete book.'), 100);
+                                    }
                                 } catch (err) {
                                     setIsDeleting(false);
                                     console.error(err);
-                                    // Make sure to show error? Existing implementation logged only.
-                                    // Ideally show alerting here.
-                                    setConfirmationModal(prev => ({ ...prev, isOpen: false })); // Close for now or show error
+                                    setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                                    setTimeout(() => showError('Network Error', 'Failed to connect to server.'), 100);
                                 }
                             }
                         });
@@ -424,7 +443,7 @@ const CatalogPage = () => {
                     }}
 
                     onImport={async (booksData) => {
-                        const res = await fetch('http://localhost:17221/api/books/bulk', {
+                        const res = await fetch(`${API_BASE}/api/books/bulk`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(booksData)
@@ -473,7 +492,7 @@ const CatalogPage = () => {
                         if (scope === 'all') {
                             try {
                                 // REMOVED &department=All to fetch truly all books
-                                const res = await fetch(`http://localhost:17221/api/books?limit=100000`);
+                                const res = await fetch(`${API_BASE}/api/books?limit=100000`);
                                 const data = await res.json();
                                 dataToExport = Array.isArray(data) ? data : (data.data || []);
                             } catch (e) {
@@ -506,7 +525,7 @@ const CatalogPage = () => {
                         if (scope === 'all') {
                             try {
                                 // REMOVED &department=All
-                                const res = await fetch(`http://localhost:17221/api/books?limit=100000`);
+                                const res = await fetch(`${API_BASE}/api/books?limit=100000`);
                                 const data = await res.json();
                                 dataToExport = Array.isArray(data) ? data : (data.data || []);
                             } catch (e) {
@@ -651,6 +670,14 @@ const CatalogPage = () => {
                 htmlContent={pdfPreview.html}
                 title={pdfPreview.title}
                 fileName={pdfPreview.fileName}
+            />
+
+            <StatusModal
+                isOpen={statusModal.isOpen}
+                onClose={() => setStatusModal({ ...statusModal, isOpen: false })}
+                type={statusModal.type}
+                title={statusModal.title}
+                message={statusModal.message}
             />
 
             <style>{`

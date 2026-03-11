@@ -8,6 +8,7 @@ import AdminCard from '../components/admin/AdminCard';
 import AddAdminModal from '../components/admin/AddAdminModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
 import StatusModal from '../components/common/StatusModal';
+import API_BASE from '../config/apiConfig';
 
 const AdminManager = () => {
     const { t } = useLanguage();
@@ -31,7 +32,7 @@ const AdminManager = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:17221/api/admins', {
+            const res = await fetch(`${API_BASE}/api/admins`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -102,7 +103,7 @@ const AdminManager = () => {
             const token = localStorage.getItem('auth_token');
             let res;
             if (action === 'toggle_status') {
-                res = await fetch(`http://localhost:17221/api/admins/${data.id}/status`, {
+                res = await fetch(`${API_BASE}/api/admins/${data.id}/status`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
@@ -111,17 +112,17 @@ const AdminManager = () => {
                     body: JSON.stringify({ status: data.newStatus })
                 });
             } else if (action === 'delete') {
-                res = await fetch(`http://localhost:17221/api/admins/${data.id}`, {
+                res = await fetch(`${API_BASE}/api/admins/${data.id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else if (action === 'reset_password') {
-                res = await fetch(`http://localhost:17221/api/admins/${data.id}/reset-password`, {
+                res = await fetch(`${API_BASE}/api/admins/${data.id}/reset-password`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else if (action === 'transfer_root') {
-                res = await fetch(`http://localhost:17221/api/admins/transfer-root`, {
+                res = await fetch(`${API_BASE}/api/admins/transfer-root`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -137,7 +138,7 @@ const AdminManager = () => {
                 // Refresh Current User Context if Transfer Successful (Role might have changed)
                 if (action === 'transfer_root') {
                     // Force refresh user data
-                    const userRes = await fetch(`http://localhost:17221/api/admins/${currentUser.id}`, {
+                    const userRes = await fetch(`${API_BASE}/api/admins/${currentUser.id}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const userData = await userRes.json();
@@ -268,7 +269,7 @@ const AdminManager = () => {
                         // If editing self, update context
                         if (editingAdmin && editingAdmin.id === currentUser?.id) {
                             // Fetch fresh data for self
-                            fetch(`http://localhost:17221/api/admins/${currentUser.id}`, {
+                            fetch(`${API_BASE}/api/admins/${currentUser.id}`, {
                                 headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                             })
                                 .then(res => res.json())

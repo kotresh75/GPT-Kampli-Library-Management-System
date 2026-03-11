@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, User, Hash, Briefcase, Calendar, Mail, Phone, MapPin } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
+import API_BASE from '../../config/apiConfig';
 
 const AddStudentModal = ({ onClose, onAdd }) => {
     const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ const AddStudentModal = ({ onClose, onAdd }) => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetch('http://localhost:17221/api/departments')
+        fetch(`${API_BASE}/api/departments`)
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(err => console.error("Failed to fetch depts", err));
@@ -36,7 +37,7 @@ const AddStudentModal = ({ onClose, onAdd }) => {
         }
 
         try {
-            const res = await fetch('http://localhost:17221/api/students', {
+            const res = await fetch(`${API_BASE}/api/students`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

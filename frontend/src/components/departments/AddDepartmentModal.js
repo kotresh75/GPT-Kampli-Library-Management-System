@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Save, Building } from 'lucide-react';
+import API_BASE from '../../config/apiConfig';
 
 const AddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
     const isEditMode = !!initialData;
@@ -18,8 +19,8 @@ const AddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
 
         try {
             const url = isEditMode
-                ? `http://localhost:17221/api/departments/${formData.id}`
-                : 'http://localhost:17221/api/departments';
+                ? `${API_BASE}/api/departments/${formData.id}`
+                : `${API_BASE}/api/departments`;
             const method = isEditMode ? 'PUT' : 'POST';
 
             const res = await fetch(url, {

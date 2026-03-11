@@ -103,9 +103,7 @@
     max-height: 92vh;
     display: flex;
     flex-direction: column;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: var(--glass-bg-solid);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-2xl), 0 0 80px rgba(102, 126, 234, 0.06);

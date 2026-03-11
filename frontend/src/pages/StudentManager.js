@@ -19,6 +19,7 @@ import StatusModal from '../components/common/StatusModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
 import PdfPreviewModal from '../components/common/PdfPreviewModal';
+import API_BASE from '../config/apiConfig';
 
 const StudentManager = () => {
     const { t } = useLanguage();
@@ -59,13 +60,13 @@ const StudentManager = () => {
 
     // Fetch Departments
     useEffect(() => {
-        fetch('http://localhost:17221/api/departments')
+        fetch(`${API_BASE}/api/departments`)
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(err => console.error("Failed to fetch depts", err));
 
         // Fetch all students for validation (lightweight ID check if possible, or full list)
-        fetch('http://localhost:17221/api/students?limit=10000').then(res => res.json())
+        fetch(`${API_BASE}/api/students?limit=10000`).then(res => res.json())
             .then(data => {
                 if (data.data && Array.isArray(data.data)) {
                     setExistingRegNos(new Set(data.data.map(s => s.register_number.toUpperCase())));
@@ -89,7 +90,7 @@ const StudentManager = () => {
                 limit
             }).toString();
 
-            const res = await axios.get(`http://localhost:17221/api/students?${query}`);
+            const res = await axios.get(`${API_BASE}/api/students?${query}`);
             setStudents(res.data.data || []);
             setTotalPages(res.data.pagination?.totalPages || 1);
             setTotalStudentsCount(res.data.pagination?.total || 0);
@@ -122,7 +123,7 @@ const StudentManager = () => {
     const [globalTotalStudentsCount, setGlobalTotalStudentsCount] = useState(0);
     const fetchGlobalCount = async () => {
         try {
-            const res = await axios.get(`http://localhost:17221/api/students?limit=100000`);
+            const res = await axios.get(`${API_BASE}/api/students?limit=100000`);
             const data = (res.data && res.data.data) || [];
             if (Array.isArray(data)) {
                 setGlobalTotalStudentsCount(data.length);
@@ -187,7 +188,7 @@ const StudentManager = () => {
             const body = isBulk ? JSON.stringify({ ids }) : null;
 
             try {
-                const res = await fetch(`http://localhost:17221${endpoint}`, {
+                const res = await fetch(`${API_BASE}${endpoint}`, {
                     method,
                     headers: { 'Content-Type': 'application/json' },
                     body
@@ -221,7 +222,7 @@ const StudentManager = () => {
         } else if (action === 'promote' || action === 'demote') {
             const endpoint = action === 'promote' ? '/api/students/bulk-promote' : '/api/students/bulk-demote';
             try {
-                const res = await fetch(`http://localhost:17221${endpoint}`, {
+                const res = await fetch(`${API_BASE}${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ ids: data })
@@ -260,7 +261,7 @@ const StudentManager = () => {
 
     const handleBulkUpdate = async (updates) => {
         try {
-            const res = await fetch('http://localhost:17221/api/students/bulk-update', {
+            const res = await fetch(`${API_BASE}/api/students/bulk-update`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids: Array.from(selectedStudents), updates })
@@ -292,7 +293,7 @@ const StudentManager = () => {
                 };
             });
 
-            const res = await fetch('http://localhost:17221/api/students/bulk-import', {
+            const res = await fetch(`${API_BASE}/api/students/bulk-import`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(finalData)
@@ -319,7 +320,7 @@ const StudentManager = () => {
                 ids: Array.from(selectedStudents)
             };
 
-            const res = await fetch('http://localhost:17221/api/students/export', {
+            const res = await fetch(`${API_BASE}/api/students/export`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -448,7 +449,7 @@ const StudentManager = () => {
 
             const finalQuery = `limit=100000&${query}`;
 
-            const res = await fetch(`http://localhost:17221/api/students?${finalQuery}`);
+            const res = await fetch(`${API_BASE}/api/students?${finalQuery}`);
             const data = await res.json();
 
             if (data.data && Array.isArray(data.data)) {
@@ -718,7 +719,7 @@ const StudentManager = () => {
                     onFetchAll={async () => {
                         try {
                             // strictly fetch ALL for export/print
-                            const res = await fetch(`http://localhost:17221/api/students?limit=100000`);
+                            const res = await fetch(`${API_BASE}/api/students?limit=100000`);
                             const data = await res.json();
                             return (data.data || []).map(s => ({
                                 id: s.id, // Include ID for selection matching

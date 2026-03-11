@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, Database, Table2, Key, Hash, ArrowRight, Columns3, Link2, AlertCircle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import '../../styles/components/database-schema.css';
+import API_BASE from '../../config/apiConfig';
 
 const DatabaseSchemaModal = () => {
     const { currentUser } = useUser();
@@ -38,7 +39,7 @@ const DatabaseSchemaModal = () => {
             return;
         }
 
-        fetch('http://localhost:17221/api/utils/db-schema', {
+        fetch(`${API_BASE}/api/utils/db-schema`, {
             headers: { 'Authorization': `Bearer ${token}` }
         })
             .then(res => {

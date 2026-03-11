@@ -7,6 +7,7 @@ import ConfirmationModal from '../components/common/ConfirmationModal';
 import StatusModal from '../components/common/StatusModal';
 import { useSocket } from '../context/SocketContext';
 import { useTutorial } from '../context/TutorialContext';
+import API_BASE from '../config/apiConfig';
 
 const DepartmentPage = () => {
     const { setPageContext } = useTutorial();
@@ -29,7 +30,7 @@ const DepartmentPage = () => {
     const fetchDepartments = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:17221/api/departments?search=${search}`);
+            const res = await fetch(`${API_BASE}/api/departments?search=${search}`);
             const data = await res.json();
             if (Array.isArray(data)) setDepartments(data);
         } catch (error) {
@@ -63,7 +64,7 @@ const DepartmentPage = () => {
         if (!id) return;
 
         try {
-            const res = await fetch(`http://localhost:17221/api/departments/${id}`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/api/departments/${id}`, { method: 'DELETE' });
             if (res.ok) {
                 fetchDepartments();
                 setStatusModal({ isOpen: true, type: 'success', title: t('departments.delete_success_title'), message: t('departments.delete_success_msg') });

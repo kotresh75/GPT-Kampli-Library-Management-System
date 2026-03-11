@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDate } from '../../utils/dateUtils';
 import { X, Activity, User, Mail, Phone, Briefcase, Calendar, Clock, Lock } from 'lucide-react';
+import API_BASE from '../../config/apiConfig';
 
 const StaffDetailModal = ({ staff, onClose }) => {
     const [logs, setLogs] = useState([]);
@@ -16,7 +17,7 @@ const StaffDetailModal = ({ staff, onClose }) => {
     useEffect(() => {
         if (staff) {
             setLoading(true);
-            fetch(`http://localhost:17221/api/staff/${staff.id}/activity`)
+            fetch(`${API_BASE}/api/staff/${staff.id}/activity`)
                 .then(res => res.json())
                 .then(data => setLogs(Array.isArray(data) ? data : []))
                 .catch(err => console.error(err))

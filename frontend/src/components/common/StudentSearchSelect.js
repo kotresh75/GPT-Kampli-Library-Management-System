@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, User, Plus } from 'lucide-react';
+import API_BASE from '../../config/apiConfig';
 
 const StudentSearchSelect = ({ onSelect, selectedStudents = [], placeholder = "Search student..." }) => {
     const [query, setQuery] = useState('');
@@ -36,7 +37,7 @@ const StudentSearchSelect = ({ onSelect, selectedStudents = [], placeholder = "S
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:17221/api/students?search=${query}&limit=5`, {
+            const res = await fetch(`${API_BASE}/api/students?search=${query}&limit=5`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();

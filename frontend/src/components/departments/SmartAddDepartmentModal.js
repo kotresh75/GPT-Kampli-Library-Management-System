@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Save, Building, AlertCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
+import API_BASE from '../../config/apiConfig';
 
 const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
     const { t } = useLanguage();
@@ -49,8 +50,8 @@ const SmartAddDepartmentModal = ({ onClose, onAdded, initialData = null }) => {
 
         try {
             const url = isEditMode
-                ? `http://localhost:17221/api/departments/${initialData.id}`
-                : 'http://localhost:17221/api/departments';
+                ? `${API_BASE}/api/departments/${initialData.id}`
+                : `${API_BASE}/api/departments`;
             const method = isEditMode ? 'PUT' : 'POST';
 
             const res = await fetch(url, {

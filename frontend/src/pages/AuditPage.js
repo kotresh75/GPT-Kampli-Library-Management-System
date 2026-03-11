@@ -12,6 +12,7 @@ import SmartAuditTable from '../components/dashboard/SmartAuditTable';
 import GlassSelect from '../components/common/GlassSelect';
 import SmartExportModal from '../components/common/SmartExportModal';
 import PdfPreviewModal from '../components/common/PdfPreviewModal';
+import API_BASE from '../config/apiConfig';
 
 const AuditPage = () => {
     const { t } = useLanguage();
@@ -54,7 +55,7 @@ const AuditPage = () => {
                 limit,
                 ...filters
             });
-            const res = await axios.get(`http://localhost:17221/api/audit?${params}`, { headers });
+            const res = await axios.get(`${API_BASE}/api/audit?${params}`, { headers });
             setLogs(res.data.data);
             setTotalPages(res.data.pagination.totalPages);
             setFilteredTotal(res.data.pagination.total);
@@ -71,7 +72,7 @@ const AuditPage = () => {
         try {
             const token = localStorage.getItem('auth_token');
             const headers = { Authorization: `Bearer ${token}` };
-            const res = await axios.get('http://localhost:17221/api/audit/stats', { headers });
+            const res = await axios.get(`${API_BASE}/api/audit/stats`, { headers });
             setStats(res.data);
         } catch (error) {
             console.error("Error fetching stats:", error);
@@ -110,7 +111,7 @@ const AuditPage = () => {
                 }
                 params.append('limit', '100000');
                 setLoading(true);
-                const res = await axios.get(`http://localhost:17221/api/audit?${params}`, { headers });
+                const res = await axios.get(`${API_BASE}/api/audit?${params}`, { headers });
                 const allLogs = res.data.data || [];
                 setLoading(false);
 
@@ -150,7 +151,7 @@ const AuditPage = () => {
             params.append('limit', '100000');
 
             setLoading(true);
-            const response = await axios.get(`http://localhost:17221/api/audit/export?${params.toString()}`, {
+            const response = await axios.get(`${API_BASE}/api/audit/export?${params.toString()}`, {
                 headers,
                 responseType: 'blob'
             });
@@ -348,7 +349,7 @@ const AuditPage = () => {
                                 return []; // Not implemented for audit yet
                             }
 
-                            const res = await axios.get(`http://localhost:17221/api/audit?${params}`, { headers });
+                            const res = await axios.get(`${API_BASE}/api/audit?${params}`, { headers });
                             const allLogs = res.data.data;
                             if (!Array.isArray(allLogs)) throw new Error("Invalid data format");
 

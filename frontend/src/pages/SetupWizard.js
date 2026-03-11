@@ -5,6 +5,7 @@ import { usePreferences } from '../context/PreferencesContext';
 import { useLanguage } from '../context/LanguageContext';
 import InteractiveBG from '../components/common/InteractiveBG';
 import '../styles/pages/setup-wizard.css';
+import API_BASE from '../config/apiConfig';
 
 // Assets from /public directory
 const collegeLogo = `${process.env.PUBLIC_URL}/College_Logo.png`;
@@ -285,7 +286,7 @@ const SetupWizard = () => {
     useEffect(() => {
         const checkSetup = async () => {
             try {
-                const res = await axios.get('http://localhost:17221/api/auth/setup-status');
+                const res = await axios.get(`${API_BASE}/api/auth/setup-status`);
                 if (!res.data.needsSetup) {
                     navigate('/login', { replace: true });
                     return;
@@ -341,7 +342,7 @@ const SetupWizard = () => {
             }
             setSubmitting(true);
             try {
-                await axios.post('http://localhost:17221/api/auth/setup', {
+                await axios.post(`${API_BASE}/api/auth/setup`, {
                     name: adminForm.name.trim(),
                     email: adminForm.email.trim(),
                     password: adminForm.password,

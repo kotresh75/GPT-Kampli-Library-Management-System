@@ -9,6 +9,7 @@ import {
 import * as XLSX from 'xlsx';
 import GlassSelect from './GlassSelect';
 import ConfirmationModal from './ConfirmationModal';
+import ExpandableInput from './ExpandableInput';
 import '../../styles/components/smart-bulk-import.css';
 
 // Helper to parse dates robustly (handles Excel serial, DD/MM/YYYY, YYYY-MM-DD)
@@ -787,7 +788,7 @@ const SmartBulkImportModal = ({
                                                                         </div>
                                                                     ) : (
                                                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                            <input
+                                                                            <ExpandableInput
                                                                                 type={col.type === 'number' ? 'number' : 'text'}
                                                                                 className={`glass-input ${cellError ? 'error-border' : cellWarning ? 'warning-border' : ''}`}
                                                                                 value={row[col.key]}

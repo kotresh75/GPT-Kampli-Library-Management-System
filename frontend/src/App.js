@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
@@ -32,10 +32,12 @@ import GlobalNotifications from './components/common/GlobalNotifications';
 import UserManualModal from './components/common/UserManualModal';
 import DatabaseSchemaModal from './components/common/DatabaseSchemaModal';
 import LockScreen from './components/common/LockScreen';
+import PerformanceWidget from './components/common/PerformanceWidget';
 import TitleBar from './components/layout/TitleBar';
 import useFontToggle from './hooks/useFontToggle';
 import './styles/index.css';
 import './App.css';
+import API_BASE from './config/apiConfig';
 
 // ---------------------------------------------------------------------------
 // Global Frontend Error Forwarding — sends JS errors to electron-log file
@@ -58,7 +60,7 @@ const DbStatusCheck = () => {
   const [status, setStatus] = React.useState('checking');
 
   React.useEffect(() => {
-    fetch('http://localhost:17221/api/status')
+    fetch(`${API_BASE}/api/status`)
       .then(res => res.json())
       .then(data => setStatus(data.status === 'online' ? 'online' : 'error'))
       .catch(() => setStatus('offline'));
@@ -77,7 +79,7 @@ const SetupGuard = ({ children }) => {
   const [needsSetup, setNeedsSetup] = React.useState(null); // null = checking
 
   React.useEffect(() => {
-    fetch('http://localhost:17221/api/auth/setup-status')
+    fetch(`${API_BASE}/api/auth/setup-status`)
       .then(res => res.json())
       .then(data => setNeedsSetup(data.needsSetup))
       .catch(() => setNeedsSetup(false)); // On error, allow normal flow
@@ -95,6 +97,13 @@ const FontToggleInitializer = () => {
 };
 
 function App() {
+  const [showPerfWidget, setShowPerfWidget] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setShowPerfWidget(prev => !prev);
+    window.addEventListener('toggle-perf-widget', handler);
+    return () => window.removeEventListener('toggle-perf-widget', handler);
+  }, []);
   return (
     <PreferencesProvider>
       <LanguageProvider>
@@ -110,6 +119,7 @@ function App() {
                     <DbStatusCheck />
                     <GlobalNotifications />
                     <LockScreen />
+                    {showPerfWidget && <PerformanceWidget />}
                     <Routes>
                       <Route path="/setup" element={<SetupWizard />} />
                       <Route path="/" element={<SetupGuard><LandingPage /></SetupGuard>} />

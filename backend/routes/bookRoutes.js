@@ -4,6 +4,7 @@ const bookController = require('../controllers/bookController');
 
 router.get('/', bookController.getBooks);
 router.post('/bulk', bookController.bulkUploadBooks); // Specific route first
+router.post('/bulk-delete', bookController.bulkDeleteBooks); // Bulk delete with pre-validation
 router.post('/', bookController.addBook);
 router.get('/:isbn', bookController.getBookDetails);
 router.put('/:isbn', bookController.updateBook);

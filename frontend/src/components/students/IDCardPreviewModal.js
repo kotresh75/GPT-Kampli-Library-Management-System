@@ -6,6 +6,7 @@ import html2canvas from 'html2canvas';
 import IDCardTemplate from './IDCardTemplate';
 import cardBgUrl from '../../ID Template/id_bg.png';
 import emblemBgUrl from '../../ID Template/karnataka_seal.png';
+import API_BASE from '../../config/apiConfig';
 
 const IDCardPreviewModal = ({ student, onClose }) => {
     const cardRef = useRef(null);
@@ -21,12 +22,12 @@ const IDCardPreviewModal = ({ student, onClose }) => {
         const fetchSignaturesAndAssets = async () => {
             try {
                 // 1. Fetch Signatures
-                const principalRes = await fetch('http://localhost:17221/api/settings/principal-signature');
+                const principalRes = await fetch(`${API_BASE}/api/settings/principal-signature`);
                 const principalData = await principalRes.json();
 
                 let hodSignature = null;
                 if (student.dept_id) {
-                    const deptRes = await fetch(`http://localhost:17221/api/departments/${student.dept_id}`);
+                    const deptRes = await fetch(`${API_BASE}/api/departments/${student.dept_id}`);
                     if (deptRes.ok) {
                         const deptData = await deptRes.json();
                         hodSignature = deptData.hod_signature;

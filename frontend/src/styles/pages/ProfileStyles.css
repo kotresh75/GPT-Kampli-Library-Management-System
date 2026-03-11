@@ -135,7 +135,6 @@
     align-items: center;
     justify-content: center;
     z-index: var(--z-modal);
-    backdrop-filter: blur(4px);
 }
 
 .icon-picker-modal {
@@ -223,8 +222,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.4); /* Darkened slightly to compensate for missing blur */
     border-radius: var(--radius-xl);
     color: #fff;
     opacity: 0;

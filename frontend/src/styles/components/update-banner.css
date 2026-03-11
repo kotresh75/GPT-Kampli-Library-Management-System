@@ -173,8 +173,7 @@
     position: fixed;
     inset: 0;
     z-index: 10000;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.7); /* Darkened to counteract missing blur */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -479,8 +478,7 @@
     position: fixed;
     inset: 0;
     z-index: 99999;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(12px);
+    background: rgba(0, 0, 0, 0.95); /* Extremely dark to counteract missing heavy blur */
     display: flex;
     align-items: center;
     justify-content: center;

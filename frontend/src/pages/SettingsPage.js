@@ -18,6 +18,7 @@ import { useTutorial } from '../context/TutorialContext';
 import { useSession } from '../context/SessionContext';
 import GlassSelect from '../components/common/GlassSelect';
 import BulkIDCardDownload from '../components/students/BulkIDCardDownload';
+import API_BASE from '../config/apiConfig';
 
 // Help functions
 
@@ -891,7 +892,7 @@ const BulkPhotoUpload = () => {
 
     const fetchPhotoStats = async () => {
         try {
-            const res = await fetch('http://localhost:17221/api/students/photo/stats');
+            const res = await fetch(`${API_BASE}/api/students/photo/stats`);
             if (res.ok) {
                 const data = await res.json();
                 setPhotoCount(data.count);
@@ -912,7 +913,7 @@ const BulkPhotoUpload = () => {
     const handleDeletePhotos = async () => {
         setIsDeleting(true);
         try {
-            const res = await fetch('http://localhost:17221/api/students/photo/bulk-delete', { method: 'POST' });
+            const res = await fetch(`${API_BASE}/api/students/photo/bulk-delete`, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
                 setStatus(prev => ({ ...prev, currentFile: data.message, running: false }));
@@ -983,7 +984,7 @@ const BulkPhotoUpload = () => {
                 const compressedBase64 = await compressImage(file);
 
                 // 2. Upload
-                const res = await fetch('http://localhost:17221/api/students/photo/upload', {
+                const res = await fetch(`${API_BASE}/api/students/photo/upload`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ register_no: regNo, image_data: compressedBase64 })
@@ -1182,7 +1183,7 @@ const SignatureUploadSection = () => {
 
     const fetchDepartments = async () => {
         try {
-            const res = await fetch('http://localhost:17221/api/departments');
+            const res = await fetch(`${API_BASE}/api/departments`);
             const data = await res.json();
             if (Array.isArray(data)) {
                 setDepartments(data);
@@ -1205,7 +1206,7 @@ const SignatureUploadSection = () => {
 
     const fetchPrincipalSignature = async () => {
         try {
-            const res = await fetch('http://localhost:17221/api/settings/principal-signature');
+            const res = await fetch(`${API_BASE}/api/settings/principal-signature`);
             const data = await res.json();
             setPrincipalSignature(data.signature);
         } catch (e) {
@@ -1249,7 +1250,7 @@ const SignatureUploadSection = () => {
 
         try {
             const compressedBase64 = await compressImage(file);
-            const res = await fetch('http://localhost:17221/api/settings/principal-signature', {
+            const res = await fetch(`${API_BASE}/api/settings/principal-signature`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image_data: compressedBase64 })
@@ -1272,7 +1273,7 @@ const SignatureUploadSection = () => {
     const handlePrincipalDelete = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:17221/api/settings/principal-signature', { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/api/settings/principal-signature`, { method: 'DELETE' });
             if (res.ok) {
                 setPrincipalSignature(null);
                 setUploadStatus({ type: 'success', message: t('settings.signatures.status_deleted_principal') });
@@ -1293,7 +1294,7 @@ const SignatureUploadSection = () => {
 
         try {
             const compressedBase64 = await compressImage(file);
-            const res = await fetch(`http://localhost:17221/api/departments/${selectedDeptId}/signature`, {
+            const res = await fetch(`${API_BASE}/api/departments/${selectedDeptId}/signature`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image_data: compressedBase64 })
@@ -1318,7 +1319,7 @@ const SignatureUploadSection = () => {
 
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:17221/api/departments/${selectedDeptId}/signature`, { method: 'DELETE' });
+            const res = await fetch(`${API_BASE}/api/departments/${selectedDeptId}/signature`, { method: 'DELETE' });
             if (res.ok) {
                 setHodSignatures(prev => {
                     const updated = { ...prev };
@@ -1839,7 +1840,7 @@ const SettingsPage = () => {
     const fetchSettings = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:17221/api/settings/app');
+            const res = await fetch(`${API_BASE}/api/settings/app`);
             const data = await res.json();
             // Set defaults for missing keys
             const defaults = {
@@ -2008,7 +2009,7 @@ const SettingsPage = () => {
             };
             if (password) body.admin_password = password;
 
-            const res = await fetch('http://localhost:17221/api/settings/app', {
+            const res = await fetch(`${API_BASE}/api/settings/app`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -2075,7 +2076,7 @@ const SettingsPage = () => {
     const handleTestEmail = async () => {
         setTestingEmail(true);
         try {
-            const res = await fetch('http://localhost:17221/api/settings/test-email', {
+            const res = await fetch(`${API_BASE}/api/settings/test-email`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user.email || 'admin@test.com' })
@@ -2097,7 +2098,7 @@ const SettingsPage = () => {
         // Fetch all books first since we don't have them in settings page
         // We'll just fetch brief listing
         try {
-            const res = await fetch('http://localhost:17221/api/books?status=All');
+            const res = await fetch(`${API_BASE}/api/books?status=All`);
             const allBooks = await res.json();
 
             if (!Array.isArray(allBooks)) {
@@ -2201,7 +2202,7 @@ const SettingsPage = () => {
                         if (details) {
                             // Update book in backend
                             try {
-                                await fetch(`http://localhost:17221/api/books/${book.isbn}`, {
+                                await fetch(`${API_BASE}/api/books/${book.isbn}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
@@ -2271,7 +2272,7 @@ const SettingsPage = () => {
     const handleCreateBackup = async () => {
         showNotification('Creating Backup', 'Please wait while we generate a system backup...', 'info');
         try {
-            const res = await fetch('http://localhost:17221/api/settings/backup/create', { method: 'POST' });
+            const res = await fetch(`${API_BASE}/api/settings/backup/create`, { method: 'POST' });
             if (res.ok) {
                 const blob = await res.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -2298,7 +2299,7 @@ const SettingsPage = () => {
         }
         showNotification('Cloud Backup', 'Starting backup to MongoDB Atlas...', 'info');
         try {
-            const res = await fetch('http://localhost:17221/api/settings/cloud/backup', { method: 'POST' });
+            const res = await fetch(`${API_BASE}/api/settings/cloud/backup`, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
                 showNotification('Success', 'Cloud Backup Complete!', 'success');
@@ -2312,7 +2313,7 @@ const SettingsPage = () => {
 
     const performCloudRestore = async (password) => {
         try {
-            const res = await fetch('http://localhost:17221/api/settings/cloud/restore', {
+            const res = await fetch(`${API_BASE}/api/settings/cloud/restore`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -2349,7 +2350,7 @@ const SettingsPage = () => {
     const handleTestCloudConnection = async () => {
         setTestingConnection(true);
         try {
-            const res = await fetch('http://localhost:17221/api/settings/cloud/test-connection', {
+            const res = await fetch(`${API_BASE}/api/settings/cloud/test-connection`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ uri: settings.backup_config.connectionUri })
@@ -2397,7 +2398,7 @@ const SettingsPage = () => {
 
                 setPendingAction(() => async (password) => {
                     try {
-                        const res = await fetch('http://localhost:17221/api/settings/backup/restore', {
+                        const res = await fetch(`${API_BASE}/api/settings/backup/restore`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -2462,7 +2463,7 @@ const SettingsPage = () => {
     const handleFactoryReset = async () => {
         setPendingAction(() => async (password) => {
             try {
-                const res = await fetch('http://localhost:17221/api/settings/factory-reset', {
+                const res = await fetch(`${API_BASE}/api/settings/factory-reset`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

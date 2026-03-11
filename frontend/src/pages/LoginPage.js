@@ -10,6 +10,7 @@ import LogoParticles from '../components/common/LogoParticles';
 import InteractiveBG from '../components/common/InteractiveBG';
 
 import StatusModal from '../components/common/StatusModal';
+import API_BASE from '../config/apiConfig';
 
 const RECENT_LOGINS_KEY = 'recent_logins';
 const MAX_RECENT = 5;
@@ -119,7 +120,7 @@ const LoginPage = () => {
         setFieldError('');
 
         try {
-            const response = await axios.post('http://localhost:17221/api/auth/login', credentials);
+            const response = await axios.post(`${API_BASE}/api/auth/login`, credentials);
 
             // Success
             const { token, user } = response.data;

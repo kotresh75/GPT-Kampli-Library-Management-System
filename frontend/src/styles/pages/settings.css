@@ -28,14 +28,13 @@
    ============================ */
 .settings-sidebar {
     width: 280px;
-    background: var(--glass-bg);
+    background: var(--glass-bg-solid);
     border-right: 1px solid var(--glass-border);
     padding: 1.5rem;
     display: flex;
     flex-direction: column;
     gap: 2rem;
     overflow-y: auto;
-    backdrop-filter: blur(var(--glass-blur));
 }
 
 .sidebar-header {
@@ -185,10 +184,8 @@ body[data-theme='light'] .unsaved-alert {
 
 /* Cards */
 .settings-card {
-    background: var(--glass-bg);
+    background: var(--glass-bg-solid);
     box-shadow: var(--glass-shadow);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
     border-radius: var(--radius-lg);
     border: 1px solid var(--glass-border);
     padding: 1.5rem;

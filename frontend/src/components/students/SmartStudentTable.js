@@ -226,7 +226,7 @@ const SmartStudentTable = ({
                     </thead>
                     <tbody>
                         {students.map((student, index) => (
-                            <tr key={student.id} className="hover:bg-white/5 transition-colors group">
+                            <tr key={student.id} className="hover:bg-white/5">
                                 <td>
                                     <input
                                         type="checkbox"
@@ -280,7 +280,7 @@ const SmartStudentTable = ({
                                     {getStatusBadge(student.status)}
                                 </td>
                                 <td>
-                                    <div className="flex justify-end gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity whitespace-nowrap shrink-0">
+                                    <div className="flex justify-end gap-2 whitespace-nowrap shrink-0">
                                         <button
                                             onClick={() => onView && onView(student)}
                                             className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"

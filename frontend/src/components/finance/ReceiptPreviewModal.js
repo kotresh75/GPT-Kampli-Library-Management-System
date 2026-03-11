@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom';
 import { X, Download, FileText, Minimize2, Maximize2, Printer } from 'lucide-react';
 import { generateReceiptContent, generatePdf } from '../../utils/SmartPrinterHandler';
+import API_BASE from '../../config/apiConfig';
 
 const ReceiptPreviewModal = ({ isOpen, onClose, transaction }) => {
     const [settings, setSettings] = useState({});
@@ -16,7 +17,7 @@ const ReceiptPreviewModal = ({ isOpen, onClose, transaction }) => {
     useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const res = await fetch('http://localhost:17221/api/settings/app');
+                const res = await fetch(`${API_BASE}/api/settings/app`);
                 if (res.ok) {
                     const data = await res.json();
                     setSettings(data);

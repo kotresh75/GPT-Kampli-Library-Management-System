@@ -432,8 +432,8 @@ exports.restoreLocalBackup = async (req, res) => {
 };
 
 exports.triggerCloudBackup = async (req, res) => {
-    // Manual trigger
-    const result = await cloudBackupService.performCloudBackup();
+    // Manual trigger always forces a full backup of all tables
+    const result = await cloudBackupService.performCloudBackup({ forceFull: true });
     if (result.success) {
         res.json({ success: true, message: "Backup completed successfully" });
     } else {

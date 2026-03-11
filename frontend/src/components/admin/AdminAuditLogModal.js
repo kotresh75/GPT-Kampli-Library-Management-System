@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Activity, User } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import API_BASE from '../../config/apiConfig';
 
 const AdminAuditLogModal = ({ admin, onClose }) => {
     const { t } = useLanguage();
@@ -10,7 +11,7 @@ const AdminAuditLogModal = ({ admin, onClose }) => {
     useEffect(() => {
         if (admin) {
             setLoading(true);
-            fetch(`http://localhost:17221/api/admins/${admin.id}/logs`)
+            fetch(`${API_BASE}/api/admins/${admin.id}/logs`)
                 .then(res => res.json())
                 .then(data => setLogs(Array.isArray(data) ? data : []))
                 .catch(err => console.error(err))

@@ -4,6 +4,7 @@ import { Search, RotateCcw, CheckCircle, AlertCircle, RefreshCcw, User, BookOpen
 import StatusModal from '../common/StatusModal';
 import '../../styles/components/TransactionDetailsModal.css';
 import { useLanguage } from '../../context/LanguageContext';
+import API_BASE from '../../config/apiConfig';
 
 // Helper: Format date to DD/MM/YYYY
 const formatDate = (dateStr) => {
@@ -69,7 +70,7 @@ const ReturnTab = () => {
 
     // Fetch Email Event Settings
     useEffect(() => {
-        fetch('http://localhost:17221/api/settings/app')
+        fetch(`${API_BASE}/api/settings/app`)
             .then(res => res.json())
             .then(data => {
                 if (data.email_events) setEmailEvents(data.email_events);
@@ -82,7 +83,7 @@ const ReturnTab = () => {
         const fetchDefaults = async () => {
             try {
                 const token = localStorage.getItem('auth_token');
-                const res = await fetch('http://localhost:17221/api/circulation/policy-defaults', {
+                const res = await fetch(`${API_BASE}/api/circulation/policy-defaults`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -102,8 +103,8 @@ const ReturnTab = () => {
         try {
             const token = localStorage.getItem('auth_token');
             const url = query
-                ? `http://localhost:17221/api/circulation/issued-students?q=${encodeURIComponent(query)}`
-                : 'http://localhost:17221/api/circulation/issued-students';
+                ? `${API_BASE}/api/circulation/issued-students?q=${encodeURIComponent(query)}`
+                : `${API_BASE}/api/circulation/issued-students`;
             const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -135,7 +136,7 @@ const ReturnTab = () => {
         setLoadingLoans(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:17221/api/circulation/loans/${studentId}`, {
+            const res = await fetch(`${API_BASE}/api/circulation/loans/${studentId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -197,7 +198,7 @@ const ReturnTab = () => {
     const fetchNextAccession = async (isbn) => {
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch(`http://localhost:17221/api/circulation/next-accession/${isbn}`, {
+            const res = await fetch(`${API_BASE}/api/circulation/next-accession/${isbn}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
@@ -252,7 +253,7 @@ const ReturnTab = () => {
         setProcessing(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:17221/api/circulation/return', {
+            const res = await fetch(`${API_BASE}/api/circulation/return`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -295,7 +296,7 @@ const ReturnTab = () => {
         setProcessing(true);
         try {
             const token = localStorage.getItem('auth_token');
-            const res = await fetch('http://localhost:17221/api/circulation/renew', {
+            const res = await fetch(`${API_BASE}/api/circulation/renew`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

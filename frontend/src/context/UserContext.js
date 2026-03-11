@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import API_BASE from '../config/apiConfig';
 
 const UserContext = createContext();
 
@@ -28,9 +29,9 @@ export const UserProvider = ({ children }) => {
                     // But login() saves role, so it should be there.
                     let endpoint = null;
                     if (currentUser.role === 'Admin') {
-                        endpoint = `http://localhost:17221/api/admins/${currentUser.id}`;
+                        endpoint = `${API_BASE}/api/admins/${currentUser.id}`;
                     } else {
-                        endpoint = `http://localhost:17221/api/staff/${currentUser.id}`;
+                        endpoint = `${API_BASE}/api/staff/${currentUser.id}`;
                     }
 
                     const res = await fetch(endpoint, {

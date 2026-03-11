@@ -4,6 +4,7 @@ import { X, Save, User, Hash, Briefcase, Calendar, Mail, Phone, MapPin, AlertCir
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
+import API_BASE from '../../config/apiConfig';
 
 const SmartAddStudentModal = ({ onClose, onAdd }) => {
     const { t } = useLanguage();
@@ -24,7 +25,7 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        fetch('http://localhost:17221/api/departments')
+        fetch(`${API_BASE}/api/departments`)
             .then(res => res.json())
             .then(data => Array.isArray(data) ? setDepartments(data) : [])
             .catch(err => console.error("Failed to fetch depts", err));
@@ -51,7 +52,7 @@ const SmartAddStudentModal = ({ onClose, onAdd }) => {
         }
 
         try {
-            const res = await fetch('http://localhost:17221/api/students', {
+            const res = await fetch(`${API_BASE}/api/students`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useUser } from '../context/UserContext';
 import '../styles/pages/ProfileStyles.css';
+import API_BASE from '../config/apiConfig';
 
 const TOTAL_ICONS = 15;
 
@@ -24,7 +25,7 @@ const UserProfile = () => {
 
     // Fetch Icons on Mount
     useEffect(() => {
-        axios.get('http://localhost:17221/api/utils/icons')
+        axios.get(`${API_BASE}/api/utils/icons`)
             .then(res => setIcons(res.data))
             .catch(err => console.error("Failed to fetch icons", err));
     }, []);
@@ -56,7 +57,7 @@ const UserProfile = () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            await axios.post('http://localhost:17221/api/auth/change-password', {
+            await axios.post(`${API_BASE}/api/auth/change-password`, {
                 oldPassword: passData.oldPassword,
                 newPassword: passData.newPassword
             }, {
@@ -76,7 +77,7 @@ const UserProfile = () => {
         setIconLoading(true);
         try {
             const token = localStorage.getItem('auth_token');
-            await axios.put('http://localhost:17221/api/auth/profile-icon', {
+            await axios.put(`${API_BASE}/api/auth/profile-icon`, {
                 profileIcon: iconData
             }, {
                 headers: { 'Authorization': `Bearer ${token}` }

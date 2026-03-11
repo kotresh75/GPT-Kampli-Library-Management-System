@@ -2,6 +2,7 @@ const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
 const { autoUpdater } = require('electron-updater');
 
 // -----------------------------------------------------------------------------
@@ -24,6 +25,7 @@ let isQuitting = false;
 // Config
 const isDev = !app.isPackaged;
 const isPortable = !!process.env.PORTABLE_EXECUTABLE_DIR;
+const BACKEND_PORT = 17221;
 const userDataPath = isPortable
     ? path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'GPTK-Data')
     : app.getPath('userData');
@@ -364,13 +366,19 @@ function createWindow() {
 
     // Show window when ready and close splash
     mainWindow.once('ready-to-show', () => {
-        // slight delay to ensure smooth transition
+        // Minimal delay for smooth visual transition
         setTimeout(() => {
             mainWindow.show();
+            mainWindow.focus();
+            // Temporarily force on top so it appears above all other apps
+            mainWindow.setAlwaysOnTop(true);
+            setTimeout(() => {
+                mainWindow.setAlwaysOnTop(false);
+            }, 300);
             if (splashWindow) {
                 splashWindow.close();
             }
-        }, 500);
+        }, 100);
     });
 
     // Handle external links (target="_blank") to open in default browser
@@ -466,7 +474,45 @@ function performQuit() {
 // -----------------------------------------------------------------------------
 // 3. Backend Management
 // -----------------------------------------------------------------------------
-function startBackend() {
+
+/**
+ * Smart Polling: Ping the backend every 100ms until it responds.
+ * Resolves as soon as the backend is ready. Times out after 15 seconds.
+ */
+function waitForBackend(port, timeoutMs = 15000) {
+    return new Promise((resolve) => {
+        const startTime = Date.now();
+        const pollInterval = 100; // ms between pings
+
+        const check = () => {
+            const req = http.get(`http://localhost:${port}/api/status`, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                    const elapsed = Date.now() - startTime;
+                    console.log(`[SmartPoll] Backend ready in ${elapsed}ms`);
+                    resolve(true);
+                });
+            });
+
+            req.on('error', () => {
+                // Backend not ready yet
+                if (Date.now() - startTime >= timeoutMs) {
+                    console.warn(`[SmartPoll] Backend did not respond within ${timeoutMs}ms. Proceeding anyway.`);
+                    resolve(false);
+                } else {
+                    setTimeout(check, pollInterval);
+                }
+            });
+
+            req.setTimeout(pollInterval); // Don't let individual requests hang
+        };
+
+        check();
+    });
+}
+
+async function startBackend() {
     const backendPath = isDev
         ? path.join(__dirname, '../backend')
         : path.join(process.resourcesPath, 'backend');
@@ -486,20 +532,17 @@ function startBackend() {
         process.env.NODE_ENV = isDev ? 'development' : 'production';
         process.env.USER_DATA_PATH = userDataPath;
 
-        // Start Server
-        // We use 'require' so it runs in THIS process. 
+        // Start Server (runs in THIS process via require)
         require(path.join(backendPath, 'server.js'));
-        backendProcess = true; // Flag that it's running
+        backendProcess = true;
 
-        // Listen for the "Done" signal from backend if we implement it, 
-        // OR just assume it's up.
-        // For robustness, let's wait a second before showing main window to let DB connect.
-        setTimeout(() => {
-            createWindow();
-            if (!isPortable) {
-                setupAutoUpdater(); // Check for updates after app is ready (skip in portable mode)
-            }
-        }, 2500);
+        // Smart Polling: Wait only as long as actually needed
+        await waitForBackend(BACKEND_PORT);
+
+        createWindow();
+        if (!isPortable) {
+            setupAutoUpdater();
+        }
 
     } catch (err) {
         console.error("Failed to start backend:", err);
@@ -522,11 +565,8 @@ app.on('second-instance', (event, commandLine, workingDirectory) => {
 
 app.on('ready', () => {
     createSplashWindow('startup');
-
-    // Small delay to let splash render
-    setTimeout(() => {
-        startBackend();
-    }, 500);
+    // Start backend immediately — no artificial delay
+    startBackend();
 });
 
 app.on('window-all-closed', function () {
@@ -538,9 +578,6 @@ app.on('activate', function () {
 });
 
 // Listener for Backend 'Ready to Quit' signal
-// We will modify server.js to emit this when backup is done
-// Listener for Backend 'Ready to Quit' signal
-// We will modify server.js to emit this when backup is done
 process.on('backend-exit-completed', (status) => {
     console.log("[Main] Backend finished cleanup. Quitting.");
 
@@ -576,6 +613,24 @@ ipcMain.on('open-devtools', () => {
             mainWindow.webContents.openDevTools();
         }
     }
+});
+
+// IPC: Performance Widget — gather process metrics
+ipcMain.handle('get-system-metrics', async () => {
+    const metrics = app.getAppMetrics();
+    let cpuTotal = 0, ramTotal = 0, gpuMem = 0;
+    metrics.forEach(p => {
+        cpuTotal += p.cpu.percentCPUUsage;
+        ramTotal += p.memory.workingSetSize; // KB
+        if (p.type === 'GPU') gpuMem = p.memory.workingSetSize;
+    });
+    return {
+        cpuPercent: Math.round(cpuTotal * 100) / 100,
+        ramMB: Math.round(ramTotal / 1024),
+        gpuMemMB: Math.round(gpuMem / 1024),
+        processCount: metrics.length,
+        timestamp: Date.now()
+    };
 });
 
 // External Link Handling

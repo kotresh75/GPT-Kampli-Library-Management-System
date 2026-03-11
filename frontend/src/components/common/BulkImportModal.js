@@ -4,6 +4,8 @@ import { X, UploadCloud, AlertCircle, FileSpreadsheet } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import GlassSelect from './GlassSelect';
 import ConfirmationModal from './ConfirmationModal';
+import ExpandableInput from './ExpandableInput';
+import '../../styles/components/smart-bulk-import.css';
 
 // Helper to parse dates robustly (handles Excel serial, DD/MM/YYYY, YYYY-MM-DD)
 const parseDateValue = (val) => {
@@ -375,12 +377,12 @@ const BulkImportModal = ({
                                                                     </div>
                                                                 ) : (
                                                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                                        <input
+                                                                        <ExpandableInput
                                                                             type={col.type === 'number' ? 'number' : 'text'}
                                                                             className={`glass-input ${cellError ? 'error-border' : ''}`}
                                                                             value={row[col.key]}
                                                                             onChange={(e) => handleCellChange(row.id, col.key, e.target.value)}
-                                                                            onBlur={(e) => handleCellChange(row.id, col.key, e.target.value.trim())} // Auto-trim
+                                                                            onBlur={(e) => handleCellChange(row.id, col.key, e.target.value.trim())}
                                                                             style={{ width: '100%' }}
                                                                         />
                                                                         {cellError && <span style={{ color: '#fc8181', fontSize: '0.7rem' }}>{cellError}</span>}

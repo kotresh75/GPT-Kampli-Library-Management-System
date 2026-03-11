@@ -3,6 +3,7 @@ import { Activity, Server, Database, Wifi, Cpu, HardDrive, RefreshCw, CheckCircl
 
 import { useLanguage } from '../context/LanguageContext';
 import { useTutorial } from '../context/TutorialContext';
+import API_BASE from '../config/apiConfig';
 
 const SystemHealthPage = () => {
     const { t } = useLanguage();
@@ -63,13 +64,13 @@ const SystemHealthPage = () => {
     const fetchHealth = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:17221/api/health');
+            const res = await fetch(`${API_BASE}/api/health`);
             const data = await res.json();
             setHealth(data);
 
             // Auto-check connectivity if not done yet
             if (!connectivity) {
-                const netRes = await fetch('http://localhost:17221/api/health/connectivity');
+                const netRes = await fetch(`${API_BASE}/api/health/connectivity`);
                 const netData = await netRes.json();
                 setConnectivity(netData);
             }
@@ -83,7 +84,7 @@ const SystemHealthPage = () => {
     const runNetCheck = async () => {
         setCheckingNet(true);
         try {
-            const res = await fetch('http://localhost:17221/api/health/connectivity');
+            const res = await fetch(`${API_BASE}/api/health/connectivity`);
             const data = await res.json();
             setConnectivity(data);
         } catch (err) {
