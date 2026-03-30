@@ -1,5 +1,6 @@
 import React from 'react';
 import { Mail, Phone, Edit2, Trash2, User, ToggleLeft, ToggleRight, Book, Users, Repeat, DollarSign, FileText, Eye, Briefcase } from 'lucide-react';
+import { getProfileIconUrl } from '../../utils/imageUtils';
 
 const StaffCard = ({ staff, onEdit, onToggleStatus, onDelete, onView }) => {
     const isActive = staff.status === 'Active';
@@ -30,7 +31,7 @@ const StaffCard = ({ staff, onEdit, onToggleStatus, onDelete, onView }) => {
                     }}>
                         {staff.profile_icon ? (
                             <img
-                                src={staff.profile_icon.startsWith('data:') ? staff.profile_icon : (staff.profile_icon.startsWith('/') ? staff.profile_icon.slice(1) : staff.profile_icon)}
+                                src={getProfileIconUrl(staff.profile_icon)}
                                 alt={staff.name}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />

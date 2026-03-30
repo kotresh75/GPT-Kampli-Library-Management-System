@@ -7,6 +7,7 @@ import {
 import { usePreferences } from '../../context/PreferencesContext';
 import { useLanguage } from '../../context/LanguageContext';
 import GlassSelect from '../common/GlassSelect';
+import { getBookCoverUrl } from '../../utils/imageUtils';
 import '../../styles/components/tables.css';
 
 const SmartBookTable = ({
@@ -295,8 +296,8 @@ const SmartBookTable = ({
                                 </td>
                                 <td>
                                     <div className="w-10 h-14 bg-gray-800 rounded overflow-hidden border border-white/10 shadow-sm relative">
-                                        {book.cover_image_url ? (
-                                            <img src={book.cover_image_url} alt="" className="w-full h-full object-cover" />
+                                        {getBookCoverUrl(book) ? (
+                                            <img src={getBookCoverUrl(book)} alt="" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-xs text-gray-600">N/A</div>
                                         )}

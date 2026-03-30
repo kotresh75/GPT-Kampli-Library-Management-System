@@ -7,6 +7,7 @@ import IDCardTemplate from './IDCardTemplate';
 import cardBgUrl from '../../ID Template/id_bg.png';
 import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 import API_BASE from '../../config/apiConfig';
+import { getSignatureUrl } from '../../utils/imageUtils';
 
 const IDCardPreviewModal = ({ student, onClose }) => {
     const cardRef = useRef(null);
@@ -35,8 +36,8 @@ const IDCardPreviewModal = ({ student, onClose }) => {
                 }
 
                 setSignatures({
-                    hod: hodSignature,
-                    principal: principalData.signature
+                    hod: getSignatureUrl(hodSignature),
+                    principal: getSignatureUrl(principalData.signature)
                 });
 
                 // 2. Fetch Assets (BG & Emblem)

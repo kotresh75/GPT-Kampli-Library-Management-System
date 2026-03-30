@@ -21,6 +21,9 @@
     box-shadow: var(--glass-shadow);
     padding: var(--space-10);
     animation: fadeInUp 0.6s var(--ease-spring);
+    /* GPU Hardware Acceleration for Scroll Jank */
+    transform: translateZ(0);
+    will-change: transform, backdrop-filter;
 }
 
 /* ===================
@@ -34,6 +37,9 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-elevation-low);
     padding: var(--space-5);
+    /* GPU Hardware Acceleration for Scroll Jank */
+    transform: translateZ(0);
+    will-change: transform, backdrop-filter;
     transition: transform var(--transition-base),
         box-shadow var(--transition-base),
         background var(--transition-base);
@@ -64,6 +70,9 @@
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-2xl);
     box-shadow: var(--shadow-2xl);
+    /* GPU Hardware Acceleration for Scroll Jank */
+    transform: translateZ(0);
+    will-change: transform, backdrop-filter;
 }
 
 /* ===================
@@ -78,6 +87,9 @@
     width: 260px;
     display: flex;
     flex-direction: column;
+    /* GPU Hardware Acceleration for Scroll Jank */
+    transform: translateZ(0);
+    will-change: transform, backdrop-filter;
     transition: width var(--transition-slow),
         transform var(--transition-slow);
     z-index: var(--z-fixed);
@@ -100,6 +112,9 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 var(--space-8);
+    /* GPU Hardware Acceleration for Scroll Jank */
+    transform: translateZ(0);
+    will-change: transform, backdrop-filter;
     z-index: var(--z-sticky);
 }
 
@@ -142,6 +157,10 @@
 .footer-heart {
     color: #ef4444;
     fill: #ef4444;
+    transition: transform 0.2s;
+}
+
+.footer-heart:hover {
     animation: heartBeat 1.5s ease-in-out infinite;
 }
 

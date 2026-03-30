@@ -40,7 +40,7 @@ exports.setupAdmin = (req, res) => {
             const { v4: uuidv4 } = require('uuid');
             const id = uuidv4();
             const createdAt = getISTISOWithOffset();
-            const profileIcon = `/profile-icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.png`;
+            const profileIcon = `icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.webp`;
             // First admin created via setup is always Root
             const isRoot = 1;
 

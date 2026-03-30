@@ -1,4 +1,5 @@
 import React, { forwardRef, useState, useEffect } from 'react';
+import { getStudentPhotoUrl } from '../../utils/imageUtils';
 
 const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, base64Bg, base64Emblem, base64BloodGroup }, ref) => {
     // --- STYLES (Inline for seamless SVG export) ---
@@ -182,32 +183,7 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, 
         }
     };
 
-    // Helper: Convert URL to Base64 for safe Export
-    const [base64Profile, setBase64Profile] = useState(null);
-
-    useEffect(() => {
-        const convertToBase64 = async (url, setter) => {
-            if (!url) return;
-            try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error(`Failed to load ${url} `);
-                const blob = await res.blob();
-                const reader = new FileReader();
-                reader.onloadend = () => setter(reader.result);
-                reader.readAsDataURL(blob);
-            } catch (e) {
-                console.error("Image Load Error:", e);
-                setter(null);
-            }
-        };
-
-        // Convert Profile
-        if (student.profile_image) {
-            convertToBase64(student.profile_image, setBase64Profile);
-        } else {
-            setBase64Profile(null);
-        }
-    }, [student.profile_image]);
+    const photoUrl = getStudentPhotoUrl(student);
 
     // Helper to derive Admission Year from Register Number (e.g., 172CS23021 -> 2023)
     const getAdmissionYear = () => {
@@ -264,8 +240,8 @@ const IDCardTemplate = forwardRef(({ student, hodSignature, principalSignature, 
                 {/* Photo & Blood Group */}
                 <div style={styles.photoWrapper}>
                     <div style={styles.photoBox}>
-                        {base64Profile ? (
-                            <img src={base64Profile} alt="Student" style={styles.img} crossOrigin="anonymous" />
+                        {photoUrl ? (
+                            <img src={photoUrl} alt="Student" style={styles.img} crossOrigin="anonymous" />
                         ) : (
                             <>
                                 <span style={styles.photoIcon}>📷</span>

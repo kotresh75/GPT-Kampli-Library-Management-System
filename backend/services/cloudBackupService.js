@@ -1,6 +1,7 @@
 const { MongoClient } = require('mongodb');
 const db = require('../db');
 const auditService = require('./auditService');
+const imageService = require('./imageService');
 const { v4: uuidv4 } = require('uuid');
 
 // Helper to get SQLite data
@@ -124,9 +125,37 @@ exports.performCloudBackup = async (options = {}) => {
             }
         }
 
-        // 4. Update Audit Log
+        // 4. Backup Uploads Directory (Images, Icons, etc.)
+        console.log('[CloudBackup] Syncing Uploads directory...');
+        const uploadFolders = ['covers', 'students', 'signatures', 'icons'];
+        let totalFiles = 0;
+        const fileCollection = mongoDb.collection('app_uploads');
+        
+        const fileCollections = await mongoDb.listCollections({ name: 'app_uploads' }).toArray();
+        if (fileCollections.length === 0) {
+            await mongoDb.createCollection('app_uploads');
+        }
+        
+        await fileCollection.deleteMany({});
+        
+        for (const folder of uploadFolders) {
+            const files = imageService.getFilesForBackup(folder);
+            if (files.length > 0) {
+                const docs = files.map(f => ({
+                    _id: `${folder}/${f.filename}`,
+                    folder: folder,
+                    filename: f.filename,
+                    data: f.data
+                }));
+                await fileCollection.insertMany(docs);
+                totalFiles += docs.length;
+                console.log(`[CloudBackup] Backed up ${docs.length} files from ${folder}`);
+            }
+        }
+
+        // 5. Update Audit Log
         console.log('[CloudBackup] Backup completed successfully.');
-        auditService.log('SYSTEM', 'BACKUP_CLOUD', 'System', `Backed up ${tablesToBackup.length} tables (${totalRecords} records) to MongoDB Atlas`);
+        auditService.log('SYSTEM', 'BACKUP_CLOUD', 'System', `Backed up ${tablesToBackup.length} tables (${totalRecords} records) and ${totalFiles} images to MongoDB Atlas`);
 
         return { success: true, totalRecords };
 
@@ -210,12 +239,35 @@ exports.restoreFromCloud = async () => {
                         }
                     }
 
+                    // Restore Uploads Directory
+                    const fileCollection = mongoDb.collection('app_uploads');
+                    const fileCollections = await mongoDb.listCollections({ name: 'app_uploads' }).toArray();
+                    let totalRestoredFiles = 0;
+                    
+                    if (fileCollections.length > 0) {
+                        const uploadDocs = await fileCollection.find({}).toArray();
+                        if (uploadDocs.length > 0) {
+                            const uploadFolders = ['covers', 'students', 'signatures', 'icons'];
+                            for (const folder of uploadFolders) {
+                                const filesInFolder = uploadDocs.filter(d => d.folder === folder).map(d => ({
+                                    filename: d.filename,
+                                    data: d.data
+                                }));
+                                if (filesInFolder.length > 0) {
+                                    const restoredCount = imageService.restoreFilesFromBackup(folder, filesInFolder);
+                                    totalRestoredFiles += restoredCount;
+                                }
+                            }
+                            console.log(`[CloudRestore] Restored ${totalRestoredFiles} files to Uploads directory`);
+                        }
+                    }
+
                     await runDb("COMMIT;");
                     await runDb("PRAGMA foreign_keys = ON;");
 
                     console.log('[CloudRestore] Restore completed successfully.');
-                    auditService.log('SYSTEM', 'RESTORE_CLOUD', 'System', `Restored ${totalRestored} records from MongoDB Atlas`);
-                    resolve({ success: true, totalRecords: totalRestored });
+                    auditService.log('SYSTEM', 'RESTORE_CLOUD', 'System', `Restored ${totalRestored} records and ${totalRestoredFiles} images from MongoDB Atlas`);
+                    resolve({ success: true, totalRecords: totalRestored, totalFiles: totalRestoredFiles });
 
                 } catch (txErr) {
                     await runDb("ROLLBACK;");

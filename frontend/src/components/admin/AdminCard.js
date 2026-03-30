@@ -1,6 +1,7 @@
 import { formatDate } from '../../utils/dateUtils';
 import { Mail, Phone, Edit2, Trash2, Shield, Activity, Lock, ToggleLeft, ToggleRight, Repeat } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import { getProfileIconUrl } from '../../utils/imageUtils';
 
 const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword, onTransferRoot }) => {
     const { currentUser } = useUser();
@@ -32,7 +33,7 @@ const AdminCard = ({ admin, onEdit, onToggleStatus, onDelete, onResetPassword, o
                     }}>
                         {admin.profile_icon ? (
                             <img
-                                src={admin.profile_icon.startsWith('data:') ? admin.profile_icon : (admin.profile_icon.startsWith('/') ? admin.profile_icon : '/' + admin.profile_icon)}
+                                src={getProfileIconUrl(admin.profile_icon)}
                                 alt={admin.name}
                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 onError={(e) => e.target.style.display = 'none'}

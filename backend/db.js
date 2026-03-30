@@ -561,9 +561,10 @@ db.prepare = function (sql, ...params) {
 function seedProfileIcons() {
     db.get("SELECT count(*) as count FROM profile_icons", (err, row) => {
         if (!err && row && row.count === 0) {
-            console.log("Seeding profile icons into database...");
+            console.log("Seeding profile icons (copying WebP files)...");
             const fs = require('fs');
             const path = require('path');
+            const imageService = require('./services/imageService');
 
             // Priority 1: Check in resources (Production - via extraResources)
             let iconsDir = path.join(process.resourcesPath, 'profile-icons');
@@ -579,34 +580,32 @@ function seedProfileIcons() {
             }
 
             if (fs.existsSync(iconsDir)) {
-                try {
-                    const files = fs.readdirSync(iconsDir).filter(file => file.endsWith('.png'));
-                    const insert = db.prepare("INSERT INTO profile_icons (name, data) VALUES (?, ?)");
+                const files = fs.readdirSync(iconsDir).filter(file => file.endsWith('.webp'));
+                let count = 0;
 
-                    let count = 0;
-                    files.forEach(file => {
-                        try {
-                            const filePath = path.join(iconsDir, file);
-                            const data = fs.readFileSync(filePath);
-                            const base64 = `data:image/png;base64,${data.toString('base64')}`;
-                            insert.run(file, base64);
-                            count++;
-                        } catch (e) {
-                            console.error(`Failed to read icon ${file}:`, e);
-                        }
-                    });
+                files.forEach(file => {
+                    try {
+                        const filePath = path.join(iconsDir, file);
+                        const safeName = file.replace('.webp', '');
+                        
+                        const outputPath = path.join(imageService.ICONS_DIR, `${safeName}.webp`);
+                        
+                        // Copy the pre-optimized WebP file
+                        fs.copyFileSync(filePath, outputPath);
+                        const relativePath = `icons/${safeName}.webp`;
 
-                    insert.finalize();
-                    console.log(`Seeded ${count} profile icons.`);
-                } catch (e) {
-                    console.error("Failed to read icons directory:", e);
-                }
+                        // Store relative path in DB (not base64)
+                        db.run("INSERT INTO profile_icons (name, data) VALUES (?, ?)", [file, relativePath]);
+                        count++;
+                    } catch (e) {
+                        console.error(`Failed to seed icon ${file}:`, e.message);
+                    }
+                });
+                
+                console.log(`Seeded ${count} profile icons as WebP.`);
             } else {
                 console.warn("Profile icons directory not found for seeding at:", iconsDir);
             }
-        } else {
-            // Already seeded
-            // console.log("Profile icons already seeded.");
         }
     });
 }

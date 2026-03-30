@@ -1,5 +1,40 @@
 # Changelog
 
+## [1.0.3] - 25/03/2026
+
+### Added
+- **Unified Image Service (`backend/services/imageService.js`)**: Extended previous `coverService.js` with generic `saveBase64AsWebP()`, `deleteImageFile()`, `clearDirectory()`, `getFilesForBackup()`, and `restoreFilesFromBackup()` methods supporting all image subdirectories (`covers/`, `students/`, `signatures/`).
+- **Frontend Image Helpers (`frontend/src/utils/imageUtils.js`)**: Added `getStudentPhotoUrl()` and `getSignatureUrl()` helpers that resolve local WebP file paths to full URLs, with backward-compatible base64 fallback.
+- **Migration Script (`backend/scripts/migrateImages.js`)**: Idempotent script to convert existing base64 data in the database to WebP files. Run: `node backend/scripts/migrateImages.js`.
+
+### Changed
+- **Student Photo Uploads**: Photos are now converted to optimized WebP files (`Uploads/students/<register_no>.webp`) instead of storing raw base64 in the database. ~90% storage savings.
+- **HOD Signatures**: Saved as `Uploads/signatures/hod_<dept_name>.webp` instead of base64 in departments table.
+- **Principal Signature**: Saved as `Uploads/signatures/principal.webp` instead of base64 in system_settings table.
+- **Student Deletion Cleanup**: Single and bulk student deletion now removes associated photo files from disk.
+- **Department Deletion Cleanup**: Deleting a department removes the associated HOD signature file.
+- **Backup Format (v1.2)**: Backups now include `student_images[]` and `signature_images[]` alongside `cover_images[]`. Backward compatible with v1.1/v1.0 backups.
+- **Frontend Components Updated**: `SmartStudentTable`, `StudentDetailModal`, `IDCardTemplate`, `IDCardPreviewModal`, `BulkIDCardDownload` all resolve images through the new helpers.
+
+## [1.0.2] - 25/03/2026
+
+### Added
+- **Offline Book Cover Images**: Book cover images are now downloaded and stored locally as optimized WebP files in `Uploads/covers/`, enabling offline display without internet dependency.
+- **Cover Download Service (`backend/services/coverService.js`)**: New service that downloads external cover images from Google Books / Open Library, converts them to WebP format using `sharp` (75% quality, max 300px width), and manages local file storage.
+- **Cover API Routes (`backend/routes/coverRoutes.js`)**: New endpoints `POST /api/covers/download` and `POST /api/covers/download-batch` for single and bulk cover downloads.
+- **Static File Serving (`backend/server.js`)**: Added `/uploads` static route to serve locally stored cover images and other uploaded files.
+- **Image Utility Helper (`frontend/src/utils/imageUtils.js`)**: Shared `getBookCoverUrl()` function that resolves local paths or URLs, and `downloadCoverImage()` for frontend-triggered downloads.
+
+### Changed
+- **Auto-Fill Enhancement (`SettingsPage.js`)**: Data enrichment auto-fill now downloads cover images locally via the backend instead of only storing external URLs.
+- **ISBN Lookup Enhancement (`SmartAddBookModal.js`)**: Adding books via ISBN lookup now downloads covers locally before saving.
+- **Cover Image Display**: Updated 6 components (`SmartBookTable`, `SmartBookDetailModal`, `BookCard`, `IssueTab`, `ReturnTab`, `FinesTab`) to use `getBookCoverUrl()` helper for consistent local/URL resolution.
+- **Backup Format (v1.1)**: Local backups now include cover image files (base64-encoded) under `cover_images[]` array, making backups fully self-contained. Backward compatible with v1.0 backups.
+- **Book Deletion Cleanup**: Deleting books (single or bulk) now removes associated cover image files from disk.
+
+### Dependencies
+- Added `sharp` npm package for high-performance image processing and WebP conversion.
+
 ## [1.0.1] - 2026-03-10
 
 ### Added

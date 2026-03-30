@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom';
 import { X, Save, BookOpen, Search, AlertCircle, CheckCircle } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
+import { downloadCoverImage } from '../../utils/imageUtils';
 import '../../styles/components/smart-form-modal.css';
 import API_BASE from '../../config/apiConfig';
 
@@ -79,12 +80,19 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
 
             if (googleData.items && googleData.items.length > 0) {
                 const book = googleData.items[0].volumeInfo;
+                const coverUrl = book.imageLinks?.thumbnail?.replace('http:', 'https:') || '';
+                // Download cover image locally
+                let localPath = '';
+                if (coverUrl && cleanIsbn) {
+                    localPath = await downloadCoverImage(coverUrl, cleanIsbn) || '';
+                }
                 setFormData(prev => ({
                     ...prev,
                     title: book.title || prev.title,
                     author: book.authors ? book.authors.join(', ') : prev.author,
                     publisher: book.publisher || prev.publisher,
-                    cover_image_url: book.imageLinks?.thumbnail?.replace('http:', 'https:') || prev.cover_image_url,
+                    cover_image_url: coverUrl || prev.cover_image_url,
+                    cover_image: localPath || prev.cover_image || '',
                 }));
 
                 setFetchSuccess(t('books.modal.found_google'));
@@ -99,12 +107,18 @@ const SmartAddBookModal = ({ onClose, onAdded }) => {
 
             if (olData[key]) {
                 const book = olData[key];
+                const coverUrl = book.cover?.medium || book.cover?.large || '';
+                let localPath = '';
+                if (coverUrl && cleanIsbn) {
+                    localPath = await downloadCoverImage(coverUrl, cleanIsbn) || '';
+                }
                 setFormData(prev => ({
                     ...prev,
                     title: book.title || prev.title,
                     author: book.authors ? book.authors.map(a => a.name).join(', ') : prev.author,
                     publisher: book.publishers ? book.publishers.map(p => p.name).join(', ') : prev.publisher,
-                    cover_image_url: book.cover?.medium || book.cover?.large || prev.cover_image_url
+                    cover_image_url: coverUrl || prev.cover_image_url,
+                    cover_image: localPath || prev.cover_image || '',
                 }));
 
                 setFetchSuccess(t('books.modal.found_ol'));

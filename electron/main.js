@@ -6,7 +6,17 @@ const http = require('http');
 const { autoUpdater } = require('electron-updater');
 
 // -----------------------------------------------------------------------------
-// 0. Single Instance Lock
+// 0. Memory Optimization Flags
+// -----------------------------------------------------------------------------
+// Force V8 Garbage Collector to run more aggressively by lowering the heap limit (default is often 2GB+)
+app.commandLine.appendSwitch('js-flags', '--max-old-space-size=512');
+// Disable site isolation to reduce the number of renderer processes and save significant RAM
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+// Disable some unnecessary Chromium features for a standard desktop CRUD app
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
+
+// -----------------------------------------------------------------------------
+// 1. Single Instance Lock
 // -----------------------------------------------------------------------------
 const gotTheLock = app.requestSingleInstanceLock();
 

@@ -4,6 +4,7 @@ import { Search, RotateCcw, CheckCircle, AlertCircle, RefreshCcw, User, BookOpen
 import StatusModal from '../common/StatusModal';
 import '../../styles/components/TransactionDetailsModal.css';
 import { useLanguage } from '../../context/LanguageContext';
+import { getBookCoverUrl, getStudentPhotoUrl } from '../../utils/imageUtils';
 import API_BASE from '../../config/apiConfig';
 
 // Helper: Format date to DD/MM/YYYY
@@ -407,9 +408,9 @@ const ReturnTab = () => {
                                                 border: '1px solid var(--glass-border)',
                                                 overflow: 'hidden'
                                             }}>
-                                                {student.profile_image ? (
+                                                {getStudentPhotoUrl(student) ? (
                                                     <img
-                                                        src={student.profile_image}
+                                                        src={getStudentPhotoUrl(student)}
                                                         alt={student.full_name}
                                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     />
@@ -468,8 +469,8 @@ const ReturnTab = () => {
                                                         <div key={loan.transaction_id} className="p-4 rounded-xl border border-glass bg-white/5">
                                                             <div className="flex justify-between items-start mb-3">
                                                                 <div className="flex items-start gap-3 flex-1">
-                                                                    {loan.cover_image ? (
-                                                                        <img src={loan.cover_image} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
+                                                                    {getBookCoverUrl(loan) ? (
+                                                                        <img src={getBookCoverUrl(loan)} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
                                                                     ) : (
                                                                         <div className="w-6 h-8 rounded-sm bg-blue-500/10 flex items-center justify-center text-blue-400">
                                                                             <BookOpen size={14} />

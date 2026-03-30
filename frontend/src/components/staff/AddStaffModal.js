@@ -7,6 +7,7 @@ import StatusModal from '../common/StatusModal';
 import { useLanguage } from '../../context/LanguageContext';
 import '../../styles/components/smart-form-modal.css';
 import API_BASE from '../../config/apiConfig';
+import { getProfileIconUrl } from '../../utils/imageUtils';
 
 const PERMISSIONS_LIST = [
     { id: 'CATALOG', label: 'Catalog Access', description: 'Can manage book inventory (add/edit books)' },
@@ -260,7 +261,7 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                                 }}>
                                     {formData.profile_icon ? (
                                         <img
-                                            src={formData.profile_icon}
+                                            src={getProfileIconUrl(formData.profile_icon)}
                                             alt="Profile"
                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                             onError={() => setFormData(prev => ({ ...prev, profile_icon: '' }))}
@@ -291,7 +292,7 @@ const AddStaffModal = ({ staff, onClose, onSave }) => {
                                                     className={`icon-picker-item ${isActive ? 'active' : ''}`}
                                                     onClick={() => handleIconSelect(icon.data)}
                                                 >
-                                                    <img src={icon.data} alt={icon.name} />
+                                                    <img src={getProfileIconUrl(icon.data)} alt={icon.name} />
                                                     {isActive && <div className="icon-picker-check"><Check size={16} color="white" /></div>}
                                                 </div>
                                             );

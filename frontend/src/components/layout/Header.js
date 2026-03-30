@@ -6,6 +6,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useUser } from '../../context/UserContext';
 import StatusModal from '../common/StatusModal';
 import UpdateBanner from '../common/UpdateBanner';
+import { getProfileIconUrl } from '../../utils/imageUtils';
 
 const Header = ({ toggleSidebar, onHelpClick }) => {
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
@@ -18,7 +19,7 @@ const Header = ({ toggleSidebar, onHelpClick }) => {
 
     // Use current user directly from context
     const user = currentUser || {};
-    const profileIcon = user.profile_icon || null;
+    const profileIcon = user.profile_icon ? getProfileIconUrl(user.profile_icon) : null;
     const userInitial = (user.name || 'U').charAt(0).toUpperCase();
 
     // Map numeric scale to labels for display/cycling
@@ -122,7 +123,7 @@ const Header = ({ toggleSidebar, onHelpClick }) => {
                         >
                             <div className="header-avatar">
                                 {profileIcon ? (
-                                    <img src={profileIcon.startsWith('/') ? profileIcon.slice(1) : profileIcon} alt="Profile" className="header-avatar-img" />
+                                    <img src={profileIcon} alt="Profile" className="header-avatar-img" />
                                 ) : (
                                     <span className="header-avatar-initial">{userInitial}</span>
                                 )}
@@ -143,7 +144,7 @@ const Header = ({ toggleSidebar, onHelpClick }) => {
                                 <div className="dropdown-header">
                                     <div className="dropdown-avatar">
                                         {profileIcon ? (
-                                            <img src={profileIcon.startsWith('/') ? profileIcon.slice(1) : profileIcon} alt="Profile" className="dropdown-avatar-img" />
+                                            <img src={profileIcon} alt="Profile" className="dropdown-avatar-img" />
                                         ) : (
                                             <span className="dropdown-avatar-initial">{userInitial}</span>
                                         )}

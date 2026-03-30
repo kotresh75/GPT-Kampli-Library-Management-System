@@ -8,6 +8,7 @@ import {
     Sun, Moon, Volume2, Eye, Printer, Key, AlertTriangle, User, Monitor, Search, Info,
     ScanLine, Zap, Clock, Bluetooth, Usb
 } from 'lucide-react';
+import { Image as ImageIcon, Edit2 } from 'lucide-react';
 import { useSocket } from '../context/SocketContext';
 import PasswordPromptModal from '../components/common/PasswordPromptModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
@@ -18,7 +19,9 @@ import { useTutorial } from '../context/TutorialContext';
 import { useSession } from '../context/SessionContext';
 import GlassSelect from '../components/common/GlassSelect';
 import BulkIDCardDownload from '../components/students/BulkIDCardDownload';
+import { downloadCoverImage } from '../utils/imageUtils';
 import API_BASE from '../config/apiConfig';
+import { getSignatureUrl } from '../utils/imageUtils';
 
 // Help functions
 
@@ -882,6 +885,52 @@ const BulkPhotoUpload = () => {
     const [isDeleting, setIsDeleting] = useState(false);
     const [photoCount, setPhotoCount] = useState(null);
 
+    const [showPhotos, setShowPhotos] = useState(false);
+    const [photoList, setPhotoList] = useState([]);
+    const [editingPhoto, setEditingPhoto] = useState(null);
+    const [newPhotoName, setNewPhotoName] = useState('');
+
+    const handleViewPhotos = async () => {
+        try {
+            if (!showPhotos) {
+                const res = await fetch(`${API_BASE}/api/students/photo/list`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setPhotoList(Array.isArray(data) ? data : []);
+                }
+            }
+            setShowPhotos(!showPhotos);
+        } catch (e) {
+            console.error("Failed to fetch photos", e);
+        }
+    };
+
+    const handleRenamePhoto = async (oldName) => {
+        if (!newPhotoName || newPhotoName === oldName) {
+            setEditingPhoto(null);
+            return;
+        }
+        let finalNewName = newPhotoName;
+        if (!finalNewName.includes('.')) finalNewName += '.webp';
+        
+        try {
+            const res = await fetch(`${API_BASE}/api/students/photo/rename`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldName, newName: finalNewName })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setPhotoList(prev => prev.map(p => p === oldName ? data.newName : p));
+                setEditingPhoto(null);
+                setNewPhotoName('');
+            } else alert(data.error || 'Rename failed');
+        } catch (e) {
+            console.error(e);
+            alert('Rename failed');
+        }
+    };
+
     const fileInputRef = React.useRef(null);
     const folderInputRef = React.useRef(null);
 
@@ -928,41 +977,6 @@ const BulkPhotoUpload = () => {
         }
     };
 
-    const compressImage = (file) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const elem = document.createElement('canvas');
-                    const maxSize = 500; // Max dimension
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > maxSize) {
-                            height *= maxSize / width;
-                            width = maxSize;
-                        }
-                    } else {
-                        if (height > maxSize) {
-                            width *= maxSize / height;
-                            height = maxSize;
-                        }
-                    }
-
-                    elem.width = width;
-                    elem.height = height;
-                    const ctx = elem.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(elem.toDataURL('image/jpeg', 0.8)); // Compress to JPEG 80%
-                };
-            };
-        });
-    };
-
     const handleFileSelect = async (e) => {
         const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
         if (files.length === 0) return;
@@ -980,14 +994,14 @@ const BulkPhotoUpload = () => {
             setStatus(prev => ({ ...prev, processed: i + 1, currentFile: `Processing ${file.name}...` }));
 
             try {
-                // 1. Compress
-                const compressedBase64 = await compressImage(file);
+                // Send raw file via FormData (no base64)
+                const formData = new FormData();
+                formData.append('register_no', regNo);
+                formData.append('photo', file);
 
-                // 2. Upload
                 const res = await fetch(`${API_BASE}/api/students/photo/upload`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ register_no: regNo, image_data: compressedBase64 })
+                    body: formData
                 });
 
                 if (res.ok) successCount++;
@@ -1117,6 +1131,80 @@ const BulkPhotoUpload = () => {
                 )}
 
 
+                {/* Photo Viewer & Renamer */}
+                <div style={{ marginTop: '20px', borderTop: '1px solid var(--glass-border)', paddingTop: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: showPhotos ? '15px' : '0' }}>
+                        <div>
+                            <h4 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <ImageIcon size={16} /> Photo Directory
+                            </h4>
+                            <p className="form-hint" style={{ margin: '4px 0 0' }}>View and rename uploaded student photos.</p>
+                        </div>
+                        <button className="secondary-glass-btn" onClick={handleViewPhotos}>
+                            {showPhotos ? 'Hide Photos' : 'View Photos'}
+                        </button>
+                    </div>
+
+                    {showPhotos && (
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                            gap: '15px',
+                            maxHeight: '400px',
+                            overflowY: 'auto',
+                            padding: '10px',
+                            background: 'rgba(0,0,0,0.1)',
+                            borderRadius: '8px',
+                            marginTop: '15px'
+                        }}>
+                            {photoList.length === 0 ? (
+                                <p style={{ color: 'var(--text-secondary)', gridColumn: '1 / -1', textAlign: 'center' }}>No photos found.</p>
+                            ) : photoList.map(name => (
+                                <div key={name} style={{ background: 'var(--bg-color)', padding: '10px', borderRadius: '8px', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <div style={{ width: '100%', aspectRatio: '0.8', background: '#e5e7eb', borderRadius: '4px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <img 
+                                            src={`${API_BASE}/Uploads/students/${name}`} 
+                                            alt={name} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                            onError={(e) => e.target.style.display = 'none'} 
+                                        />
+                                    </div>
+                                    
+                                    {editingPhoto === name ? (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                            <input 
+                                                type="text" 
+                                                value={newPhotoName} 
+                                                onChange={e => setNewPhotoName(e.target.value)} 
+                                                style={{ width: '100%', padding: '4px 8px', fontSize: '0.8rem', borderRadius: '4px', border: '1px solid var(--primary-color)', background: 'var(--bg-color)', color: 'var(--text-main)' }} 
+                                                autoFocus 
+                                            />
+                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                                <button className="btn-primary" style={{ padding: '2px 8px', fontSize: '0.7rem', flex: 1 }} onClick={() => handleRenamePhoto(name)}>Save</button>
+                                                <button className="btn-secondary" style={{ padding: '2px 8px', fontSize: '0.7rem', flex: 1 }} onClick={() => setEditingPhoto(null)}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.8rem', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 500 }} title={name}>
+                                                {name}
+                                            </span>
+                                            <button 
+                                                className="icon-btn" 
+                                                style={{ padding: '4px', color: 'var(--primary-color)' }} 
+                                                onClick={() => { setEditingPhoto(name); setNewPhotoName(name.replace(/\.[^/.]+$/, "")); }}
+                                                title="Rename"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
                 {/* Danger Zone for Photos */}
                 <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid rgba(239, 68, 68, 0.2)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1191,7 +1279,7 @@ const SignatureUploadSection = () => {
                 const hodMap = {};
                 data.forEach(dept => {
                     if (dept.hod_signature) {
-                        hodMap[dept.id] = dept.hod_signature;
+                        hodMap[dept.id] = getSignatureUrl(dept.hod_signature);
                     }
                 });
                 setHodSignatures(hodMap);
@@ -1208,37 +1296,10 @@ const SignatureUploadSection = () => {
         try {
             const res = await fetch(`${API_BASE}/api/settings/principal-signature`);
             const data = await res.json();
-            setPrincipalSignature(data.signature);
+            setPrincipalSignature(getSignatureUrl(data.signature));
         } catch (e) {
             console.error("Failed to fetch principal signature", e);
         }
-    };
-
-    const compressImage = (file, maxWidth = 300) => {
-        return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = (event) => {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > maxWidth) {
-                        height = (height * maxWidth) / width;
-                        width = maxWidth;
-                    }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/png', 0.9));
-                };
-            };
-        });
     };
 
     const handlePrincipalUpload = async (e) => {
@@ -1249,15 +1310,18 @@ const SignatureUploadSection = () => {
         setUploadStatus({ type: '', message: '' });
 
         try {
-            const compressedBase64 = await compressImage(file);
+            // Send raw file via FormData (no base64)
+            const formData = new FormData();
+            formData.append('photo', file);
+
             const res = await fetch(`${API_BASE}/api/settings/principal-signature`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image_data: compressedBase64 })
+                body: formData
             });
 
             if (res.ok) {
-                setPrincipalSignature(compressedBase64);
+                // Re-fetch to get the server-stored path
+                await fetchPrincipalSignature();
                 setUploadStatus({ type: 'success', message: t('settings.signatures.status_success_principal') });
             } else {
                 throw new Error('Upload failed');
@@ -1293,15 +1357,18 @@ const SignatureUploadSection = () => {
         setUploadStatus({ type: '', message: '' });
 
         try {
-            const compressedBase64 = await compressImage(file);
+            // Send raw file via FormData (no base64)
+            const formData = new FormData();
+            formData.append('photo', file);
+
             const res = await fetch(`${API_BASE}/api/departments/${selectedDeptId}/signature`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ image_data: compressedBase64 })
+                body: formData
             });
 
             if (res.ok) {
-                setHodSignatures(prev => ({ ...prev, [selectedDeptId]: compressedBase64 }));
+                // Re-fetch to get the server-stored path
+                await fetchDepartments();
                 setUploadStatus({ type: 'success', message: t('settings.signatures.status_success_hod') });
             } else {
                 throw new Error('Upload failed');
@@ -2200,6 +2267,14 @@ const SettingsPage = () => {
                     const results = await Promise.all(batch.map(async (book) => {
                         const details = await fetchBookDetails(book.isbn);
                         if (details) {
+                            // Download cover image locally via backend
+                            const coverUrl = details.imageLinks?.thumbnail?.replace('http:', 'https:') || '';
+                            let localCoverPath = book.cover_image || '';
+                            if (coverUrl) {
+                                const downloaded = await downloadCoverImage(coverUrl, book.isbn);
+                                if (downloaded) localCoverPath = downloaded;
+                            }
+
                             // Update book in backend
                             try {
                                 await fetch(`${API_BASE}/api/books/${book.isbn}`, {
@@ -2210,7 +2285,8 @@ const SettingsPage = () => {
                                         title: details.title || book.title,
                                         author: details.authors ? details.authors.join(', ') : book.author,
                                         publisher: details.publisher || book.publisher,
-                                        cover_image_url: details.imageLinks?.thumbnail?.replace('http:', 'https:') || book.cover_image_url
+                                        cover_image: localCoverPath,
+                                        cover_image_url: coverUrl || book.cover_image_url
                                     })
                                 });
                                 return true;

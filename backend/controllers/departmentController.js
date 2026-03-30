@@ -1,6 +1,7 @@
 const db = require('../db');
 const socketService = require('../services/socketService');
 const { v4: uuidv4 } = require('uuid');
+const imageService = require('../services/imageService');
 
 // Get all departments with book counts
 exports.getDepartments = (req, res) => {
@@ -88,40 +89,55 @@ exports.deleteDepartment = (req, res) => {
     // Note: We should ideally check if any books or students link to this dept first.
     // For now, simple delete. DB Foreign Keys might restrict this if set to RESTRICT (default depends on sqlite version/pragma)
 
-    db.run("DELETE FROM departments WHERE id = ?", [id], function (err) {
-        if (err) {
-            if (err.message.includes('FOREIGN KEY constraint failed')) {
-                return res.status(409).json({ error: "Cannot delete: This department is in use by Books or Students." });
+    db.get("SELECT name FROM departments WHERE id = ?", [id], (err, deptRow) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const deptName = deptRow?.name;
+
+        db.run("DELETE FROM departments WHERE id = ?", [id], function (err) {
+            if (err) {
+                if (err.message.includes('FOREIGN KEY constraint failed')) {
+                    return res.status(409).json({ error: "Cannot delete: This department is in use by Books or Students." });
+                }
+                return res.status(500).json({ error: err.message });
             }
-            return res.status(500).json({ error: err.message });
-        }
-        if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
-        socketService.emit('dept_update', { type: 'DELETE', id });
-        res.json({ message: "Department deleted" });
+            if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
+            // Delete HOD signature file
+            if (deptName) imageService.deleteImageFile('signatures', 'hod_' + deptName);
+            socketService.emit('dept_update', { type: 'DELETE', id });
+            res.json({ message: "Department deleted" });
+        });
     });
 };
 
-// Upload HOD Signature for a Department
-exports.uploadHodSignature = (req, res) => {
+// Upload HOD Signature for a Department — accepts file via multer
+exports.uploadHodSignature = async (req, res) => {
     const { id } = req.params;
-    const { image_data } = req.body;
 
-    if (!image_data) {
+    if (!req.file) {
         return res.status(400).json({ error: "No signature image provided" });
     }
 
-    // Validate Base64 image data
-    if (!image_data.startsWith('data:image/')) {
-        return res.status(400).json({ error: "Invalid image format. Must be Base64 encoded image." });
-    }
-
-    const sql = "UPDATE departments SET hod_signature = ?, updated_at = datetime('now', '+05:30') WHERE id = ?";
-
-    db.run(sql, [image_data, id], function (err) {
+    // Get department name for filename
+    db.get("SELECT name FROM departments WHERE id = ?", [id], async (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
-        socketService.emit('dept_update', { type: 'UPDATE', id });
-        res.json({ message: "HOD signature uploaded successfully" });
+        if (!row) return res.status(404).json({ error: "Department not found" });
+
+        try {
+            const relativePath = await imageService.saveBufferAsWebP(req.file.buffer, 'signatures', 'hod_' + row.name, { maxWidth: 600, quality: 85 });
+            if (!relativePath) {
+                return res.status(500).json({ error: "Failed to process signature image" });
+            }
+
+            const sql = "UPDATE departments SET hod_signature = ?, updated_at = datetime('now', '+05:30') WHERE id = ?";
+            db.run(sql, [relativePath, id], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                socketService.emit('dept_update', { type: 'UPDATE', id });
+                res.json({ message: "HOD signature uploaded successfully" });
+            });
+        } catch (err) {
+            console.error("[HOD Signature] Processing Error:", err.message);
+            res.status(500).json({ error: "Failed to process signature" });
+        }
     });
 };
 
@@ -129,13 +145,18 @@ exports.uploadHodSignature = (req, res) => {
 exports.deleteHodSignature = (req, res) => {
     const { id } = req.params;
 
-    const sql = "UPDATE departments SET hod_signature = NULL, updated_at = datetime('now', '+05:30') WHERE id = ?";
-
-    db.run(sql, [id], function (err) {
+    // Get department name to delete the correct file
+    db.get("SELECT name FROM departments WHERE id = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
-        socketService.emit('dept_update', { type: 'UPDATE', id });
-        res.json({ message: "HOD signature deleted successfully" });
+        if (row?.name) imageService.deleteImageFile('signatures', 'hod_' + row.name);
+
+        const sql = "UPDATE departments SET hod_signature = NULL, updated_at = datetime('now', '+05:30') WHERE id = ?";
+        db.run(sql, [id], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            if (this.changes === 0) return res.status(404).json({ error: "Department not found" });
+            socketService.emit('dept_update', { type: 'UPDATE', id });
+            res.json({ message: "HOD signature deleted successfully" });
+        });
     });
 };
 

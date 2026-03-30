@@ -1,5 +1,6 @@
 const db = require('../db');
 const socketService = require('../services/socketService');
+const coverService = require('../services/imageService');
 
 // Helper for IDs
 const generateId = () => Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -222,6 +223,8 @@ exports.deleteBook = (req, res) => {
                     // D. Delete Book by ID
                     db.run("DELETE FROM books WHERE id = ?", [bookId], function (err) {
                         if (err) return res.status(500).json({ error: "Failed to delete book: " + err.message });
+                        // E. Delete cover image file
+                        coverService.deleteCoverFile(isbn);
                         socketService.emit('book_update', { type: 'DELETE', isbn });
                         res.json({ message: "Book deleted. History preserved with suffix." });
                     });
@@ -499,7 +502,8 @@ exports.bulkDeleteBooks = (req, res) => {
                                             existingIsbns,
                                             function (err) {
                                                 if (err) return res.status(500).json({ error: "Failed to delete books: " + err.message });
-
+                                                // Delete cover image files
+                                                existingIsbns.forEach(delIsbn => coverService.deleteCoverFile(delIsbn));
                                                 socketService.emit('book_update', { type: 'BULK_DELETE', count: this.changes });
                                                 res.json({ message: `${this.changes} book(s) deleted successfully. History preserved with suffix.` });
                                             }

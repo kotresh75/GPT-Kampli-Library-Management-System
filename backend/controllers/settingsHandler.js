@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const auditService = require('../services/auditService');
 const socketService = require('../services/socketService');
+const imageService = require('../services/imageService');
 
 // Get All App Settings
 exports.getAppSettings = (req, res) => {
@@ -326,9 +327,13 @@ exports.createLocalBackup = async (req, res) => {
     await Promise.all(promises);
 
     const backup = {
-        version: "1.0",
+        version: "1.3",
         timestamp: new Date().toISOString(),
-        data: data
+        data: data,
+        cover_images: imageService.getFilesForBackup('covers'),
+        student_images: imageService.getFilesForBackup('students'),
+        signature_images: imageService.getFilesForBackup('signatures'),
+        icon_images: imageService.getFilesForBackup('icons')
     };
 
     res.setHeader('Content-Type', 'application/json');
@@ -416,6 +421,25 @@ exports.restoreLocalBackup = async (req, res) => {
             await runDb("PRAGMA foreign_keys = ON;");
 
             auditService.log(admin_id, 'RESTORE_LOCAL', 'System', `Restored ${totalRestored} records from local backup`);
+
+            // Restore all image files from backup
+            if (backup_data.cover_images && Array.isArray(backup_data.cover_images)) {
+                const restored = imageService.restoreFilesFromBackup('covers', backup_data.cover_images);
+                console.log(`[Restore] Restored ${restored} cover images`);
+            }
+            if (backup_data.student_images && Array.isArray(backup_data.student_images)) {
+                const restored = imageService.restoreFilesFromBackup('students', backup_data.student_images);
+                console.log(`[Restore] Restored ${restored} student images`);
+            }
+            if (backup_data.signature_images && Array.isArray(backup_data.signature_images)) {
+                const restored = imageService.restoreFilesFromBackup('signatures', backup_data.signature_images);
+                console.log(`[Restore] Restored ${restored} signature images`);
+            }
+            if (backup_data.icon_images && Array.isArray(backup_data.icon_images)) {
+                const restored = imageService.restoreFilesFromBackup('icons', backup_data.icon_images);
+                console.log(`[Restore] Restored ${restored} icon images`);
+            }
+
             res.json({ success: true, message: "Restore completed successfully" });
 
         } catch (txErr) {
@@ -595,57 +619,57 @@ exports.getPrincipalSignature = (req, res) => {
     });
 };
 
-// Upload Principal Signature
-exports.uploadPrincipalSignature = (req, res) => {
-    const { image_data } = req.body;
-
-    if (!image_data) {
+// Upload Principal Signature — accepts file via multer
+exports.uploadPrincipalSignature = async (req, res) => {
+    if (!req.file) {
         return res.status(400).json({ error: "No signature image provided" });
     }
 
-    // Validate Base64 image data
-    if (!image_data.startsWith('data:image/')) {
-        return res.status(400).json({ error: "Invalid image format. Must be Base64 encoded image." });
+    try {
+        // Save multer buffer as WebP file (no base64)
+        const relativePath = await imageService.saveBufferAsWebP(req.file.buffer, 'signatures', 'principal', { maxWidth: 600, quality: 85 });
+        if (!relativePath) {
+            return res.status(500).json({ error: "Failed to process signature image" });
+        }
+
+        // Store relative path in DB
+        db.get("SELECT key FROM system_settings WHERE key = 'principal_signature'", [], (err, row) => {
+            if (err) {
+                console.error("[Principal Signature] DB Error:", err.message);
+                return res.status(500).json({ error: err.message });
+            }
+
+            const dbValue = relativePath;
+            if (row) {
+                db.run("UPDATE system_settings SET value = ? WHERE key = 'principal_signature'",
+                    [dbValue], function (err) {
+                        if (err) return res.status(500).json({ error: err.message });
+                        console.log("[Principal Signature] Updated to file:", dbValue);
+                        socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
+                        res.json({ message: "Principal signature uploaded successfully" });
+                    });
+            } else {
+                db.run("INSERT INTO system_settings (key, value, category, data_type, description) VALUES (?, ?, ?, ?, ?)",
+                    ['principal_signature', dbValue, 'App', 'string', 'Principal signature image for ID cards'],
+                    function (err) {
+                        if (err) return res.status(500).json({ error: err.message });
+                        console.log("[Principal Signature] Inserted as file:", dbValue);
+                        socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
+                        res.json({ message: "Principal signature uploaded successfully" });
+                    });
+            }
+        });
+    } catch (err) {
+        console.error("[Principal Signature] Processing Error:", err.message);
+        res.status(500).json({ error: "Failed to process signature" });
     }
-
-    // Check if setting exists, if not insert, else update - using 'key' instead of 'id'
-    db.get("SELECT key FROM system_settings WHERE key = 'principal_signature'", [], (err, row) => {
-        if (err) {
-            console.error("[Principal Signature] DB Error checking existence:", err.message);
-            return res.status(500).json({ error: err.message });
-        }
-
-        if (row) {
-            // Update
-            db.run("UPDATE system_settings SET value = ? WHERE key = 'principal_signature'",
-                [image_data], function (err) {
-                    if (err) {
-                        console.error("[Principal Signature] Update Error:", err.message);
-                        return res.status(500).json({ error: err.message });
-                    }
-                    console.log("[Principal Signature] Updated successfully");
-                    socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
-                    res.json({ message: "Principal signature uploaded successfully" });
-                });
-        } else {
-            // Insert - using only columns that exist in older schema
-            db.run("INSERT INTO system_settings (key, value, category, data_type, description) VALUES (?, ?, ?, ?, ?)",
-                ['principal_signature', image_data, 'App', 'string', 'Principal signature image for ID cards'],
-                function (err) {
-                    if (err) {
-                        console.error("[Principal Signature] Insert Error:", err.message);
-                        return res.status(500).json({ error: err.message });
-                    }
-                    console.log("[Principal Signature] Inserted successfully");
-                    socketService.emit('settings_update', { type: 'UPDATE', keys: ['principal_signature'] });
-                    res.json({ message: "Principal signature uploaded successfully" });
-                });
-        }
-    });
 };
 
 // Delete Principal Signature
 exports.deletePrincipalSignature = (req, res) => {
+    // Delete the file
+    imageService.deleteImageFile('signatures', 'principal');
+
     db.run("UPDATE system_settings SET value = NULL WHERE key = 'principal_signature'",
         function (err) {
             if (err) return res.status(500).json({ error: err.message });

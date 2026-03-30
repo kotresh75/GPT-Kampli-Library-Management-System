@@ -106,9 +106,10 @@ exports.createStaff = (req, res) => {
         if (err) return res.status(500).json({ error: "Encryption failed" });
 
         const id = uuidv4();
+        const finalIcon = profile_icon || `icons/profile_icon_${Math.floor(Math.random() * 15) + 1}.webp`;
         const query = `INSERT INTO staff (id, name, email, phone, designation, access_permissions, password_hash, status, profile_icon) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active', ?)`;
 
-        db.run(query, [id, name, email, phone, designation, permissionsJson, hash, profile_icon], function (err) {
+        db.run(query, [id, name, email, phone, designation, permissionsJson, hash, finalIcon], function (err) {
             if (err) {
                 if (err.message.includes('UNIQUE')) return res.status(409).json({ error: "Email already exists" });
                 return res.status(500).json({ error: err.message });

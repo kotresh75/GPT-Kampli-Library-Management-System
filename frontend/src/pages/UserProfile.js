@@ -7,6 +7,7 @@ import {
 import { useUser } from '../context/UserContext';
 import '../styles/pages/ProfileStyles.css';
 import API_BASE from '../config/apiConfig';
+import { getProfileIconUrl } from '../utils/imageUtils';
 
 const TOTAL_ICONS = 15;
 
@@ -30,7 +31,7 @@ const UserProfile = () => {
             .catch(err => console.error("Failed to fetch icons", err));
     }, []);
 
-    const profileIcon = user.profile_icon;
+    const profileIcon = getProfileIconUrl(user.profile_icon);
     const userInitial = (user.name || 'U').charAt(0).toUpperCase();
     const [imageError, setImageError] = useState(false);
 
@@ -146,7 +147,7 @@ const UserProfile = () => {
                         </div>
                         <div className="icon-picker-grid">
                             {icons.map((icon, i) => {
-                                const isActive = profileIcon === icon.data;
+                                const isActive = user.profile_icon === icon.data;
                                 return (
                                     <button
                                         key={icon.id || i}
@@ -154,7 +155,7 @@ const UserProfile = () => {
                                         onClick={() => handleIconSelect(icon.data)}
                                         disabled={iconLoading}
                                     >
-                                        <img src={icon.data} alt={icon.name} />
+                                        <img src={getProfileIconUrl(icon.data)} alt={icon.name} />
                                         {isActive && <div className="icon-picker-check"><CheckCircle size={16} /></div>}
                                     </button>
                                 );

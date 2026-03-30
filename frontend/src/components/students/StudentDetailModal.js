@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { X, User, BookOpen, DollarSign, Calendar, Mail, Phone, MapPin, AlertCircle, Clock, CheckCircle, Info, Hash, Award, AlertTriangle, Check, CreditCard } from 'lucide-react';
 import TransactionDetailsModal from '../common/TransactionDetailsModal';
 import IDCardPreviewModal from './IDCardPreviewModal'; // Updated import
-import '../../styles/components/smart-book-detail.css'; // Reusing the shared smart styling
+import '../../styles/components/smart-book-detail.css';
 import API_BASE from '../../config/apiConfig';
+import { getStudentPhotoUrl } from '../../utils/imageUtils';
 
 const StudentDetailModal = ({ student, onClose }) => {
     const [activeTab, setActiveTab] = useState('profile');
@@ -97,9 +98,9 @@ const StudentDetailModal = ({ student, onClose }) => {
 
                     <div className="hero-content">
                         <div className="book-cover-large" style={{ borderRadius: '50%', width: '140px', height: '140px', background: 'var(--surface-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                            {student.profile_image ? (
+                            {getStudentPhotoUrl(student) ? (
                                 <img
-                                    src={student.profile_image}
+                                    src={getStudentPhotoUrl(student)}
                                     alt={student.full_name}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />

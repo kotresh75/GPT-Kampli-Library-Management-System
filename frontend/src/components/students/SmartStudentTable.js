@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
+import { getStudentPhotoUrl } from '../../utils/imageUtils';
 import '../../styles/components/tables.css';
 
 const SmartStudentTable = ({
@@ -239,9 +240,9 @@ const SmartStudentTable = ({
                                     {(pagination.currentPage - 1) * pagination.itemsPerPage + index + 1}
                                 </td>
                                 <td>
-                                    {student.profile_image ? (
+                                    {getStudentPhotoUrl(student) ? (
                                         <img
-                                            src={student.profile_image}
+                                            src={getStudentPhotoUrl(student)}
                                             alt={student.full_name}
                                             style={{
                                                 width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover',

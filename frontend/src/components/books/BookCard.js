@@ -1,5 +1,6 @@
 import React from 'react';
 import { Book, Edit, Layers } from 'lucide-react';
+import { getBookCoverUrl } from '../../utils/imageUtils';
 
 const BookCard = ({ book, onEdit, onManageCopies }) => {
     // Determine placeholder color based on Dept/Category
@@ -25,8 +26,8 @@ const BookCard = ({ book, onEdit, onManageCopies }) => {
                 alignItems: 'center',
                 justifyContent: 'center'
             }}>
-                {book.cover_image ? (
-                    <img src={book.cover_image} alt={book.title} style={{ height: '100%', width: '100%', objectFit: 'cover' }} />
+                {getBookCoverUrl(book) ? (
+                    <img src={getBookCoverUrl(book)} alt={book.title} style={{ height: '100%', width: '100%', objectFit: 'cover' }} />
                 ) : (
                     <Book size={48} color="white" style={{ opacity: 0.8 }} />
                 )}

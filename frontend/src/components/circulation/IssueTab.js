@@ -7,6 +7,7 @@ import IDCardTemplate from '../students/IDCardTemplate';
 import cardBgUrl from '../../ID Template/id_bg.png';
 import emblemBgUrl from '../../ID Template/karnataka_seal.png';
 import { useLanguage } from '../../context/LanguageContext';
+import { getBookCoverUrl, getStudentPhotoUrl, getSignatureUrl } from '../../utils/imageUtils';
 import API_BASE from '../../config/apiConfig';
 
 const IssueTab = () => {
@@ -73,8 +74,8 @@ const IssueTab = () => {
                 }
 
                 setSignatures({
-                    hod: hodSignature,
-                    principal: principalData.signature
+                    hod: getSignatureUrl(hodSignature),
+                    principal: getSignatureUrl(principalData.signature)
                 });
             } catch (e) {
                 console.error("Failed to fetch signatures", e);
@@ -357,9 +358,9 @@ const IssueTab = () => {
                             alignItems: 'center'
                         }}>
                             <div className="flex items-center gap-3 overflow-hidden">
-                                {student.profile_image ? (
+                                {getStudentPhotoUrl(student) ? (
                                     <img
-                                        src={student.profile_image}
+                                        src={getStudentPhotoUrl(student)}
                                         alt="Profile"
                                         style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
                                         className="border border-white/10"
@@ -467,8 +468,8 @@ const IssueTab = () => {
                         cart.map((item, idx) => (
                             <div key={idx} className="group flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 hover:border-white/20 transition-all">
                                 <div className="flex items-center gap-3 overflow-hidden">
-                                    {item.cover_image ? (
-                                        <img src={item.cover_image} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
+                                    {getBookCoverUrl(item) ? (
+                                        <img src={getBookCoverUrl(item)} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
                                     ) : (
                                         <div className="w-6 h-8 rounded-sm bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
                                             <BookOpen size={14} />

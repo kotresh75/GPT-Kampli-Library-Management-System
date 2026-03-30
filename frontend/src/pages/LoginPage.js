@@ -11,6 +11,7 @@ import InteractiveBG from '../components/common/InteractiveBG';
 
 import StatusModal from '../components/common/StatusModal';
 import API_BASE from '../config/apiConfig';
+import { getProfileIconUrl } from '../utils/imageUtils';
 
 const RECENT_LOGINS_KEY = 'recent_logins';
 const MAX_RECENT = 5;
@@ -277,7 +278,7 @@ const LoginPage = () => {
                                 >
                                     <div className="chip-avatar">
                                         {account.profile_icon ? (
-                                            <img src={account.profile_icon} alt="" />
+                                            <img src={getProfileIconUrl(account.profile_icon)} alt="" />
                                         ) : (
                                             <span>{getInitials(account.name)}</span>
                                         )}

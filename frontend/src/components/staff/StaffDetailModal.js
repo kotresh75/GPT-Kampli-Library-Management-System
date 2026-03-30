@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { formatDate } from '../../utils/dateUtils';
 import { X, Activity, User, Mail, Phone, Briefcase, Calendar, Clock, Lock } from 'lucide-react';
 import API_BASE from '../../config/apiConfig';
+import { getProfileIconUrl } from '../../utils/imageUtils';
 
 const StaffDetailModal = ({ staff, onClose }) => {
     const [logs, setLogs] = useState([]);
@@ -53,7 +54,7 @@ const StaffDetailModal = ({ staff, onClose }) => {
                         }}>
                             {staff.profile_icon ? (
                                 <img
-                                    src={staff.profile_icon.startsWith('data:') ? staff.profile_icon : (staff.profile_icon.startsWith('/') ? staff.profile_icon.slice(1) : staff.profile_icon)}
+                                    src={getProfileIconUrl(staff.profile_icon)}
                                     alt={staff.name}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                 />

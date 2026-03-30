@@ -13,6 +13,7 @@ import SmartExportModal from '../common/SmartExportModal';
 import PdfPreviewModal from '../common/PdfPreviewModal';
 import { generatePrintContent } from '../../utils/SmartPrinterHandler';
 import { useLanguage } from '../../context/LanguageContext';
+import { getBookCoverUrl, getStudentPhotoUrl } from '../../utils/imageUtils';
 import API_BASE from '../../config/apiConfig';
 
 const FinesTab = ({ initialTab }) => {
@@ -656,9 +657,9 @@ const FinesTab = ({ initialTab }) => {
                                                     border: '1px solid var(--glass-border)',
                                                     overflow: 'hidden'
                                                 }}>
-                                                    {group.student.profile_image ? (
+                                                    {getStudentPhotoUrl(group.student) ? (
                                                         <img
-                                                            src={group.student.profile_image}
+                                                            src={getStudentPhotoUrl(group.student)}
                                                             alt={group.student.name}
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                         />
@@ -709,8 +710,8 @@ const FinesTab = ({ initialTab }) => {
                                                     <div key={fine.id} className="p-4 rounded-xl border border-glass bg-white/5 relative group">
                                                         <div className="flex justify-between items-start mb-2">
                                                             <div className="flex items-start gap-3 flex-1">
-                                                                {fine.cover_image ? (
-                                                                    <img src={fine.cover_image} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
+                                                                {getBookCoverUrl(fine) ? (
+                                                                    <img src={getBookCoverUrl(fine)} alt="Book" className="w-auto h-8 rounded-sm object-cover shadow-sm bg-black/20" />
                                                                 ) : (
                                                                     <div className="w-6 h-8 rounded-sm bg-blue-500/10 flex items-center justify-center text-blue-400 shrink-0">
                                                                         <BookOpen size={14} />

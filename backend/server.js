@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const http = require('http'); // Import HTTP
 const db = require('./db');
 const authRoutes = require('./routes/authRoutes');
@@ -41,6 +42,15 @@ app.use('/api/fines', require('./routes/fineRoutes'));
 app.use('/api/reports', require('./routes/reportsRoutes'));
 app.use('/api/audit', require('./routes/auditRoutes'));
 app.use('/api/utils', require('./routes/utilRoutes'));
+app.use('/api/covers', require('./routes/coverRoutes'));
+
+// Static file serving for uploaded images (covers, etc.)
+// Compute uploads path directly (same logic as db.js) to avoid module load order issues
+const _isDev = process.env.NODE_ENV !== 'production' && !process.resourcesPath?.includes('app.asar');
+const _userDataPath = process.env.USER_DATA_PATH || (_isDev
+    ? path.resolve(__dirname, '..')
+    : path.join(process.env.APPDATA || process.env.HOME, 'GPTK Library Manager'));
+app.use('/uploads', express.static(path.join(_userDataPath, 'Uploads')));
 
 // API: Get Status
 app.get('/api/status', (req, res) => {

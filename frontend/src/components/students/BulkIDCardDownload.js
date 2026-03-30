@@ -9,6 +9,7 @@ import IDCardTemplate from './IDCardTemplate';
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
 import API_BASE from '../../config/apiConfig';
+import { getSignatureUrl } from '../../utils/imageUtils';
 
 // ── PDF Preview Modal ──
 const PDFPreviewModal = ({ pdfBlobUrl, fileName, onClose }) => {
@@ -168,13 +169,13 @@ const BulkIDCardDownload = () => {
         fetchCount();
     }, [fetchCount]);
 
-    // Fetch signatures (cached)
+    // Fetch signatures (cached) — resolve paths via helper
     const fetchSignatures = async (deptId) => {
         if (sigCacheRef.current.principal === null) {
             try {
                 const res = await fetch(`${API_BASE}/api/settings/principal-signature`);
                 const data = await res.json();
-                sigCacheRef.current.principal = data.signature || undefined;
+                sigCacheRef.current.principal = getSignatureUrl(data.signature) || undefined;
             } catch {
                 sigCacheRef.current.principal = undefined;
             }
@@ -184,7 +185,7 @@ const BulkIDCardDownload = () => {
                 const res = await fetch(`${API_BASE}/api/departments/${deptId}`);
                 if (res.ok) {
                     const data = await res.json();
-                    sigCacheRef.current.hod[deptId] = data.hod_signature || undefined;
+                    sigCacheRef.current.hod[deptId] = getSignatureUrl(data.hod_signature) || undefined;
                 } else {
                     sigCacheRef.current.hod[deptId] = undefined;
                 }

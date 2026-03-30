@@ -5,6 +5,7 @@ import {
     Calendar, AlertTriangle, Book, CreditCard, User, Bookmark
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { getBookCoverUrl } from '../../utils/imageUtils';
 import '../../styles/components/smart-book-detail.css';
 import API_BASE from '../../config/apiConfig';
 
@@ -86,7 +87,7 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
             <div className="smart-detail-modal">
                 {/* Hero Section */}
                 <div className="detail-hero" style={{
-                    backgroundImage: `url(${book.cover_image_url || ''})`
+                    backgroundImage: `url(${getBookCoverUrl(book) || ''})`
                 }}>
                     <div className="hero-overlay" />
 
@@ -96,8 +97,8 @@ const SmartBookDetailModal = ({ book, onClose, onEdit, onManageCopies }) => {
 
                     <div className="hero-content">
                         <div className="book-cover-large">
-                            {book.cover_image_url ? (
-                                <img src={book.cover_image_url} alt={book.title} />
+                            {getBookCoverUrl(book) ? (
+                                <img src={getBookCoverUrl(book)} alt={book.title} />
                             ) : (
                                 <div className="book-cover-placeholder">
                                     <BookOpen size={40} />

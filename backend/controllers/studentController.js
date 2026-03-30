@@ -1,6 +1,7 @@
 const db = require('../db');
-const { v4: uuidv4 } = require('uuid'); // Added for UUID generation
-const socketService = require('../services/socketService'); // Socket
+const { v4: uuidv4 } = require('uuid');
+const socketService = require('../services/socketService');
+const imageService = require('../services/imageService');
 
 // GET /api/students
 exports.getStudents = (req, res) => {
@@ -164,13 +165,18 @@ exports.deleteStudent = (req, res) => {
             // Break link to Paid Fines (Nullify ID, Suffix Name) - Unpaid already checked above
             db.run("UPDATE fines SET student_id = NULL, student_name = student_name || ' (Deleted)' WHERE student_id = ?", [id]);
 
-            // 3. Permanent Delete
-            db.run("DELETE FROM students WHERE id=?", [id], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (this.changes === 0) return res.status(404).json({ error: "Student not found" });
-                socketService.emit('student_update', { type: 'DELETE', id });
-                res.json({ message: "Student permanently deleted and history anonymized." });
-            });
+            // 3. Permanent Delete — fetch reg no for file cleanup
+                db.get("SELECT register_number FROM students WHERE id = ?", [id], (err2, studentRow) => {
+                    const regNo = studentRow?.register_number;
+                    db.run("DELETE FROM students WHERE id=?", [id], function (err) {
+                        if (err) return res.status(500).json({ error: err.message });
+                        if (this.changes === 0) return res.status(404).json({ error: "Student not found" });
+                        // Delete photo file
+                        if (regNo) imageService.deleteImageFile('students', regNo);
+                        socketService.emit('student_update', { type: 'DELETE', id });
+                        res.json({ message: "Student permanently deleted and history anonymized." });
+                    });
+                });
         });
     });
 };
@@ -209,10 +215,17 @@ exports.bulkDelete = (req, res) => {
                 // Paid Fines (Unpaid are blocked)
                 db.run(`UPDATE fines SET student_id = NULL, student_name = student_name || ' (Deleted)' WHERE student_id IN (${placeholders})`, ids);
 
-                // 3. Permanent Delete
-                db.run(`DELETE FROM students WHERE id IN (${placeholders})`, ids, function (err) {
+                // 3. Permanent Delete — first get register numbers for file cleanup
+                db.all(`SELECT register_number FROM students WHERE id IN (${placeholders})`, ids, (err, regRows) => {
                     if (err) return res.status(500).json({ error: err.message });
-                    res.json({ message: `${this.changes} students permanently deleted and history anonymized.` });
+                    const regNos = regRows.map(r => r.register_number).filter(Boolean);
+
+                    db.run(`DELETE FROM students WHERE id IN (${placeholders})`, ids, function (err) {
+                        if (err) return res.status(500).json({ error: err.message });
+                        // Delete photo files
+                        regNos.forEach(regNo => imageService.deleteImageFile('students', regNo));
+                        res.json({ message: `${this.changes} students permanently deleted and history anonymized.` });
+                    });
                 });
             });
         });
@@ -364,6 +377,70 @@ exports.exportStudents = (req, res) => {
     });
 };
 
+// GET /api/students/photo/list
+exports.listPhotos = (req, res) => {
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const userDataPath = process.env.USER_DATA_PATH || (process.env.NODE_ENV !== 'production' && !process.resourcesPath?.includes('app.asar')
+            ? path.resolve(__dirname, '..', '..')
+            : path.join(process.env.APPDATA || process.env.HOME, 'GPTK Library Manager'));
+        const dir = path.join(userDataPath, 'Uploads', 'students');
+        
+        if (!fs.existsSync(dir)) return res.json([]);
+        
+        const files = fs.readdirSync(dir).filter(f => f.match(/\.(jpg|jpeg|png|webp)$/i));
+        // Sort by modified time descending (newest first)
+        const fileStats = files.map(file => {
+            return {
+                name: file,
+                time: fs.statSync(path.join(dir, file)).mtime.getTime()
+            };
+        }).sort((a,b) => b.time - a.time).map(f => f.name);
+        
+        res.json(fileStats);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// POST /api/students/photo/rename
+exports.renamePhoto = (req, res) => {
+    const { oldName, newName } = req.body;
+    if (!oldName || !newName) return res.status(400).json({ error: "Missing oldName or newName" });
+
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const userDataPath = process.env.USER_DATA_PATH || (process.env.NODE_ENV !== 'production' && !process.resourcesPath?.includes('app.asar')
+            ? path.resolve(__dirname, '..', '..')
+            : path.join(process.env.APPDATA || process.env.HOME, 'GPTK Library Manager'));
+        const dir = path.join(userDataPath, 'Uploads', 'students');
+        
+        const safeOld = path.basename(oldName);
+        let safeNew = path.basename(newName);
+        
+        // Ensure new name has an extension (default to webp if missing)
+        if (!safeNew.includes('.')) safeNew += '.webp';
+        
+        const oldPath = path.join(dir, safeOld);
+        const newPath = path.join(dir, safeNew);
+        
+        if (!fs.existsSync(oldPath)) {
+            return res.status(404).json({ error: "Original file not found" });
+        }
+        
+        if (fs.existsSync(newPath) && oldPath !== newPath) {
+            return res.status(400).json({ error: "A file with the new name already exists" });
+        }
+        
+        fs.renameSync(oldPath, newPath);
+        res.json({ message: "File renamed successfully", newName: safeNew });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // POST /api/students/promote (Global Promotion)
 // POST /api/students/promotion-scan
 exports.scanForPromotion = (req, res) => {
@@ -478,28 +555,39 @@ exports.bulkImport = (req, res) => {
         });
     });
 };
-// POST /api/students/photo/upload
-exports.uploadPhoto = (req, res) => {
-    const { register_no, image_data } = req.body;
+// POST /api/students/photo/upload (multer: req.file)
+exports.uploadPhoto = async (req, res) => {
+    const { register_no } = req.body;
 
-    if (!register_no || !image_data) {
-        return res.status(400).json({ error: "Missing Register No or Image Data" });
+    if (!register_no || !req.file) {
+        return res.status(400).json({ error: "Missing Register No or Image File" });
     }
 
-    const query = `UPDATE students SET profile_image = ? WHERE register_number = ?`;
-
-    db.run(query, [image_data, register_no], function (err) {
-        if (err) {
-            console.error("Photo Upload Error:", err);
-            return res.status(500).json({ error: "Database error" });
-        }
-        if (this.changes === 0) {
-            return res.status(404).json({ error: "Student not found" });
+    try {
+        // Save multer buffer as WebP file (no base64)
+        const relativePath = await imageService.saveBufferAsWebP(req.file.buffer, 'students', register_no, { maxWidth: 400, quality: 80 });
+        if (!relativePath) {
+            return res.status(500).json({ error: "Failed to process image" });
         }
 
-        socketService.emit('student_update', { type: 'UPDATE', register_no });
-        res.json({ message: "Photo updated successfully" });
-    });
+        // Store relative path in DB
+        const query = `UPDATE students SET profile_image = ? WHERE register_number = ?`;
+        db.run(query, [relativePath, register_no], function (err) {
+            if (err) {
+                console.error("Photo Upload Error:", err);
+                return res.status(500).json({ error: "Database error" });
+            }
+            if (this.changes === 0) {
+                return res.status(404).json({ error: "Student not found" });
+            }
+
+            socketService.emit('student_update', { type: 'UPDATE', register_no });
+            res.json({ message: "Photo updated successfully" });
+        });
+    } catch (err) {
+        console.error("Photo Processing Error:", err.message);
+        res.status(500).json({ error: "Failed to process image" });
+    }
 };
 
 // POST /api/students/photo/bulk-delete
@@ -511,6 +599,9 @@ exports.bulkDeletePhotos = (req, res) => {
             console.error("Bulk Photo Delete Error:", err);
             return res.status(500).json({ error: "Database error" });
         }
+
+        // Clear all student photo files
+        imageService.clearDirectory('students');
 
         socketService.emit('student_update', { type: 'BULK_UPDATE' });
         res.json({ message: `Successfully deleted profile images for ${this.changes} students.` });
