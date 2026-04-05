@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Save, Layers, user } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Layers } from 'lucide-react';
 
 import GlassSelect from '../common/GlassSelect';
 import { useLanguage } from '../../context/LanguageContext';
@@ -15,7 +16,7 @@ const BulkEditStudentModal = ({ count, onClose, onUpdate }) => {
         onUpdate({ [field]: value });
     };
 
-    return (
+    return createPortal(
         <div className="modal-overlay" style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
             background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
@@ -85,7 +86,8 @@ const BulkEditStudentModal = ({ count, onClose, onUpdate }) => {
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
