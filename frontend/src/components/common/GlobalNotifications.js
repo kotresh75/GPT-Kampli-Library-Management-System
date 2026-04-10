@@ -39,8 +39,8 @@ const Toast = ({ type, message, onClose }) => {
             pointerEvents: 'auto'
         }}>
             {icon}
-            <p style={{ margin: 0, fontSize: '0.9rem', flex: 1 }}>{message}</p>
-            <button onClick={onClose} className="icon-btn-sm">
+            <p style={{ margin: 0, fontSize: '0.9rem', flex: 1, whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{message}</p>
+            <button onClick={onClose} className="icon-btn-sm" style={{ alignSelf: 'flex-start' }}>
                 <X size={14} />
             </button>
         </div>

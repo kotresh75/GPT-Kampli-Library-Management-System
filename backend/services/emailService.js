@@ -116,7 +116,6 @@ const sendEmail = async ({ to, subject, html, text, attachments = [] }) => {
             return false;
         }
 
-        // Connectivity Check
         const dns = require('dns').promises;
         try {
             await dns.lookup('google.com');
@@ -125,7 +124,8 @@ const sendEmail = async ({ to, subject, html, text, attachments = [] }) => {
             const socketService = require('./socketService');
             socketService.emit('notification', {
                 type: 'warning',
-                message: `Offline: Email to ${to} could not be sent.`
+                title: 'Email Skipped (Offline)',
+                message: `Could not send to ${to}\nReason: ${subject}\nNo internet connection.`
             });
             return false;
         }
@@ -152,13 +152,22 @@ const sendEmail = async ({ to, subject, html, text, attachments = [] }) => {
         });
 
         console.log(`[Email] Sent to ${to}: ${info.messageId} (Usage: ${quota.current.count}/${quota.current.limit})`);
+        
+        const socketService = require('./socketService');
+        socketService.emit('notification', {
+            type: 'success',
+            title: 'Email Sent Successfully',
+            message: `Sent to: ${to}\nReason: ${subject}`
+        });
+
         return true;
     } catch (error) {
         console.error(`[Email] Failed to send to ${to}:`, error.message);
         const socketService = require('./socketService');
         socketService.emit('notification', {
             type: 'error',
-            message: `Email Warning: ${error.message}`
+            title: 'Email Failed',
+            message: `Failed to send to ${to}\nReason: ${subject}\nError: ${error.message}`
         });
         return false;
     }

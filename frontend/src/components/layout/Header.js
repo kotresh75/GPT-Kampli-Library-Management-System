@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, LogOut, User, Sun, Moon, Type, ChevronDown, HelpCircle } from 'lucide-react';
+import { Menu, LogOut, User, Sun, Moon, Type, ChevronDown, HelpCircle, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePreferences } from '../../context/PreferencesContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -93,6 +93,9 @@ const Header = ({ toggleSidebar, onHelpClick }) => {
                             <span className="control-badge" style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>
                                 {language === 'en' ? 'KN' : 'EN'}
                             </span>
+                        </button>
+                        <button className="icon-btn-sm" onClick={() => window.location.reload()} title="Refresh (Ctrl+R)">
+                            <RefreshCw size={18} />
                         </button>
                         <button className="icon-btn-sm" onClick={cycleFontSize} title={t('header.font_size')}>
                             <Type size={18} />

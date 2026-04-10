@@ -239,8 +239,14 @@ exports.updateCopyStatus = (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    db.run("UPDATE book_copies SET status = ? WHERE id = ?", [status, id], function (err) {
+    const validStatuses = ['Available', 'Issued', 'Lost', 'Maintenance', 'Damaged'];
+    if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+    }
+
+    db.run("UPDATE book_copies SET status = ?, updated_at = datetime('now', '+05:30') WHERE id = ?", [status, id], function (err) {
         if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: "Copy not found" });
         socketService.emit('book_update', { type: 'COPY_UPDATE', id });
         res.json({ message: "Copy status updated" });
     });

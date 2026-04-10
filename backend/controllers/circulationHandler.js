@@ -388,7 +388,7 @@ exports.returnBook = async (req, res) => {
 
         // Set Copy Status based on condition (independent of fine amount)
         if (condition === 'Damaged') {
-            copyStatus = 'Maintenance';
+            copyStatus = 'Damaged';
         } else if (condition === 'Lost') {
             copyStatus = 'Lost';
         }
@@ -433,14 +433,31 @@ exports.returnBook = async (req, res) => {
             );
         });
 
-        // 3. Remove from Active Circulation (STATE)
-        await new Promise((resolve) => {
-            db.run(`DELETE FROM circulation WHERE id = ?`, [transaction_id], () => resolve());
+        // 3. Update Copy Status FIRST (before removing circulation)
+        // CRITICAL: This must succeed before we delete the circulation record
+        await new Promise((resolve, reject) => {
+            db.run(`UPDATE book_copies SET status = ?, updated_at = datetime('now', '+05:30') WHERE id = ?`, [copyStatus, loan.copy_id], function(err) {
+                if (err) {
+                    console.error(`[Return] Failed to update copy status to '${copyStatus}':`, err.message);
+                    // If 'Damaged' fails due to CHECK constraint, fallback to 'Maintenance'
+                    if (copyStatus === 'Damaged') {
+                        console.log("[Return] Falling back to 'Maintenance' status for damaged copy");
+                        db.run(`UPDATE book_copies SET status = 'Maintenance', updated_at = datetime('now', '+05:30') WHERE id = ?`, [loan.copy_id], function(err2) {
+                            if (err2) reject(err2);
+                            else resolve();
+                        });
+                    } else {
+                        reject(err);
+                    }
+                } else {
+                    resolve();
+                }
+            });
         });
 
-        // 4. Update Copy Status & Handle Replacement
+        // 4. Remove from Active Circulation (STATE) - safe since copy status is already updated
         await new Promise((resolve) => {
-            db.run(`UPDATE book_copies SET status = ? WHERE id = ?`, [copyStatus, loan.copy_id], () => resolve());
+            db.run(`DELETE FROM circulation WHERE id = ?`, [transaction_id], () => resolve());
         });
 
         // Handle Replacement Copy Logic

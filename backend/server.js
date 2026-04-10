@@ -172,4 +172,61 @@ process.on('message', (msg) => {
     }
 });
 
+// --- Backend Stop/Start Control (for Ctrl+Alt+C / Ctrl+Alt+S shortcuts) ---
+let isBackendRunning = true;
+const activeSockets = new Set();
 
+server.on('connection', (socket) => {
+    activeSockets.add(socket);
+    socket.once('close', () => {
+        activeSockets.delete(socket);
+    });
+});
+
+process.on('backend-stop', () => {
+    if (!isBackendRunning) {
+        console.log('[Backend] Already stopped.');
+        process.emit('backend-status', { running: false });
+        return;
+    }
+    console.log('[Backend] Stopping server forcibly...');
+    isBackendRunning = false;
+    process.emit('backend-status', { running: false }); // Update UI immediately
+
+    // Close Socket.io if running
+    try {
+        const io = socketService.getIo();
+        if (io) io.close();
+    } catch(e) {}
+
+    // Forcefully destroy all kept-alive TCP sockets
+    for (const socket of activeSockets) {
+        socket.destroy();
+    }
+
+    server.close(() => {
+        console.log('[Backend] Server closed gracefully.');
+    });
+});
+
+process.on('backend-start', () => {
+    if (isBackendRunning) {
+        console.log('[Backend] Already running.');
+        process.emit('backend-status', { running: true });
+        return;
+    }
+    console.log('[Backend] Starting server...');
+    isBackendRunning = true;
+    
+    server.listen(PORT, () => {
+        console.log(`[Backend] Server restarted on http://localhost:${PORT}`);
+        process.emit('backend-status', { running: true });
+
+        // Re-init socket.io
+        try {
+            socketService.init(server);
+        } catch(e) {
+            console.log("Socket.io re-init failed or already running:", e.message);
+        }
+    });
+});

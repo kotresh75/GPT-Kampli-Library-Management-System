@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, globalShortcut } = require('electron');
 const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -577,10 +577,24 @@ app.on('ready', () => {
     createSplashWindow('startup');
     // Start backend immediately — no artificial delay
     startBackend();
+
+    // Register global keyboard shortcuts for backend control
+    globalShortcut.register('Ctrl+Alt+C', () => {
+        log.info('[Shortcut] Ctrl+Alt+C — Stop Backend');
+        process.emit('backend-stop');
+    });
+    globalShortcut.register('Ctrl+Alt+S', () => {
+        log.info('[Shortcut] Ctrl+Alt+S — Start Backend');
+        process.emit('backend-start');
+    });
 });
 
 app.on('window-all-closed', function () {
     if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('will-quit', () => {
+    globalShortcut.unregisterAll();
 });
 
 app.on('activate', function () {
@@ -613,6 +627,33 @@ ipcMain.on('window-maximize', () => {
     }
 });
 ipcMain.on('window-close', () => { if (mainWindow) mainWindow.close(); });
+
+// IPC: Restart the entire application (kills backend + relaunches)
+ipcMain.on('restart-app', () => {
+    log.info('[Main] Restart requested by renderer');
+    isQuitting = true;
+    app.relaunch();
+    app.exit(0);
+});
+
+// IPC: Stop backend only (Ctrl+Alt+C)
+ipcMain.on('stop-backend', () => {
+    log.info('[Main] Stop backend requested');
+    process.emit('backend-stop');
+});
+
+// IPC: Start backend only (Ctrl+Alt+S)
+ipcMain.on('start-backend', () => {
+    log.info('[Main] Start backend requested');
+    process.emit('backend-start');
+});
+
+// Forward backend status changes to renderer
+process.on('backend-status', (status) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('backend-status-changed', status);
+    }
+});
 
 // IPC: Toggle DevTools (triggered by Alt+H from renderer)
 ipcMain.on('open-devtools', () => {

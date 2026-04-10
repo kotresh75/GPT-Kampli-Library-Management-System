@@ -17,7 +17,7 @@ exports.getStats = async (req, res) => {
             booksIssuedToday,
             overdueBooks,
             totalFines,
-            lostBooks
+            lostDamagedBooks
         ] = await Promise.all([
             getCount("SELECT count(*) as count FROM books"),
             getCount("SELECT count(*) as count FROM students"),
@@ -26,7 +26,8 @@ exports.getStats = async (req, res) => {
             // Use circulation for active overdue loans
             getCount("SELECT count(*) as count FROM circulation WHERE date(due_date) < date('now', '+05:30')"),
             getCount("SELECT sum(amount) as total FROM fines WHERE is_paid = 1"),
-            getCount("SELECT count(*) as count FROM book_copies WHERE status = 'Lost'")
+            // Count both Lost AND Damaged copies
+            getCount("SELECT count(*) as count FROM book_copies WHERE status IN ('Lost', 'Damaged')")
         ]);
 
         res.json({
@@ -35,7 +36,7 @@ exports.getStats = async (req, res) => {
             booksIssuedToday,
             overdueBooks,
             totalFines: totalFines || 0,
-            lostBooks
+            lostBooks: lostDamagedBooks
         });
 
     } catch (err) {
@@ -158,13 +159,12 @@ exports.getDetails = (req, res) => {
             ORDER BY c.due_date ASC
         `;
     } else if (type === 'lost_damaged') {
-        // Copies marked as Lost or Damaged
+        // Copies marked as Lost, Damaged or Maintenance
         query = `
             SELECT bc.updated_at as date, bc.status, b.title, bc.accession_number
-             -- We might not have student info easily here unless we query last transaction, for simplicity listing books
             FROM book_copies bc
             JOIN books b ON bc.book_isbn = b.isbn
-            WHERE bc.status IN ('Lost', 'Damaged')
+            WHERE bc.status IN ('Lost', 'Damaged', 'Maintenance')
             ORDER BY bc.updated_at DESC
         `;
     } else {

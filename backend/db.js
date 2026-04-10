@@ -35,20 +35,28 @@ const db = new sqlite3.Database(dbPath, (err) => {
         console.error('Could not connect to database', err);
     } else {
         console.log('Connected to SQLite database at', dbPath);
-        // Enable Foreign Keys
-        db.run('PRAGMA foreign_keys = ON;', (err) => {
-            if (err) console.error("Failed to enable Foreign Keys:", err);
-            else {
-                initializeTables();
 
-                // DATA REPAIR: Fix missing IDs for copies created before the fix
-                db.run("UPDATE book_copies SET id = lower(hex(randomblob(16))) WHERE id IS NULL", function (err) {
-                    if (!err && this.changes > 0) console.log("Fixed missing IDs for book_copies");
-                });
-                // DATA REPAIR: Fix missing IDs for books created before the fix
-                db.run("UPDATE books SET id = lower(hex(randomblob(16))) WHERE id IS NULL", function (err) {
-                    if (!err && this.changes > 0) console.log("Fixed missing IDs for books");
-                });
+        // STEP 1: Fix book_copies schema FIRST (before FK and before initializeTables)
+        // This MUST run before any other code touches book_copies, because SQLite
+        // caches CHECK constraints at first table access and never refreshes them.
+        migrateBookCopiesSchema(db, () => {
+
+            // STEP 2: Enable Foreign Keys
+            db.run('PRAGMA foreign_keys = ON;', (err) => {
+                if (err) console.error("Failed to enable Foreign Keys:", err);
+                else {
+
+                    // STEP 3: Initialize all tables
+                    initializeTables();
+
+                    // DATA REPAIR: Fix missing IDs for copies created before the fix
+                    db.run("UPDATE book_copies SET id = lower(hex(randomblob(16))) WHERE id IS NULL", function (err) {
+                        if (!err && this.changes > 0) console.log("Fixed missing IDs for book_copies");
+                    });
+                    // DATA REPAIR: Fix missing IDs for books created before the fix
+                    db.run("UPDATE books SET id = lower(hex(randomblob(16))) WHERE id IS NULL", function (err) {
+                        if (!err && this.changes > 0) console.log("Fixed missing IDs for books");
+                    });
 
 
 
@@ -177,8 +185,98 @@ const db = new sqlite3.Database(dbPath, (err) => {
                 });
             }
         });
+        });
     }
 });
+
+/**
+ * SCHEMA MIGRATION: Rebuild book_copies table to add 'Damaged' to CHECK constraint.
+ * 
+ * CRITICAL: This MUST run BEFORE foreign_keys = ON and BEFORE initializeTables().
+ * SQLite caches CHECK constraints when a table is first accessed in a connection.
+ * If initializeTables() touches book_copies first, the old constraint gets cached
+ * and 'Damaged' status updates will silently fail for the entire session.
+ * 
+ * This function is idempotent - it checks the schema first and only rebuilds if needed.
+ */
+function migrateBookCopiesSchema(db, callback) {
+    db.get("SELECT sql FROM sqlite_master WHERE type='table' AND name='book_copies'", (err, row) => {
+        if (err || !row || !row.sql) {
+            // Table doesn't exist yet (fresh install) - clean up and proceed
+            db.run("DROP TABLE IF EXISTS book_copies_new");
+            db.run("DROP TABLE IF EXISTS book_copies_migrated");
+            return callback();
+        }
+
+        if (row.sql.includes("'Damaged'")) {
+            // Schema already has 'Damaged' - clean up leftover temp tables and proceed
+            db.run("DROP TABLE IF EXISTS book_copies_new");
+            db.run("DROP TABLE IF EXISTS book_copies_migrated");
+            return callback();
+        }
+
+        console.log("[Migration] Rebuilding book_copies to add 'Damaged' status...");
+        
+        // FK is OFF by default at this point (we haven't enabled it yet)
+        // Get existing columns dynamically so we don't miss any ALTER TABLE additions
+        db.all("PRAGMA table_info(book_copies)", (err, columns) => {
+            if (err || !columns || columns.length === 0) {
+                console.error("[Migration] Cannot read table_info:", err);
+                return callback();
+            }
+
+            const colNames = columns.map(c => c.name);
+            const colList = colNames.join(', ');
+
+            db.serialize(() => {
+                // Clean up any leftover from previous failed attempts
+                db.run("DROP TABLE IF EXISTS book_copies_rebuild");
+
+                // Create new table with updated CHECK constraint
+                db.run(`CREATE TABLE book_copies_rebuild (
+                    id TEXT PRIMARY KEY,
+                    accession_number TEXT UNIQUE,
+                    book_id TEXT,
+                    book_isbn TEXT,
+                    status TEXT CHECK(status IN ('Available', 'Issued', 'Lost', 'Maintenance', 'Damaged')),
+                    location TEXT,
+                    created_at TEXT DEFAULT (datetime('now', '+05:30')),
+                    updated_at TEXT DEFAULT (datetime('now', '+05:30')),
+                    FOREIGN KEY (book_id) REFERENCES books(id),
+                    FOREIGN KEY (book_isbn) REFERENCES books(isbn)
+                )`, (err) => {
+                    if (err) {
+                        console.error("[Migration] Create rebuild table failed:", err);
+                    }
+                });
+
+                // Copy all data
+                db.run(`INSERT INTO book_copies_rebuild (${colList}) SELECT ${colList} FROM book_copies`, function(err) {
+                    if (err) console.error("[Migration] Copy data failed:", err);
+                    else console.log(`[Migration] Copied ${this.changes} rows`);
+                });
+
+                // Swap tables
+                db.run("DROP TABLE book_copies", (err) => {
+                    if (err) console.error("[Migration] Drop old table failed:", err);
+                });
+
+                db.run("ALTER TABLE book_copies_rebuild RENAME TO book_copies", (err) => {
+                    if (err) console.error("[Migration] Rename failed:", err);
+                    else console.log("[Migration] book_copies rebuilt with 'Damaged' status support.");
+
+                    // Clean up any other leftover tables
+                    db.run("DROP TABLE IF EXISTS book_copies_new");
+                    db.run("DROP TABLE IF EXISTS book_copies_migrated");
+
+                    callback();
+                });
+            });
+        });
+    });
+}
+
+
 
 function initializeTables() {
     db.serialize(() => {
@@ -272,7 +370,7 @@ function initializeTables() {
             accession_number TEXT UNIQUE,
             book_id TEXT,
             book_isbn TEXT,
-            status TEXT CHECK(status IN ('Available', 'Issued', 'Lost', 'Maintenance')),
+            status TEXT CHECK(status IN ('Available', 'Issued', 'Lost', 'Maintenance', 'Damaged')),
             location TEXT,
             created_at TEXT DEFAULT (datetime('now', '+05:30')),
             updated_at TEXT DEFAULT (datetime('now', '+05:30')),

@@ -57,18 +57,27 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
 
     const handleStatusChange = async (copyId, newStatus) => {
         // Optimistic Update
+        const previousCopies = [...copies];
         const updated = copies.map(c => c.id === copyId ? { ...c, status: newStatus } : c);
         setCopies(updated);
 
         try {
-            await fetch(`${API_BASE}/api/books/copy/${copyId}`, {
+            const res = await fetch(`${API_BASE}/api/books/copy/${copyId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus })
             });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                console.error("Status update failed:", errData.error || res.statusText);
+                setCopies(previousCopies); // Revert optimistic update
+                fetchCopies(); // Re-fetch from server
+                return;
+            }
             if (onUpdate) onUpdate();
         } catch (error) {
             console.error("Update failed", error);
+            setCopies(previousCopies); // Revert optimistic update
             fetchCopies(); // Revert
         }
     };
@@ -164,6 +173,7 @@ const SmartManageCopiesModal = ({ book, onClose, onUpdate }) => {
                                 { value: "Available", label: t('books.manage.status_avail') },
                                 { value: "Issued", label: t('books.manage.status_issued') },
                                 { value: "Lost", label: t('books.manage.status_lost') },
+                                { value: "Damaged", label: t('books.manage.status_damaged') },
                                 { value: "Maintenance", label: t('books.manage.status_maint') }
                             ]}
                             value={filterStatus}

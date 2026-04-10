@@ -45,5 +45,9 @@ contextBridge.exposeInMainWorld(
     installUpdate: () => ipcRenderer.send('install-update'),
     removeUpdateListeners: () => {
         ipcRenderer.removeAllListeners('update-status-changed');
-    }
+    },
+    restartApp: () => ipcRenderer.send('restart-app'),
+    stopBackend: () => ipcRenderer.send('stop-backend'),
+    startBackend: () => ipcRenderer.send('start-backend'),
+    onBackendStatus: (callback) => ipcRenderer.on('backend-status-changed', (_event, status) => callback(status))
 });

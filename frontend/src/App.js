@@ -55,21 +55,70 @@ if (window.electron?.logError) {
   });
 }
 
-// --- Temporary Placeholder Components ---
+// --- API Status Check with Restart Button ---
 const DbStatusCheck = () => {
   const [status, setStatus] = React.useState('checking');
 
-  React.useEffect(() => {
+  const checkStatus = React.useCallback(() => {
     fetch(`${API_BASE}/api/status`)
       .then(res => res.json())
       .then(data => setStatus(data.status === 'online' ? 'online' : 'error'))
       .catch(() => setStatus('offline'));
   }, []);
 
-  if (status === 'online') return null; // Don't show if fine
+  React.useEffect(() => {
+    checkStatus();
+    const interval = setInterval(checkStatus, 10000);
+    return () => clearInterval(interval);
+  }, [checkStatus]);
+
+  if (status === 'online' || status === 'checking') return null;
+
+  const handleRestart = () => {
+    if (window.electron?.restartApp) {
+      window.electron.restartApp();
+    } else {
+      window.location.reload();
+    }
+  };
+
   return (
-    <div className="toast fixed" style={{ bottom: 10, right: 10, zIndex: 9999 }}>
-      API: {status}
+    <div style={{
+      position: 'fixed', bottom: 16, right: 16, zIndex: 9999,
+      background: status === 'offline'
+        ? 'linear-gradient(135deg, #1a1a2e, #16213e)'
+        : 'linear-gradient(135deg, #2d1b1b, #3e1616)',
+      color: '#fff', borderRadius: 12, padding: '14px 20px',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.06)',
+      backdropFilter: 'blur(12px)', display: 'flex', alignItems: 'center', gap: 14,
+      fontFamily: 'Inter, sans-serif', maxWidth: 380,
+      animation: 'slideInRight 0.3s ease-out'
+    }}>
+      <div style={{
+        width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+        background: status === 'offline' ? '#ef4444' : '#f59e0b',
+        boxShadow: `0 0 8px ${status === 'offline' ? '#ef4444' : '#f59e0b'}`,
+        animation: 'pulse 2s infinite'
+      }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, letterSpacing: 0.3 }}>
+          API: {status === 'offline' ? 'Offline' : 'Error'}
+        </div>
+        <div style={{ fontSize: 11, opacity: 0.7, marginTop: 2 }}>
+          {status === 'offline' ? 'Backend server is not responding' : 'Backend returned an error'}
+        </div>
+      </div>
+      <button onClick={handleRestart} style={{
+        background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)',
+        color: '#fff', padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+        fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+        transition: 'all 0.2s ease'
+      }}
+        onMouseEnter={e => { e.target.style.background = 'rgba(255,255,255,0.2)'; }}
+        onMouseLeave={e => { e.target.style.background = 'rgba(255,255,255,0.1)'; }}
+      >
+        Restart App
+      </button>
     </div>
   );
 };
