@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sun, Moon, Type, LogIn, Globe, Info } from 'lucide-react';
 import { usePreferences } from '../context/PreferencesContext';
@@ -13,6 +13,13 @@ const LandingPage = () => {
     const { theme, toggleTheme, fontScale, setFontScale, highContrast } = usePreferences();
     const { t, language, toggleLanguage } = useLanguage();
     const [showWarning, setShowWarning] = useState(false);
+    const [appVersion, setAppVersion] = useState('1.0.0');
+
+    useEffect(() => {
+        if (window.electron?.getAppVersion) {
+            window.electron.getAppVersion().then(v => setAppVersion(v));
+        }
+    }, []);
 
     // Map numeric scale to labels
     const SCALE_MAP = { 85: 'S', 100: 'M', 115: 'L', 130: 'XL' };
@@ -48,7 +55,7 @@ const LandingPage = () => {
                         <img src={logo} alt="College Logo" className="college-logo" />
                         <div className="brand-info">
                             <span className="brand-name">GPTK LMS</span>
-                            <span className="brand-tagline">v1.0.0</span>
+                            <span className="brand-tagline">v{appVersion}</span>
                         </div>
                     </div>
 

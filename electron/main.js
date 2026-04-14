@@ -3,7 +3,7 @@ const { exec } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
-const { autoUpdater } = require('electron-updater');
+const { autoUpdater, CancellationToken } = require('electron-updater');
 
 // -----------------------------------------------------------------------------
 // 0. Memory Optimization Flags
@@ -74,6 +74,7 @@ process.on('unhandledRejection', (reason) => {
 // Persistent update state
 let updateState = { status: 'idle', version: '', percent: 0, transferred: 0, total: 0 };
 let isUserDownloading = false; // Flag to distinguish user-initiated downloads
+let updateCancellationToken = null;
 
 function sendUpdateState() {
     if (mainWindow && !mainWindow.isDestroyed()) {
@@ -163,29 +164,57 @@ ipcMain.on('start-download', () => {
     updateState.percent = 0;
     sendUpdateState();
 
+    updateCancellationToken = new CancellationToken();
     logUpdate('Calling autoUpdater.downloadUpdate()...');
-    autoUpdater.downloadUpdate()
+    autoUpdater.downloadUpdate(updateCancellationToken)
         .then((paths) => {
             logUpdate(`downloadUpdate() resolved. Paths: ${JSON.stringify(paths)}`);
+            updateCancellationToken = null;
         })
         .catch(err => {
-            logUpdate(`downloadUpdate() FAILED: ${err.stack || err.message || err}`);
+            if (err.message && err.message.includes('cancelled')) {
+                logUpdate('downloadUpdate() was cancelled by user.');
+            } else {
+                logUpdate(`downloadUpdate() FAILED: ${err.stack || err.message || err}`);
+            }
             isUserDownloading = false;
             updateState.status = 'available';
             updateState.percent = 0;
             sendUpdateState();
+            updateCancellationToken = null;
         });
 });
 
 // IPC: Renderer requests to cancel the download
 ipcMain.on('cancel-download', () => {
     logUpdate('User cancelled download');
+    if (updateCancellationToken) {
+        updateCancellationToken.cancel();
+        updateCancellationToken = null;
+    }
     isUserDownloading = false;
     updateState.status = 'available';
     updateState.percent = 0;
     updateState.transferred = 0;
     updateState.total = 0;
     sendUpdateState();
+});
+
+// IPC: Renderer requests to pause the download
+ipcMain.on('pause-download', () => {
+    logUpdate('User paused download');
+    if (updateCancellationToken) {
+        updateCancellationToken.cancel();
+        updateCancellationToken = null;
+    }
+    isUserDownloading = false;
+    updateState.status = 'paused';
+    sendUpdateState();
+});
+
+// IPC: Get application version
+ipcMain.handle('get-app-version', () => {
+    return app.getVersion();
 });
 
 // IPC: Renderer requests to install the update and restart

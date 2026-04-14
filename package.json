@@ -1,6 +1,6 @@
 {
   "name": "gptk-library-management-system",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "GPTK Library Management System",
   "main": "electron/main.js",
   "author": "GPTK",
@@ -21,7 +21,6 @@
     "cross-env": "^10.1.0",
     "electron": "^40.0.0",
     "electron-builder": "^25.1.8",
-    "puppeteer": "^24.37.3",
     "wait-on": "^9.0.3"
   },
   "dependencies": {

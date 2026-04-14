@@ -35,7 +35,7 @@ DB/
 *.db
 
 # Uploads
-Uploads/
+# Uploads/
 backend/uploads/*
 !backend/uploads/.gitkeep
 

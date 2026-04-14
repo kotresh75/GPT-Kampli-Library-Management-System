@@ -42,7 +42,9 @@ contextBridge.exposeInMainWorld(
     manualCheckUpdates: () => ipcRenderer.send('manual-check-updates'),
     startDownload: () => ipcRenderer.send('start-download'),
     cancelDownload: () => ipcRenderer.send('cancel-download'),
+    pauseDownload: () => ipcRenderer.send('pause-download'),
     installUpdate: () => ipcRenderer.send('install-update'),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     removeUpdateListeners: () => {
         ipcRenderer.removeAllListeners('update-status-changed');
     },

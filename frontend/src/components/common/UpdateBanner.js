@@ -122,7 +122,7 @@ const UpdateBanner = () => {
                     lastUpdate.current = { time: now, bytes: state.transferred };
                 }
             }
-            if (state.status === 'ready' || state.status === 'available') {
+            if (state.status === 'ready' || state.status === 'available' || state.status === 'paused') {
                 setSpeed(0);
             }
         });
@@ -152,6 +152,12 @@ const UpdateBanner = () => {
     const handleCancel = () => {
         if (window.electron?.cancelDownload) {
             window.electron.cancelDownload();
+        }
+    };
+
+    const handlePause = () => {
+        if (window.electron?.pauseDownload) {
+            window.electron.pauseDownload();
         }
     };
 
@@ -223,6 +229,7 @@ const UpdateBanner = () => {
                     <h3 className="update-modal__title">
                         {status === 'ready' ? 'Update Ready!' :
                             status === 'downloading' ? 'Downloading Update' :
+                                status === 'paused' ? 'Download Paused' :
                                 'Update Available'
                         }
                     </h3>
@@ -260,6 +267,30 @@ const UpdateBanner = () => {
                         </>
                     )}
 
+                    {status === 'paused' && (
+                        <>
+                            <div className="update-modal__progress-wrap" style={{ opacity: 0.6 }}>
+                                <div className="update-modal__progress-bar">
+                                    <div className="update-modal__progress-fill" style={{ width: `${progress}%`, backgroundColor: '#888' }} />
+                                </div>
+                                <span className="update-modal__percent">{Math.round(progress)}%</span>
+                            </div>
+
+                            <div className="update-modal__stats" style={{ opacity: 0.6 }}>
+                                <div className="update-modal__stat">
+                                    <span className="update-modal__stat-label">Downloaded</span>
+                                    <span className="update-modal__stat-value">{formatBytes(transferred)} / {formatBytes(total)}</span>
+                                </div>
+                                <div className="update-modal__stat">
+                                    <span className="update-modal__stat-label">Speed</span>
+                                    <span className="update-modal__stat-value">Paused</span>
+                                </div>
+                            </div>
+
+                            <p className="update-modal__hint">Download paused. Resume when ready.</p>
+                        </>
+                    )}
+
                     {status === 'ready' && (
                         <div className="update-modal__info-text">
                             <p>Update has been downloaded successfully. Restart the application to apply changes.</p>
@@ -285,14 +316,34 @@ const UpdateBanner = () => {
 
                     {status === 'downloading' && (
                         <>
-                            <button className="update-modal__btn update-modal__btn--secondary" onClick={() => setShowModal(false)}>
-                                Minimize
+                            <button className="update-modal__btn update-modal__btn--secondary" onClick={handlePause}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                                </svg>
+                                Pause
                             </button>
                             <button className="update-modal__btn update-modal__btn--danger" onClick={handleCancel}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                 </svg>
-                                Cancel Download
+                                Cancel
+                            </button>
+                        </>
+                    )}
+
+                    {status === 'paused' && (
+                        <>
+                            <button className="update-modal__btn update-modal__btn--primary" onClick={handleDownload}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                </svg>
+                                Resume
+                            </button>
+                            <button className="update-modal__btn update-modal__btn--danger" onClick={handleCancel}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                </svg>
+                                Cancel
                             </button>
                         </>
                     )}
@@ -437,6 +488,7 @@ const UpdateBanner = () => {
                 title={
                     status === 'ready' ? `Update v${version} ready — click to install` :
                         status === 'downloading' ? `Downloading v${version}…` :
+                        status === 'paused' ? `Paused v${version}` :
                             `Update v${version} available`
                 }
             >
@@ -458,13 +510,14 @@ const UpdateBanner = () => {
                 </span>
                 <span className="update-chip__label">
                     {status === 'ready' ? 'Update Ready' :
+                        status === 'paused' ? 'Paused' :
                         status === 'downloading' ? `${Math.round(progress)}%` :
                             `v${version}`
                     }
                 </span>
-                {status === 'downloading' && (
+                {(status === 'downloading' || status === 'paused') && (
                     <span className="update-chip__bar">
-                        <span className="update-chip__bar-fill" style={{ width: `${progress}%` }} />
+                        <span className="update-chip__bar-fill" style={{ width: `${progress}%`, backgroundColor: status === 'paused' ? '#888' : undefined }} />
                     </span>
                 )}
             </button>
